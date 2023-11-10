@@ -1,5 +1,6 @@
 use crate::error_template::{AppError, ErrorTemplate};
 use crate::models::user::UserPublic;
+use crate::screens::authenticate;
 use crate::screens::home::{ HomePage, Settings};
 use crate::screens::timesheet::{TimeSheetDisplay, TimeSheetMissing};
 use crate::screens::timesheets::{
@@ -15,6 +16,7 @@ use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
+use web_sys::SubmitEvent;
 
 static VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
 
@@ -364,28 +366,51 @@ struct PhoneQuery {
     phone: String,
 }
 
+static PIN_PATTERN: &'static str = "[0-9]{6}";
+
 #[component]
 pub fn Auth(authenticate: Action<Authenticate, Result<(), ServerFnError>>) -> impl IntoView {
-    let (_pin_input, set_pin_input) = create_signal(String::with_capacity(6));
+    let (phone_input, set_phone_input) = create_signal(String::with_capacity(20));
+    let (pin_input, set_pin_input) = create_signal(String::with_capacity(6));
 
-    let phone_query = use_query::<PhoneQuery>();
-
-    let (error_text, _set_error_text) = create_signal::<String>(String::new());
     let get_pin = create_server_action::<GetPin>();
-
-    let pattern = "[0-9]{6}";
-
+    let pin_value = get_pin.value();
     let value = authenticate.value();
+
+    let submit_pin = move |event: SubmitEvent| {
+        event.prevent_default();
+        // authenticate(phone_input, pin_input)
+    };
+    let submit_phone = move |event: SubmitEvent| {
+        event.prevent_default();
+        leptos::logging::warn!("phone: {}", phone_input());
+        // get_pin(phone_input());
+    };
+
+    create_effect(move |_| {
+        leptos::logging::warn!("@phone: {}", phone_input())
+    });
+
+    create_effect(move |_| {
+        leptos::logging::warn!("pin: {}", pin_input())
+    });
+
+    create_effect(move |_| {
+        leptos::logging::warn!("pin value: {:?}", pin_value())
+    });
+
+    create_effect(move |_| {
+        leptos::logging::warn!("value: {:?}", pin_value())
+    });
 
     view! {
         <Title text="Dental Care | Authenticating"/>
         <section class="center-center">
-
             <Show
-                when=move || phone_query().is_ok()
+                when=move || pin_value().is_some()
                 fallback=move || {
                     view! {
-                        <ActionForm class="center-center" action=get_pin>
+                        <form class="center-center solo-action" on:submit=submit_phone>
                             <label>"Phone Number"</label>
                             <input
                                 id="phone"
@@ -395,6 +420,7 @@ pub fn Auth(authenticate: Action<Authenticate, Result<(), ServerFnError>>) -> im
                                 autoComplete="tel"
                                 placeholder="+1 (893) 234-2345"
                                 inputMode="tel"
+                                on:change= move |ev| set_phone_input(event_target_value(&ev))
                                 required
                             />
                             <button type="submit" disabled=get_pin.pending()>
@@ -403,22 +429,20 @@ pub fn Auth(authenticate: Action<Authenticate, Result<(), ServerFnError>>) -> im
                             <Show when=get_pin.pending()>
                                 <div>"Loading..."</div>
                             </Show>
-                            <div data-state="error">{error_text}</div>
-                        </ActionForm>
+                        </form>
                     }
                 }
             >
 
-                {move || match phone_query() {
-                    Ok(query) => {
+                {move || match pin_value() {
+                    Some(Ok(query)) => {
                         view! {
-                            <ActionForm action=authenticate class="center-center">
-                                <input type="hidden" value=query.phone name="phone"/>
+                            <form class="center-center solo-action" on:submit=submit_pin>
                                 <label id="pin">"Enter Pin From SMS"</label>
                                 <input
                                     type="number"
                                     name="pin"
-                                    pattern=pattern
+                                    pattern=PIN_PATTERN
                                     inputMode="numeric"
                                     on:input=move |v| set_pin_input(event_target_value(&v))
                                 />
@@ -428,23 +452,16 @@ pub fn Auth(authenticate: Action<Authenticate, Result<(), ServerFnError>>) -> im
                                 <Show when=authenticate.pending()>
                                     <div>"Loading..."</div>
                                 </Show>
-                                <Show when=move || value.with(Option::is_some)>
-                                    <div>{value}</div>
-                                </Show>
-                            </ActionForm>
-                        }
+                            </form>
+                        }.into_view()
                     }
-                    Err(_e) => {
+                    Some(Err(e)) => {
                         view! {
-                            <ActionForm action=authenticate class="center-center">
-                                <input type="hidden" value="" name="phone"/>
-                                <input type="hidden" name="pin"/>
-                                <Show when=move || value.with(Option::is_some)>
-                                    <div>{value}</div>
-                                </Show>
-                            </ActionForm>
-                        }
-                    }
+                                    <div>"Error "{e.to_string()}</div>
+
+                        }.into_view()
+                    },
+                    None => view! {<div>"should not exist"</div>}.into_view()
                 }}
 
             </Show>
@@ -453,9 +470,8 @@ pub fn Auth(authenticate: Action<Authenticate, Result<(), ServerFnError>>) -> im
 }
 
 #[server]
-async fn get_pin(phone: String) -> Result<Pin, ServerFnError> {
+async fn get_pin(phone: String) -> Result<(), ServerFnError> {
     use crate::models::user::get_user_by_phone;
-    use crate::service::sms::send_message;
 
     let phone = crate::utils::filter_phone_number(&phone);
 
@@ -468,46 +484,12 @@ async fn get_pin(phone: String) -> Result<Pin, ServerFnError> {
         ));
     };
 
-    leptos::tracing::info!("**| user: {:?}", user);
-
-    let Ok(pin) = Pin::create_pin_for(user.id).await else {
+    let Ok(_) = Pin::create_pin_for(user.id).await else {
         leptos::tracing::error!("Could not create pin: {}", user.id.to_string());
         return Err(ServerFnError::ServerError("Error Creating Pin!".into()));
     };
 
-    send_message(pin.number.to_string(), format!("+1{phone}")).await;
+    // send_message(pin.number.to_string(), format!("+1{phone}")).await;
 
-    leptos_axum::redirect(&("/?phone=".to_string() + &phone));
-
-    Ok(pin)
-}
-
-#[component]
-pub fn PhoneNumber() -> impl IntoView {
-    let (error_text, _set_error_text) = create_signal::<String>(String::new());
-    let get_pin = create_server_action::<GetPin>();
-    view! {
-        <Title text="Dental Care | Authentication"/>
-
-        <ActionForm class="center-center" action=get_pin>
-            <label>"Phone Number"</label>
-            <input
-                id="phone"
-                label="Phone Number"
-                type="tel"
-                name="phone"
-                autoComplete="tel"
-                placeholder="+1 (893) 234-2345"
-                inputMode="tel"
-                required
-            />
-            <button type="submit" disabled=move || get_pin.pending()>
-                "Get Pin"
-            </button>
-            <Show when=get_pin.pending()>
-                <div>"Loading..."</div>
-            </Show>
-            <div data-state="error">{error_text}</div>
-        </ActionForm>
-    }
+    Ok(())
 }
