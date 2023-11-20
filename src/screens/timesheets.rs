@@ -1,4 +1,5 @@
-use crate::models::user::{UserPublic};
+use crate::components::loading_progress::Loading;
+use crate::models::user::UserPublic;
 use leptos::*;
 use leptos_router::*;
 use crate::components::timesheet::TimeSheetDisplay;
@@ -60,7 +61,7 @@ async fn load_hourly_users() -> Result<Vec<UserPublic>, ServerFnError> {
 pub fn TimeSheetsList() -> impl IntoView {
     let (current_user, set_current_user) = create_signal(String::new());
     let users = create_resource(move || {}, move |_| load_hourly_users());
-    let timesheet = create_resource(move || current_user(), move |user_id| load_timesheet_for(user_id));
+    let timesheet = create_resource(current_user, load_timesheet_for);
 
     create_effect( { move |_|
         leptos::logging::log!("{:?}", current_user())
@@ -68,7 +69,11 @@ pub fn TimeSheetsList() -> impl IntoView {
 
     view! {
         <Suspense fallback=move || {
-            view! { <p>"Loading..."</p> }
+            view! {
+                <p>
+                    <Loading/>
+                </p>
+            }
         }>
             {move || match users.get() {
                 Some(Ok(a)) => {
@@ -80,7 +85,7 @@ pub fn TimeSheetsList() -> impl IntoView {
                                 id="user_selected"
                                 on:change=move |e| set_current_user(event_target_value(&e))
                             >
-                                <Show when=move || current_user().len() == 0>
+                                <Show when=move || current_user().is_empty()>
                                     <option value="">"-- Select User --"</option>
                                 </Show>
                                 {a
@@ -101,18 +106,21 @@ pub fn TimeSheetsList() -> impl IntoView {
                 }
                 _ => view! { <div>"Server Error"</div> },
             }}
-            <Show when=move || current_user().len() != 0>
-            {move || match timesheet() {
-                Some(Ok(timesheet)) => {
-                    view! {
-                        <div>
-                            <TimeSheetDisplay timesheet/>
-                        </div>
+            <Show when=move || {
+                !current_user().is_empty()
+            }>
+                {move || match timesheet() {
+                    Some(Ok(timesheet)) => {
+                        view! {
+                            <div>
+                                <TimeSheetDisplay timesheet/>
+                            </div>
+                        }
                     }
-                }
-                Some(Err(e)) => view! { <div>"Error: " {e.to_string()}</div> },
-                None => view! { <div>"Error loading timesheet"</div> },
-            }}
+                    Some(Err(e)) => view! { <div>"Error: " {e.to_string()}</div> },
+                    None => view! { <div>"Error loading timesheet"</div> },
+                }}
+
             </Show>
 
         </Suspense>

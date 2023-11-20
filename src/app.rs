@@ -1,8 +1,10 @@
+use crate::components::loading_progress::Loading;
 use crate::error_template::{AppError, ErrorTemplate};
 use crate::models::user::UserPublic;
-use crate::screens::authenticate;
+use crate::screens::clock_in_link::{ClockInLink, ClockInLinkInitiateSession};
 use crate::screens::home::{ HomePage, Settings};
-use crate::screens::timesheet::{TimeSheetDisplay, TimeSheetMissing};
+use crate::screens::magic_link::MagicLink;
+use crate::screens::timesheet::{TimeSheetDisplay, TimeSheetMissing, TimeSheetEdit};
 use crate::screens::timesheets::{
     TimeSheets, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending,
 };
@@ -11,14 +13,14 @@ use crate::screens::vacations::{
     VacationEdit, VacationRequest, Vacations, VacationsList, VacationsPending,
 };
 use crate::components::check_in::CheckInView;
-use crate::models::pins::Pin;
+use crate::components::menu::Menu;
+use crate::screens::authenticate::{Auth, Authenticate, Logout};
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
-use web_sys::SubmitEvent;
 
-static VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
+pub static VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -27,9 +29,10 @@ pub fn App() -> impl IntoView {
     let log_out = create_server_action::<Logout>();
     let check_in = create_server_action::<CheckIn>();
     let authenticate = create_server_action::<Authenticate>();
+    let clock_in_link = create_server_action::<ClockInLinkInitiateSession>();
 
     let user_fetch = create_resource(move || (log_out.version().get(), authenticate.version().get()), |_| get_curent_user());
-    let session_status = create_resource(move || check_in.version().get(), |_| get_session_status());
+    let session_status = create_resource(move || (check_in.version().get(), clock_in_link.version().get()), |_| get_session_status());
 
     let _error = move || match user_fetch() {
         Some(Err(e)) => Some(e),
@@ -60,157 +63,71 @@ pub fn App() -> impl IntoView {
             outside_errors.insert_with_default_key(AppError::NotFound);
             view! { <ErrorTemplate outside_errors/> }.into_view()
         }>
-            <Suspense fallback=|| {
-                view! { "Loading..." }
-            }>
+            <Suspense fallback=Loading>
                 <header id="header">
-                    // <input type="checkbox" class="sr-only" id="menu" name="menu"/>
-                    <Show when=move || user().is_some()>
-                        <label for="menu" class="button" aria-hidden="true">
-                            <button class="hamburger" on:click=move |_| { set_show_menu(true) }>
-                                <svg
-                                    aria-hidden="true"
-                                    focusable="false"
-                                    data-prefix="fas"
-                                    data-icon="bars"
-                                    role="img"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 448 512"
-                                    width="1em"
-                                >
-                                    <path
-                                        fill="currentColor"
-                                        d="M16 132h416c8.837 0 16-7.163 16-16V76c0-8.837-7.163-16-16-16H16C7.163 60 0 67.163 0 76v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16z"
-                                    ></path>
-                                </svg>
-                            </button>
-                        </label>
-                    </Show>
-                    <h1>"Click"</h1>
+                    <h1>
+                        <span>"Click "</span>
+                        <span class="version">{VERSION}</span>
+                    </h1>
                 </header>
 
                 <Show when=move || user().is_some()>
-                    <nav aria-label="Main menu" id="nav" data-show=show_menu>
-                        <label for="menu" aria-hidden="true">
-                            <button class="close" on:click=move |_| { set_show_menu(false) }>
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 30 30"
-                                    width="30px"
-                                    height="30px"
-                                >
-                                    <path d="M 7 4 C 6.744125 4 6.4879687 4.0974687 6.2929688 4.2929688 L 4.2929688 6.2929688 C 3.9019687 6.6839688 3.9019687 7.3170313 4.2929688 7.7070312 L 11.585938 15 L 4.2929688 22.292969 C 3.9019687 22.683969 3.9019687 23.317031 4.2929688 23.707031 L 6.2929688 25.707031 C 6.6839688 26.098031 7.3170313 26.098031 7.7070312 25.707031 L 15 18.414062 L 22.292969 25.707031 C 22.682969 26.098031 23.317031 26.098031 23.707031 25.707031 L 25.707031 23.707031 C 26.098031 23.316031 26.098031 22.682969 25.707031 22.292969 L 18.414062 15 L 25.707031 7.7070312 C 26.098031 7.3170312 26.098031 6.6829688 25.707031 6.2929688 L 23.707031 4.2929688 C 23.316031 3.9019687 22.682969 3.9019687 22.292969 4.2929688 L 15 11.585938 L 7.7070312 4.2929688 C 7.5115312 4.0974687 7.255875 4 7 4 z"></path>
-                                </svg>
-                            </button>
-                        </label>
-                        <A
-                            href=""
-                            class="link"
-                            exact=true
-                            on:click=move |_| { set_show_menu(false) }
-                        >
-                            "dashboard"
-                        </A>
-                        <A href="/check_in" class="link" on:click=move |_| { set_show_menu(false) }>
-                            "check "
-                            {move || if status() { "out" } else { "in" }}
-                        </A>
-                        <A
-                            href="/timesheet"
-                            class="link"
-                            on:click=move |_| { set_show_menu(false) }
-                        >
-                            "timesheet"
-                        </A>
-
-                        <A href="/timesheets" class="link">
-                            "timesheets"
-                        </A>
-                        <A href="/vacations" class="link">
-                            "vacations"
-                        </A>
-                        <A href="/users" class="link">
-                            "users"
-                        </A>
-                        <A href="/settings" class="link">
-                            "settings"
-                        </A>
-
-                        <ActionForm action=log_out>
-                            <button type="submit">
-                                <span>"logout"</span>
-                                <span>
-                                    <svg
-                                        aria-hidden="true"
-                                        focusable="false"
-                                        data-prefix="fad"
-                                        data-icon="sign-out-alt"
-                                        className="svg-inline--fa fa-sign-out-alt fa-w-16"
-                                        role="img"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 512 512"
-                                        width="1em"
-                                    >
-                                        <g className="fa-group">
-                                            <path
-                                                className="fa-secondary"
-                                                fill="currentColor"
-                                                d="M64 160v192a32 32 0 0 0 32 32h84a12 12 0 0 1 12 12v40a12 12 0 0 1-12 12H96a96 96 0 0 1-96-96V160a96 96 0 0 1 96-96h84a12 12 0 0 1 12 12v40a12 12 0 0 1-12 12H96a32 32 0 0 0-32 32z"
-                                                opacity="0.4"
-                                            ></path>
-                                            <path
-                                                className="fa-primary"
-                                                fill="currentColor"
-                                                d="M288 424v-96H152a23.94 23.94 0 0 1-24-24v-96a23.94 23.94 0 0 1 24-24h136V88c0-21.4 25.9-32 41-17l168 168a24.2 24.2 0 0 1 0 34L329 441c-15 15-41 4.52-41-17z"
-                                            ></path>
-                                        </g>
-                                    </svg>
-                                </span>
-                            </button>
-                        </ActionForm>
-                        <span>{VERSION}</span>
-                    </nav>
+                    <Menu status log_out show_menu set_show_menu/>
                 </Show>
                 <main id="main">
-                    // Add protected routes
                     <Routes>
+                        <Route path="/p/:phone" view=move || view! { <Auth authenticate/> }/>
+                        <Route path="/l/:link" view=MagicLink/>
                         <Route
                             path=""
                             view=move || {
                                 view! {
-                                    <Show
-                                        when=move || user().is_some()
-                                        fallback=move || view! { <Auth authenticate/> }
-                                    >
+                                    <Show when=move || user().is_some() fallback=PhoneNumber>
                                         <Outlet/>
                                     </Show>
                                 }
                             }
                         >
 
-                            <Route path="/" view=move || view! { <HomePage status/> }/>
-                            <Route path="/timesheet" view=TimeSheetDisplay/>
-                            <Route path="/timesheet/missing" view=TimeSheetMissing/>
-                            <Route path="/timesheets" view=TimeSheets>
-                                <Route path="" view=TimeSheetsList/>
-                                <Route path="/adjustment" view=TimeSheetsAdjustment/>
-                                <Route path="/pending" view=TimeSheetsPending/>
-                            </Route>
-                            <Route path="/vacations" view=Vacations>
-                                <Route path="" view=VacationsList/>
-                                <Route path="/pending" view=VacationsPending/>
-                                <Route path="/request" view=VacationRequest/>
-                                <Route path="/:id" view=VacationEdit/>
-                            </Route>
-                            <Route path="/users" view=Users>
-                                <Route path="" view=UsersList/>
-                                <Route path="/create" view=UserCreate/>
-                                <Route path="/:id" view=UserUpdate/>
-                            </Route>
+                            <Route path="" view=move || view! { <HomePage status/> }/>
                             <Route
-                                path="/check_in"
-                                view=move || view! { <CheckInView check_in status/> }
+                                path="/c/:link"
+                                view=move || view! { <ClockInLink clock_in_link/> }
                             />
+                            <Route path="/app" view=move || view! { <Outlet/> }>
+                                <Route path="" view=move || view! { <HomePage status/> }/>
+                                <Route path="/timesheet" view=TimeSheetDisplay/>
+                                <Route path="/timesheet/edit/:uuid" view=TimeSheetEdit/>
+                                <Route path="/timesheet/missing" view=TimeSheetMissing/>
+                                <Route path="/vacations" view=Vacations>
+                                    <Route path="" view=VacationsList/>
+                                    <Route path="/request" view=VacationRequest/>
+                                    <Route path="/:id" view=VacationEdit/>
+                                </Route>
+                                <Route path="/users" view=Users/>
+                                <Route
+                                    path="/check_in"
+                                    view=move || view! { <CheckInView check_in status/> }
+                                />
+                            </Route>
+                            <Route path="/admin" view=move || view! { <Outlet/> }>
+                                <Route path="/vacations" view=Vacations>
+                                    <Route path="" view=VacationsList/>
+                                    <Route path="/pending" view=VacationsPending/>
+                                    <Route path="/request" view=VacationRequest/>
+                                    <Route path="/:id" view=VacationEdit/>
+                                </Route>
+                                <Route path="/timesheets" view=TimeSheets>
+                                    <Route path="" view=TimeSheetsList/>
+                                    <Route path="/adjustment" view=TimeSheetsAdjustment/>
+                                    <Route path="/pending" view=TimeSheetsPending/>
+                                </Route>
+                                <Route path="/users" view=Users>
+                                    <Route path="" view=UsersList/>
+                                    <Route path="/create" view=UserCreate/>
+                                    <Route path="/edit/:id" view=UserUpdate/>
+                                </Route>
+                            </Route>
                             <Route path="/settings" view=Settings/>
                         </Route>
                     </Routes>
@@ -225,16 +142,6 @@ pub struct Status {
     user_name: String,
     checked_in_time: Option<u64>,
     user_type: String,
-}
-
-#[server]
-async fn logout() -> Result<(), ServerFnError> {
-    use axum_session::SessionPgSession;
-    let session = use_context::<SessionPgSession>()
-        .ok_or_else(|| ServerFnError::ServerError("Session missing.".into()))?;
-    session.clear();
-
-    Ok(())
 }
 
 #[server]
@@ -306,34 +213,8 @@ async fn check_in(latitude: f64, longitude: f64, accuracy: f64) -> Result<(), Se
         }
     };
 
-    leptos_axum::redirect("/");
+    leptos_axum::redirect("/app");
 
-    Ok(())
-}
-
-#[server]
-async fn authenticate(pin: i32, phone: String) -> Result<(), ServerFnError> {
-    use crate::models::user::get_user_by_phone;
-    use axum_session::SessionPgSession;
-    use crate::models::pins::Pin;
-
-    let Ok(pin) = Pin::get_pin(pin).await else {
-        return Err(ServerFnError::ServerError("Internal Server Error".into()));
-    };
-
-    let Ok(user) = get_user_by_phone(&phone).await else {
-        return Err(ServerFnError::ServerError("Internal Server Error".into()));
-    };
-
-    let session = use_context::<SessionPgSession>()
-        .ok_or_else(|| ServerFnError::ServerError("Session missing.".into()))?;
-
-    if pin.user_id != user.id {
-        return Err(ServerFnError::Request("Unauthorized Try Again!".into()));
-    }
-    session.set_longterm(true);
-    session.set("id", user.id);
-    leptos_axum::redirect("/");
     Ok(())
 }
 
@@ -366,112 +247,11 @@ struct PhoneQuery {
     phone: String,
 }
 
-static PIN_PATTERN: &'static str = "[0-9]{6}";
-
-#[component]
-pub fn Auth(authenticate: Action<Authenticate, Result<(), ServerFnError>>) -> impl IntoView {
-    let (phone_input, set_phone_input) = create_signal(String::with_capacity(20));
-    let (pin_input, set_pin_input) = create_signal(String::with_capacity(6));
-
-    let get_pin = create_server_action::<GetPin>();
-    let pin_value = get_pin.value();
-    let value = authenticate.value();
-
-    let submit_pin = move |event: SubmitEvent| {
-        event.prevent_default();
-        // authenticate(phone_input, pin_input)
-    };
-    let submit_phone = move |event: SubmitEvent| {
-        event.prevent_default();
-        leptos::logging::warn!("phone: {}", phone_input());
-        // get_pin(phone_input());
-    };
-
-    create_effect(move |_| {
-        leptos::logging::warn!("@phone: {}", phone_input())
-    });
-
-    create_effect(move |_| {
-        leptos::logging::warn!("pin: {}", pin_input())
-    });
-
-    create_effect(move |_| {
-        leptos::logging::warn!("pin value: {:?}", pin_value())
-    });
-
-    create_effect(move |_| {
-        leptos::logging::warn!("value: {:?}", pin_value())
-    });
-
-    view! {
-        <Title text="Dental Care | Authenticating"/>
-        <section class="center-center">
-            <Show
-                when=move || pin_value().is_some()
-                fallback=move || {
-                    view! {
-                        <form class="center-center solo-action" on:submit=submit_phone>
-                            <label>"Phone Number"</label>
-                            <input
-                                id="phone"
-                                label="Phone Number"
-                                type="tel"
-                                name="phone"
-                                autoComplete="tel"
-                                placeholder="+1 (893) 234-2345"
-                                inputMode="tel"
-                                on:change= move |ev| set_phone_input(event_target_value(&ev))
-                                required
-                            />
-                            <button type="submit" disabled=get_pin.pending()>
-                                "Get Pin"
-                            </button>
-                            <Show when=get_pin.pending()>
-                                <div>"Loading..."</div>
-                            </Show>
-                        </form>
-                    }
-                }
-            >
-
-                {move || match pin_value() {
-                    Some(Ok(query)) => {
-                        view! {
-                            <form class="center-center solo-action" on:submit=submit_pin>
-                                <label id="pin">"Enter Pin From SMS"</label>
-                                <input
-                                    type="number"
-                                    name="pin"
-                                    pattern=PIN_PATTERN
-                                    inputMode="numeric"
-                                    on:input=move |v| set_pin_input(event_target_value(&v))
-                                />
-                                <button type="submit" disabled=move || authenticate.pending()>
-                                    "Log In"
-                                </button>
-                                <Show when=authenticate.pending()>
-                                    <div>"Loading..."</div>
-                                </Show>
-                            </form>
-                        }.into_view()
-                    }
-                    Some(Err(e)) => {
-                        view! {
-                                    <div>"Error "{e.to_string()}</div>
-
-                        }.into_view()
-                    },
-                    None => view! {<div>"should not exist"</div>}.into_view()
-                }}
-
-            </Show>
-        </section>
-    }
-}
-
 #[server]
-async fn get_pin(phone: String) -> Result<(), ServerFnError> {
+async fn submit_phone_number(phone: String) -> Result<(), ServerFnError> {
     use crate::models::user::get_user_by_phone;
+    use crate::service::sms::send_message;
+    use crate::models::pins::Pin;
 
     let phone = crate::utils::filter_phone_number(&phone);
 
@@ -491,5 +271,45 @@ async fn get_pin(phone: String) -> Result<(), ServerFnError> {
 
     // send_message(pin.number.to_string(), format!("+1{phone}")).await;
 
+    leptos_axum::redirect(&("/p/".to_string() + &phone));
+
     Ok(())
+}
+
+#[component]
+pub fn PhoneNumber() -> impl IntoView {
+    let submit = create_server_action::<SubmitPhoneNumber>();
+    let value = submit.value();
+    view! {
+        <Title text="Dental Care | Authentication"/>
+
+        <ActionForm class="center-center solo-action" action=submit>
+            <label>"Phone Number"</label>
+            <input
+                id="phone"
+                label="Phone Number"
+                type="tel"
+                name="phone"
+                autoComplete="tel"
+                placeholder="+1 (893) 234-2345"
+                inputMode="tel"
+                required
+            />
+            <button type="submit">"Get Pin"</button>
+        </ActionForm>
+        <Show when=submit.pending()>
+            <div>
+                <Loading/>
+            </div>
+        </Show>
+        <Show when=move || {
+            value().is_some()
+        }>
+            {match value() {
+                Some(Err(e)) => view! { <div data-state="error">"Error: " {e.to_string()}</div> },
+                _ => view! { <div data-state="error">"something is messed up"</div> },
+            }}
+
+        </Show>
+    }
 }
