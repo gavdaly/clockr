@@ -3,7 +3,6 @@ use leptos::prelude::*;
 use leptos_router::components::Redirect;
 use leptos_router::hooks::use_params;
 use leptos_router::params::Params;
-use uuid::Uuid;
 
 #[derive(Clone, Params, PartialEq)]
 struct MagicLinkParams {
@@ -38,7 +37,7 @@ async fn magic_sign_in(link: String) -> Result<(), ServerFnError> {
 
     let session = use_context::<SessionAnySession>()
         .ok_or_else(|| ServerFnError::<NoCustomError>::ServerError("Session missing.".into()))?;
-    let user_id = MagicLink::get(link)
+    let user_id = MagicLink::get(&link)
         .await
         .map_err(|_| ServerFnError::<NoCustomError>::ServerError("Invalid Link".into()))?;
 

@@ -6,7 +6,6 @@ use leptos_router::components::A;
 use leptos_router::hooks::use_params;
 use leptos_router::nested_router::Outlet;
 use leptos_router::params::Params;
-use uuid::Uuid;
 
 /// Renders the home page of your application.
 #[component]

@@ -101,7 +101,7 @@ pub async fn submit_correction_form(
     reason: String,
     date: String,
 ) -> Result<(), ServerFnError> {
-    use crate::app::get_curent_user;
+    use crate::components::app_context::get_curent_user;
     use crate::models::sessions::add_correction;
 
     let start_date = convert_string_to_local_datetime(&date, &start_time)?;

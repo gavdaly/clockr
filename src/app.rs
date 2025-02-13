@@ -1,9 +1,9 @@
+use crate::components::app_context::{create_app_context, AppContext};
 use crate::components::check_in::CheckInView;
 use crate::components::loading_progress::Loading;
 use crate::components::menu::Menu;
-use crate::models::user::UserDisplay;
-use crate::screens::authenticate::{Auth, Authenticate, Logout};
-use crate::screens::clock_in_link::{ClockInLink, ClockInLinkInitiateSession};
+use crate::screens::authenticate::Auth;
+use crate::screens::clock_in_link::ClockInLink;
 use crate::screens::home::HomePage;
 use crate::screens::magic_link::MagicLink;
 use crate::screens::timesheet::{TimeSheetDisplay, TimeSheetEdit, TimeSheetMissing};
@@ -25,10 +25,6 @@ pub static VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
 // <Link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
 // <link rel="manifest" href="/site.webmanifest" />
 
-use leptos::prelude::*;
-use leptos_meta::{provide_meta_context, MetaTags, Stylesheet, Title};
-use leptos_router::StaticSegment;
-
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
         <!DOCTYPE html>
@@ -49,43 +45,23 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
 
 #[component]
 pub fn App() -> impl IntoView {
-    // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
 
-    let log_out = ServerAction::<Logout>::new();
-    let check_in = ServerAction::<CheckIn>::new();
-    let authenticate = ServerAction::<Authenticate>::new();
-    let clock_in_link = ServerAction::<ClockInLinkInitiateSession>::new();
+    let context = create_app_context();
+    provide_context(context.clone());
 
-    let user_fetch = Resource::new(
-        move || {
-            (
-                log_out.version().get(),
-                authenticate.version().get(),
-                check_in.version().get(),
-                clock_in_link.version().get(),
-            )
-        },
-        |_| get_curent_user(),
-    );
-
-    let user_fetch = user_fetch.read();
-
-    let user = Memo::new(move |_| match user_fetch.clone() {
-        Some(Ok(a)) => a,
-        _ => None,
-    });
+    let app_context = use_context::<AppContext>().expect("should be provided");
 
     let (show_menu, set_show_menu) = signal(false);
 
     let content = r#"oklch(36.94% 0.1685 354.12)"#;
 
     view! {
-        <Stylesheet id="leptos" href="/pkg/clkr.css"/>
 
-        <Title text="Welcome to Leptos"/>
+        <Title text="Clkr"/>
         <Meta name="theme-color" content />
 
+        <Stylesheet id="leptos" href="/pkg/clkr.css"/>
         <Router>
                 <header id="header">
                     <h1>
@@ -94,18 +70,18 @@ pub fn App() -> impl IntoView {
                     </h1>
                 </header>
 
-                <Show when={move || user.get().is_some()}>
-                    <Menu /* user   status */ log_out show_menu set_show_menu/>
+                <Show when={move || app_context.user.get().is_some()}>
+                    <Menu show_menu set_show_menu/>
                 </Show>
                 <main id="main">
                     <Routes fallback=Loading>
-                        <Route path=path!("/p/:phone") view=move || view! { <Auth authenticate/> }/>
+                        <Route path=path!("/p/:phone") view=Auth />
                         <Route path=path!("/l/:link") view=MagicLink/>
                         <ParentRoute
                             path=path!("")
                             view=move || {
                                 view! {
-                                    <Show when=move || user.get().is_some() fallback=PhoneNumber>
+                                    <Show when=move || app_context.user.get().is_some() fallback=PhoneNumber>
                                         <Outlet/>
                                     </Show>
                                 }
@@ -115,7 +91,7 @@ pub fn App() -> impl IntoView {
                             <Route path=path!("") view=HomePage/>
                             <Route
                                 path=path!("/c/:link")
-                                view=move || view! { <ClockInLink clock_in_link/> }
+                                view=ClockInLink
                             />
                             <ParentRoute path=path!("/app") view= || view! { <Outlet/> }>
                             <Route path=path!("") view=HomePage/>
@@ -123,10 +99,7 @@ pub fn App() -> impl IntoView {
                                 <Route path=path!("/timesheet/edit/:uuid") view=TimeSheetEdit/>
                                 <Route path=path!("/timesheet/missing") view=TimeSheetMissing/>
                                 <Route path=path!("/users") view=Users/>
-                                <Route
-                                    path=path!("/check_in")
-                                    view=move || view! { <CheckInView check_in /> }
-                                />
+                                <Route path=path!("/check_in") view=CheckInView/>
                             </ParentRoute>
                             <ParentRoute path=path!("/admin") view=move || view! { <Outlet/> }>
                                 <ParentRoute path=path!("/timesheets") view=TimeSheets>
@@ -164,32 +137,6 @@ pub struct Status {
 }
 
 #[server]
-pub async fn get_curent_user() -> Result<Option<UserDisplay>, ServerFnError> {
-    use axum_session::SessionAnySession;
-    use leptos::prelude::server_fn::error::*;
-    use uuid::Uuid;
-
-    let Some(session) = use_context::<SessionAnySession>() else {
-        // leptos::tracing::error!("| * Error getting settion");
-        return Err(ServerFnError::ServerError(
-            "Error Finding Session 30".into(),
-        ));
-    };
-
-    let Some(id) = session.get::<Uuid>("id") else {
-        // leptos::tracing::info!("| * User not signed in");
-        return Ok(None);
-    };
-
-    let Ok(user) = UserDisplay::get(id).await else {
-        // leptos::tracing::error!("| * Could not find User for session");
-        return Err(ServerFnError::ServerError("Could Not Find User.".into()));
-    };
-
-    Ok(Some(user))
-}
-
-#[server]
 async fn get_session_status() -> Result<bool, ServerFnError> {
     use crate::models::sessions::get_open_sessions;
     use axum_session::SessionAnySession;
@@ -207,41 +154,6 @@ async fn get_session_status() -> Result<bool, ServerFnError> {
             "Error getting one".into(),
         )),
     }
-}
-
-#[server]
-async fn check_in(_latitude: f64, _longitude: f64, _accuracy: f64) -> Result<(), ServerFnError> {
-    use crate::models::sessions::{close_session, get_open_session, new_session};
-    use leptos::prelude::server_fn::error::*;
-    use uuid::Uuid;
-    // Get User
-    use axum_session::SessionAnySession;
-    let session = use_context::<SessionAnySession>()
-        .ok_or_else(|| ServerFnError::<NoCustomError>::ServerError("Session missing.".into()))?;
-    let id = session.get::<Uuid>("id").ok_or_else(|| {
-        ServerFnError::<NoCustomError>::ServerError("Error getting Session!".into())
-    })?;
-
-    // match is_close(latitude, longitude, accuracy).await {
-    //     Ok(_) => (),
-    //     Err(e) => return Err(e),
-    // };
-
-    // check for existing session
-    match get_open_session(&id).await {
-        Ok(sess) => {
-            // if no session create new session
-            let _ = close_session(&sess.id).await;
-        }
-        Err(_) => {
-            // else close exsiting session
-            let _ = new_session(&id).await;
-        }
-    };
-
-    leptos_axum::redirect("/app");
-
-    Ok(())
 }
 
 #[cfg(feature = "ssr")]

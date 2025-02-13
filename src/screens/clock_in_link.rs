@@ -1,3 +1,4 @@
+use crate::components::app_context::AppContext;
 use crate::components::loading_progress::Loading;
 use leptos::prelude::*;
 use leptos_router::components::Redirect;
@@ -10,11 +11,14 @@ struct ClockInLinkParams {
 }
 
 #[component]
-pub fn ClockInLink(clock_in_link: ServerAction<ClockInLinkInitiateSession>) -> impl IntoView {
+pub fn ClockInLink() -> impl IntoView {
     let params = use_params::<ClockInLinkParams>();
+    let app_context = use_context::<AppContext>().expect("should be provided");
     match params.get() {
         Ok(ClockInLinkParams { link: Some(link) }) => {
-            clock_in_link.dispatch(ClockInLinkInitiateSession { link });
+            app_context
+                .clock_in_link
+                .dispatch(ClockInLinkInitiateSession { link });
             view! {
                 <div>
                     <Loading/>

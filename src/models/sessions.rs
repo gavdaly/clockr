@@ -150,7 +150,10 @@ pub async fn get_open_sessions(user_id: &Uuid) -> Result<Vec<Session>, sqlx::Err
 }
 
 #[cfg(feature = "ssr")]
-pub async fn get_session(uuid: &Uuid) -> Result<Session, sqlx::Error> {
+pub async fn get_session(uuid: &str) -> Result<Session, sqlx::Error> {
+    let Ok(uuid) = Uuid::parse_str(uuid) else {
+        panic!("invalid uuid")
+    };
     let db = get_db();
 
     sqlx::query_as!(

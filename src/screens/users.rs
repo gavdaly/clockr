@@ -2,12 +2,10 @@ use super::timesheets::load_hourly_users;
 use crate::components::icon::Icon;
 use crate::components::user_form::UserForm;
 use leptos::prelude::*;
-use leptos::server_fn::redirect;
 use leptos_router::components::A;
 use leptos_router::hooks::use_params;
 use leptos_router::nested_router::Outlet;
-use leptos_router::params::{self, Params};
-use uuid::Uuid;
+use leptos_router::params::Params;
 
 /// Renders the home page of your application.
 #[component]

@@ -26,7 +26,10 @@ impl MagicLink {
         .await?;
         Ok(link.id)
     }
-    pub async fn get(id: Uuid) -> Result<Uuid, sqlx::Error> {
+    pub async fn get(id: &str) -> Result<Uuid, sqlx::Error> {
+        let Ok(id) = Uuid::parse_str(id) else {
+            panic!("invalid id")
+        };
         let db = get_db();
         let link = query_as!(
             MagicLink,

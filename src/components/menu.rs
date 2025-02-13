@@ -1,5 +1,5 @@
+use crate::components::app_context::AppContext;
 use crate::components::icon::Icon;
-use crate::screens::authenticate::Logout;
 use leptos::prelude::*;
 use leptos_router::components::A;
 
@@ -12,11 +12,8 @@ use leptos_router::components::A;
 /// * `show_menu` - A signal variable that indicates whether the menu should be shown or hidden.
 /// * `set_show_menu` - A signal variable that allows updating the value of `show_menu`.
 #[component]
-pub fn Menu(
-    log_out: ServerAction<Logout>,
-    show_menu: ReadSignal<bool>,
-    set_show_menu: WriteSignal<bool>,
-) -> impl IntoView {
+pub fn Menu(show_menu: ReadSignal<bool>, set_show_menu: WriteSignal<bool>) -> impl IntoView {
+    let app_context = use_context::<AppContext>().expect("should be provided");
     view! {
         <nav aria-label="Main Menu" id="nav" data-visible=move || show_menu.get().to_string()>
             <span>
@@ -65,7 +62,7 @@ pub fn Menu(
                 // </Show>
             </menu>
 
-            <ActionForm action=log_out>
+            <ActionForm action={app_context.log_out}>
                 <button type="submit">
                     <span>"Logout"</span>
                     <Icon name="logout".into()/>

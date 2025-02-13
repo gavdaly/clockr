@@ -1,4 +1,5 @@
-use crate::components::{icon::Icon, loading_progress::Loading};
+use crate::components::app_context::AppContext;
+use crate::components::icon::Icon;
 use leptos::prelude::*;
 use leptos_router::hooks::use_params;
 use leptos_router::params::Params;
@@ -9,13 +10,12 @@ struct PhoneParams {
 }
 
 #[component]
-pub fn Auth(authenticate: ServerAction<Authenticate>) -> impl IntoView {
+pub fn Auth() -> impl IntoView {
+    let app_context = use_context::<AppContext>().expect("should be provided");
     let (pin_input, set_pin_input) = signal(String::with_capacity(6));
 
     let phone_params = use_params::<PhoneParams>();
     let pattern = "[0-9]{6}";
-
-    let value = authenticate.value();
 
     Effect::new(move |_| {
         if pin_input.get().len() == 6 {
@@ -36,7 +36,7 @@ pub fn Auth(authenticate: ServerAction<Authenticate>) -> impl IntoView {
                 {move || match phone_params.get() {
                     Ok(query) => {
                         view! {
-                            <ActionForm action=authenticate>
+                            <ActionForm action={app_context.authenticate}>
                                 <input type="hidden" value=query.phone name="phone"/>
                                 <label id="pin">"Enter Pin From SMS"</label>
                                 <input
@@ -52,10 +52,6 @@ pub fn Auth(authenticate: ServerAction<Authenticate>) -> impl IntoView {
                                 </button>
 
                             </ActionForm>
-
-                            <Show when=move || value.with(Option::is_some)>
-                                <div>{value}</div>
-                            </Show>
                         }
                             .into_any()
                     }
@@ -64,9 +60,6 @@ pub fn Auth(authenticate: ServerAction<Authenticate>) -> impl IntoView {
                             <div>
                                 <input type="hidden" value="" name="phone"/>
                                 <input type="hidden" name="pin"/>
-                                <Show when=move || value.with(Option::is_some)>
-                                    <div>{value}</div>
-                                </Show>
                             </div>
                         }
                             .into_any()
