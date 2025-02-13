@@ -3466,7 +3466,6 @@ dependencies = [
  "axum 0.8.1",
  "axum_session",
  "axum_session_sqlx",
- "cfg-if",
  "chrono",
  "console_error_panic_hook",
  "console_log",
