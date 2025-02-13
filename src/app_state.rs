@@ -1,5 +1,5 @@
 use axum::extract::FromRef;
-use leptos::LeptosOptions;
+use leptos::config::LeptosOptions;
 use leptos_router::RouteListing;
 
 #[derive(Debug, Clone)]

@@ -1,6 +1,6 @@
 {
-    "name": "DC Time Clock",
-    "short_name": "DCTC",
+    "name": "Clkr Time Clock",
+    "short_name": "Clkr",
     "icons": [
         {
             "src": "/logo-192.png",
