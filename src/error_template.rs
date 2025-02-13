@@ -32,7 +32,7 @@ pub fn ErrorTemplate(
         },
     };
     // Get Errors from Signal
-    let errors = errors_signal.get_untracked();
+    // let errors = errors_signal.get_untracked();
 
     // Downcast lets us take a type that implements `std::error::Error`
     // let errors: Vec<AppError> = errors
@@ -44,10 +44,10 @@ pub fn ErrorTemplate(
     // Only the response code for the first error is actually sent from the server
     #[cfg(feature = "ssr")]
     {
-        use leptos_axum::ResponseOptions;
-        if let Some(response) = use_context::<ResponseOptions>() {
-            response.set_status(errors[0].status_code());
-        }
+        // use leptos_axum::ResponseOptions;
+        // if let Some(response) = use_context::<ResponseOptions>() {
+        //     response.set_status(errors[0].status_code());
+        // }
     }
 
     view! {
