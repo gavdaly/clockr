@@ -2,11 +2,12 @@ use super::timesheets::load_hourly_users;
 use crate::components::icon::Icon;
 use crate::components::user_form::UserForm;
 use leptos::prelude::*;
-use uuid::Uuid;
+use leptos::server_fn::redirect;
 use leptos_router::components::A;
-use leptos_router::nested_router::Outlet;
 use leptos_router::hooks::use_params;
-use leptos_router::params::Params;
+use leptos_router::nested_router::Outlet;
+use leptos_router::params::{self, Params};
+use uuid::Uuid;
 
 /// Renders the home page of your application.
 #[component]
@@ -111,17 +112,20 @@ pub fn UserCreate() -> impl IntoView {
 }
 
 #[derive(Clone, Params, PartialEq)]
-struct UserUpdateP {
-    uuid: Uuid,
+struct UserUpdateParams {
+    uuid: Option<String>,
 }
 
 #[component]
 pub fn UserUpdate() -> impl IntoView {
-    let params = use_params::<UserUpdateP>();
-    {
-        move || match params() {
-            Ok(UserUpdateP { uuid }) => view! { <UserForm uuid=Some(uuid)/> }.into_any(),
-            Err(e) => view! { <div data-state="error">{e.to_string()}</div> }.into_any(),
-        }
+    let params = use_params::<UserUpdateParams>();
+    let binding = params.read();
+    let Ok(uuid) = binding.as_ref() else {
+        return view! {<div>"Invalid ID"</div>}.into_any();
+    };
+
+    match &uuid.uuid {
+        Some(uuid) => view! { <UserForm uuid=Some(uuid.into())/> }.into_any(),
+        None => view! { <div data-state="error">{"Did not find the user!"}</div>}.into_any(),
     }
 }

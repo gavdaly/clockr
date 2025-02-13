@@ -29,7 +29,7 @@ async fn submit_user_form(
 }
 
 #[component]
-pub fn UserForm(uuid: Option<Uuid>) -> impl IntoView {
+pub fn UserForm(uuid: Option<String>) -> impl IntoView {
     view! {
         <form>
             {match uuid {

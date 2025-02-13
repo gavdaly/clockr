@@ -6,15 +6,15 @@ use leptos_router::params::Params;
 
 #[derive(Clone, Params, PartialEq)]
 struct ClockInLinkParams {
-    link: String,
+    link: Option<String>,
 }
 
 #[component]
 pub fn ClockInLink(clock_in_link: ServerAction<ClockInLinkInitiateSession>) -> impl IntoView {
     let params = use_params::<ClockInLinkParams>();
-    match params() {
-        Ok(ClockInLinkParams { link }) => {
-            clock_in_link.dispatch(ClockInLinkInitiateSession { link: link.clone() });
+    match params.get() {
+        Ok(ClockInLinkParams { link: Some(link) }) => {
+            clock_in_link.dispatch(ClockInLinkInitiateSession { link });
             view! {
                 <div>
                     <Loading/>
@@ -24,6 +24,7 @@ pub fn ClockInLink(clock_in_link: ServerAction<ClockInLinkInitiateSession>) -> i
             .into_any()
         }
         Err(e) => view! { <div>"Something went wrong: " {e.to_string()}</div> }.into_any(),
+        _ => view! {<div>"Could not find Link"</div>}.into_any(),
     }
 }
 

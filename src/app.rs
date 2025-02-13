@@ -20,17 +20,15 @@ use serde::{Deserialize, Serialize};
 
 pub static VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
 
-// <Stylesheet id="leptos" href="/pkg/staff.css"/>
-
-// <Meta name="theme-color" content />
-
 // <Link rel="icon" type_="image/png" sizes="48x48" href="/logo-48.png"/>
 // <Link rel="icon" type_="image/svg+xml" sizes="any" href="/logo.svg"/>
 // <Link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
 // <link rel="manifest" href="/site.webmanifest" />
 
-// <Title text="Dental Care"/>
-//
+use leptos::prelude::*;
+use leptos_meta::{provide_meta_context, MetaTags, Stylesheet, Title};
+use leptos_router::StaticSegment;
+
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
         <!DOCTYPE html>
@@ -39,7 +37,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
                 <AutoReload options=options.clone() />
-                <HydrationScripts options/>
+                <HydrationScripts options islands=true/>
                 <MetaTags/>
             </head>
             <body>
@@ -53,6 +51,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
 pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
+
     let log_out = ServerAction::<Logout>::new();
     let check_in = ServerAction::<CheckIn>::new();
     let authenticate = ServerAction::<Authenticate>::new();
@@ -79,9 +78,13 @@ pub fn App() -> impl IntoView {
 
     let (show_menu, set_show_menu) = signal(false);
 
-    let _content = r#"oklch(36.94% 0.1685 354.12)"#;
+    let content = r#"oklch(36.94% 0.1685 354.12)"#;
 
     view! {
+        <Stylesheet id="leptos" href="/pkg/clkr.css"/>
+
+        <Title text="Welcome to Leptos"/>
+        <Meta name="theme-color" content />
 
         <Router>
                 <header id="header">
@@ -91,7 +94,7 @@ pub fn App() -> impl IntoView {
                     </h1>
                 </header>
 
-                <Show when=move || user().is_some()>
+                <Show when={move || user.get().is_some()}>
                     <Menu /* user   status */ log_out show_menu set_show_menu/>
                 </Show>
                 <main id="main">
@@ -102,7 +105,7 @@ pub fn App() -> impl IntoView {
                             path=path!("")
                             view=move || {
                                 view! {
-                                    <Show when=move || user().is_some() fallback=PhoneNumber>
+                                    <Show when=move || user.get().is_some() fallback=PhoneNumber>
                                         <Outlet/>
                                     </Show>
                                 }
@@ -141,6 +144,15 @@ pub fn App() -> impl IntoView {
                     </Routes>
                 </main>
         </Router>
+    }
+}
+
+#[island]
+fn Counter() -> impl IntoView {
+    let count = RwSignal::new(0);
+    let on_click = move |_| *count.write() += 1;
+    view! {
+        <button on:click=on_click>"Click Me: " {count}</button>
     }
 }
 
@@ -319,15 +331,11 @@ pub fn PhoneNumber() -> impl IntoView {
             />
             <button type="submit">"Get Pin"</button>
         </ActionForm>
-        <Show when=submit.pending()>
-            <div>
-                <Loading/>
-            </div>
-        </Show>
+
         <Show when=move || {
-            value().is_some()
+            value.get().is_some()
         }>
-            {match value() {
+            {match value.get() {
                 Some(Err(e)) => view! { <div data-state="error">"Error: " {e.to_string()}</div> }.into_any(),
                 _ => view! { <div data-state="error">"something is messed up"</div> }.into_any(),
             }}

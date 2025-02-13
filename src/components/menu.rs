@@ -18,9 +18,9 @@ pub fn Menu(
     set_show_menu: WriteSignal<bool>,
 ) -> impl IntoView {
     view! {
-        <nav aria-label="Main Menu" id="nav" data-visible=move || show_menu().to_string()>
+        <nav aria-label="Main Menu" id="nav" data-visible=move || show_menu.get().to_string()>
             <span>
-                <button class="close nav-button" on:click=move |_| set_show_menu(false)>
+                <button class="close nav-button" on:click=move |_| set_show_menu.set(false)>
                     <Icon name="close".into()/>
                 </button>
             </span>

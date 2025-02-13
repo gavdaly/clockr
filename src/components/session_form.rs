@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use leptos::form::ActionForm;
+use leptos::prelude::*;
 use uuid::Uuid;
 
 #[cfg(feature = "ssr")]
@@ -29,18 +29,17 @@ use chrono::{DateTime, Local, NaiveDateTime, TimeZone};
 ///
 /// The generated form as an `IntoView`.
 #[component]
-pub fn CorrectionForm(uuid: Option<Uuid> /* , date: ReadSignal<Option<String>> */) -> impl IntoView
-{
+pub fn CorrectionForm(
+    uuid: Option<String>, /* , date: ReadSignal<Option<String>> */
+) -> impl IntoView {
     let action = ServerAction::<SubmitCorrectionForm>::new();
     let value = action.value();
     view! {
         <ActionForm action>
-            {move || match uuid {
-                Some(i) => {
-                    view! { <input type="hidden" name="id" value=i.to_string()/> }.into_any()
-                }
-                None => view! { <span></span> }.into_any(),
-            }}
+            <Show when=move || uuid.is_some()>
+                <input type="hidden" name="id" value/>
+            </Show>
+
 
             // {move || match date() {
             //     Some(date) => view! { <input type="hidden" name="date" value=date/> }.into_any(),
@@ -69,7 +68,7 @@ pub fn CorrectionForm(uuid: Option<Uuid> /* , date: ReadSignal<Option<String>> *
             </div>
             <button type="submit">"Ok"</button>
         </ActionForm>
-        {move || match value() {
+        {move || match value.get() {
             Some(Ok(_)) => view! { <div>"success"</div> }.into_any(),
             Some(Err(e)) => {
                 view! { <div data-state="error">"Error making correction: " {e.to_string()}</div> }

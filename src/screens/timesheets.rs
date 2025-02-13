@@ -64,16 +64,10 @@ pub fn TimeSheetsList() -> impl IntoView {
     let users = Resource::new(move || {}, move |_| load_hourly_users());
     // let timesheet = Resource::new(current_user, load_timesheet_for);
 
-    Effect::new(move |_| leptos::logging::log!("{:?}", current_user()));
+    Effect::new(move |_| leptos::logging::log!("{:?}", current_user.get()));
 
     view! {
-        <Suspense fallback=move || {
-            view! {
-                <p>
-                    <Loading/>
-                </p>
-            }
-        }>
+        <Suspense fallback=move || { view! { <Loading/> } }>
             {move || match users.get() {
                 Some(Ok(a)) => {
                     view! {
@@ -82,9 +76,9 @@ pub fn TimeSheetsList() -> impl IntoView {
                             <select
                                 name="user_selected"
                                 id="user_selected"
-                                on:change=move |e| set_current_user(event_target_value(&e))
+                                on:change=move |e| set_current_user.set(event_target_value(&e))
                             >
-                                <Show when=move || current_user().is_empty()>
+                                <Show when=move || current_user.get().is_empty()>
                                     <option value="">"-- Select User --"</option>
                                 </Show>
                                 {a
@@ -106,7 +100,7 @@ pub fn TimeSheetsList() -> impl IntoView {
                 _ => view! { <div>"Server Error"</div> }.into_any(),
             }}
             <Show when=move || {
-                !current_user().is_empty()
+                !current_user.get().is_empty()
             }>
               <p>"Show TimeSheet"</p>
 
@@ -123,11 +117,7 @@ pub fn TimeSheetsAdjustment() -> impl IntoView {
     view! {
         <ActionForm action=create_adjustment>
             <Suspense fallback=move || {
-                view! {
-                    <p>
-                        <Loading/>
-                    </p>
-                }
+                view! { <Loading/> }
             }>
                 {move || match users.get() {
                     Some(Ok(a)) => {

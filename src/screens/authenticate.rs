@@ -5,7 +5,7 @@ use leptos_router::params::Params;
 
 #[derive(Clone, Params, PartialEq)]
 struct PhoneParams {
-    phone: String,
+    phone: Option<String>,
 }
 
 #[component]
@@ -18,7 +18,7 @@ pub fn Auth(authenticate: ServerAction<Authenticate>) -> impl IntoView {
     let value = authenticate.value();
 
     Effect::new(move |_| {
-        if pin_input().len() == 6 {
+        if pin_input.get().len() == 6 {
             leptos::logging::log!("Reached Max Length")
         }
     });
@@ -27,13 +27,13 @@ pub fn Auth(authenticate: ServerAction<Authenticate>) -> impl IntoView {
         <section class="center-center">
 
             <Show
-                when=move || phone_params().is_ok()
+                when=move || phone_params.get().is_ok()
                 fallback=move || {
                     view! { <div>"Should not see"</div> }
                 }
             >
 
-                {move || match phone_params() {
+                {move || match phone_params.get() {
                     Ok(query) => {
                         view! {
                             <ActionForm action=authenticate>
@@ -44,7 +44,7 @@ pub fn Auth(authenticate: ServerAction<Authenticate>) -> impl IntoView {
                                     name="pin"
                                     pattern=pattern
                                     inputmode="numeric"
-                                    on:input=move |v| set_pin_input(event_target_value(&v))
+                                    on:input=move |v| set_pin_input.set(event_target_value(&v))
                                 />
                                 <button type="submit">
                                     <Icon name="login".into()/>
@@ -52,11 +52,7 @@ pub fn Auth(authenticate: ServerAction<Authenticate>) -> impl IntoView {
                                 </button>
 
                             </ActionForm>
-                            <Show when=authenticate.pending()>
-                                <div>
-                                    <Loading/>
-                                </div>
-                            </Show>
+
                             <Show when=move || value.with(Option::is_some)>
                                 <div>{value}</div>
                             </Show>

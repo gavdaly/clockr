@@ -38,7 +38,7 @@ pub fn TimeSheetMissing() -> impl IntoView {
 
 #[derive(Params, Clone, PartialEq)]
 struct TimeSheetEditParams {
-    uuid: Uuid,
+    uuid: Option<String>,
 }
 
 #[component]
@@ -46,23 +46,25 @@ pub fn TimeSheetEdit() -> impl IntoView {
     let params = use_params::<TimeSheetEditParams>();
     let session = ServerAction::<GetSession>::new();
     let value = session.value();
-    let _date = move || match value() {
+    let _date = move || match value.get() {
         Some(Ok(Session { start_time, .. })) => Some(start_time.format("%y-%m-%d").to_string()),
         _ => None,
     };
-    match params() {
-        Ok(TimeSheetEditParams { uuid }) => {
-            session.dispatch(GetSession { uuid });
+    match params.get() {
+        Ok(TimeSheetEditParams { uuid: Some(uuid) }) => {
+            session.dispatch(GetSession { uuid: uuid.clone() });
 
             view! { <CorrectionForm uuid=Some(uuid) /> }.into_any()
         }
         Err(e) => view! { <div data-state="error">"Error getting session: " {e.to_string()}</div> }
             .into_any(),
+        _ => view! {<div data-state="error">"Coult Not find the user you are looking for!"</div>}
+            .into_any(),
     }
 }
 
 #[server]
-async fn get_session(uuid: Uuid) -> Result<Session, ServerFnError> {
+async fn get_session(uuid: String) -> Result<Session, ServerFnError> {
     crate::models::sessions::get_session(&uuid)
         .await
         .map_err(|_| ServerFnError::Request("Error Getting Session".into()))
