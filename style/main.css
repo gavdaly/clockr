@@ -44,6 +44,11 @@ html {
     border-radius: var(--radius-round);
 }
 
+dialog {
+    width: fit-content;
+    height: fit-content;
+}
+
 #menu {
     background: var(--surface-2);
     border-radius: var(--radius-2);
@@ -53,7 +58,6 @@ menu {
     display: flex;
     flex-direction: column;
 }
-
 
 .version {
     font-size: var(--font-size-2);
@@ -109,24 +113,6 @@ menu {
 #menu > * {
     padding: var(--size-3);
 }
-
-#nav {
-    background: var(--surface-2);
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-4050%, -50%);
-    padding: var(--size-5);
-    border-radius: var(--radius--2);
-    box-shadow: var(--shadow-5);
-    z-index: 100;
-}
-
-
-#nav[data-visible="true"] {
-    transform: translate(-50%, -50%);    
-  }
-
 
 .sr-only {
     position: absolute;

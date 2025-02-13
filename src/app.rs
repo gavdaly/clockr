@@ -52,8 +52,6 @@ pub fn App() -> impl IntoView {
 
     let app_context = use_context::<AppContext>().expect("should be provided");
 
-    let (show_menu, set_show_menu) = signal(false);
-
     let content = r#"oklch(36.94% 0.1685 354.12)"#;
 
     view! {
@@ -63,59 +61,58 @@ pub fn App() -> impl IntoView {
 
         <Stylesheet id="leptos" href="/pkg/clkr.css"/>
         <Router>
-                <header id="header">
-                    <h1>
-                        <span>"Click "</span>
-                        <span class="version">{VERSION.clone()}</span>
-                    </h1>
-                </header>
+            <header id="header">
+                <h1>
+                    <span>"Click "</span>
+                    <span class="version">{VERSION.clone()}</span>
+                </h1>
+            </header>
 
-                <Show when={move || app_context.user.get().is_some()}>
-                    <Menu show_menu set_show_menu/>
-                </Show>
-                <main id="main">
-                    <Routes fallback=Loading>
-                        <Route path=path!("/p/:phone") view=Auth />
-                        <Route path=path!("/l/:link") view=MagicLink/>
-                        <ParentRoute
-                            path=path!("")
-                            view=move || {
-                                view! {
-                                    <Show when=move || app_context.user.get().is_some() fallback=PhoneNumber>
-                                        <Outlet/>
-                                    </Show>
-                                }
+            <Menu />
+
+            <main id="main">
+                <Routes fallback=Loading>
+                    <Route path=path!("/p/:phone") view=Auth />
+                    <Route path=path!("/l/:link") view=MagicLink/>
+                    <ParentRoute
+                        path=path!("")
+                        view=move || {
+                            view! {
+                                <Show when=move || app_context.user.get().is_some() fallback=PhoneNumber>
+                                    <Outlet/>
+                                </Show>
                             }
-                        >
+                        }
+                    >
 
-                            <Route path=path!("") view=HomePage/>
-                            <Route
-                                path=path!("/c/:link")
-                                view=ClockInLink
-                            />
-                            <ParentRoute path=path!("/app") view= || view! { <Outlet/> }>
-                            <Route path=path!("") view=HomePage/>
-                                <Route path=path!("/timesheet") view=TimeSheetDisplay/>
-                                <Route path=path!("/timesheet/edit/:uuid") view=TimeSheetEdit/>
-                                <Route path=path!("/timesheet/missing") view=TimeSheetMissing/>
-                                <Route path=path!("/users") view=Users/>
-                                <Route path=path!("/check_in") view=CheckInView/>
+                        <Route path=path!("") view=HomePage/>
+                        <Route
+                            path=path!("/c/:link")
+                            view=ClockInLink
+                        />
+                        <ParentRoute path=path!("/app") view= || view! { <Outlet/> }>
+                        <Route path=path!("") view=HomePage/>
+                            <Route path=path!("/timesheet") view=TimeSheetDisplay/>
+                            <Route path=path!("/timesheet/edit/:uuid") view=TimeSheetEdit/>
+                            <Route path=path!("/timesheet/missing") view=TimeSheetMissing/>
+                            <Route path=path!("/users") view=Users/>
+                            <Route path=path!("/check_in") view=CheckInView/>
+                        </ParentRoute>
+                        <ParentRoute path=path!("/admin") view=move || view! { <Outlet/> }>
+                            <ParentRoute path=path!("/timesheets") view=TimeSheets>
+                                <Route path=path!("") view=TimeSheetsList/>
+                                <Route path=path!("/adjustment") view=TimeSheetsAdjustment/>
+                                <Route path=path!("/pending") view=TimeSheetsPending/>
                             </ParentRoute>
-                            <ParentRoute path=path!("/admin") view=move || view! { <Outlet/> }>
-                                <ParentRoute path=path!("/timesheets") view=TimeSheets>
-                                    <Route path=path!("") view=TimeSheetsList/>
-                                    <Route path=path!("/adjustment") view=TimeSheetsAdjustment/>
-                                    <Route path=path!("/pending") view=TimeSheetsPending/>
-                                </ParentRoute>
-                                <ParentRoute path=path!("/users") view=AdminUsers>
-                                    <Route path=path!("") view=UsersList/>
-                                    <Route path=path!("/create") view=UserCreate/>
-                                    <Route path=path!("/edit/:id") view=UserUpdate/>
-                                </ParentRoute>
+                            <ParentRoute path=path!("/users") view=AdminUsers>
+                                <Route path=path!("") view=UsersList/>
+                                <Route path=path!("/create") view=UserCreate/>
+                                <Route path=path!("/edit/:id") view=UserUpdate/>
                             </ParentRoute>
                         </ParentRoute>
-                    </Routes>
-                </main>
+                    </ParentRoute>
+                </Routes>
+            </main>
         </Router>
     }
 }
