@@ -4,6 +4,8 @@
 
 body {
     display: grid;
+    gap: var(--size-2);
+    margin-inline: var(--size-1);
     grid-template-columns: auto 1fr;
     grid-template-rows: auto 1fr;
     grid-template-areas:
@@ -18,6 +20,7 @@ html {
 
 #main {
     height: 100%;
+    padding: var(--size-4);
     grid-area: main;
     background-color: var(--surface-1);
     border-radius: var(--radius-3);
@@ -47,11 +50,30 @@ html {
 dialog {
     width: fit-content;
     height: fit-content;
+    padding: var(--size-4);
+    nav {
+        menu {
+            padding-block-end: var(--size-2);
+        }
+    }
+    .close-button {
+        margin-block-end: var(--size-5);
+    }
+}
+
+dialog::backdrop {
+    background: var(--gradient-8);
 }
 
 #menu {
     background: var(--surface-2);
     border-radius: var(--radius-2);
+}
+
+#nav {
+    position: fixed;
+    top: var(--size-3);
+    right: var(--size-3);
 }
 
 menu {

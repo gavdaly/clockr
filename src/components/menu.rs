@@ -26,9 +26,10 @@ pub fn Menu() -> impl IntoView {
     };
     view! {
         <dialog node_ref=dialog_ref>
-            <nav aria-label="Main Menu" id="nav">
-                <button on:click=close_dialog>
+            <nav aria-label="Main Menu">
+                <button class="close-button" on:click=close_dialog>
                     <Icon name="close".into()/>
+                    <span class="sr-only">"Close Navigation Menu"</span>
                 </button>
                 <menu>
                     <li>
@@ -62,7 +63,7 @@ pub fn Menu() -> impl IntoView {
                 </menu>
 
                 <ActionForm action={log_out}>
-                    <button type="submit">
+                    <button class="logout-button" type="submit">
                         <span>"Logout"</span>
                         <Icon name="logout".into()/>
                     </button>
