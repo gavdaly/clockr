@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::prelude::*;
 
 pub struct PinPadOptions {
     pub length: u8,

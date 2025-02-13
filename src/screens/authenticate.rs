@@ -1,7 +1,7 @@
 use crate::components::{icon::Icon, loading_progress::Loading};
-use leptos::server_fn::error::NoCustomError;
-use leptos::*;
-use leptos_router::*;
+use leptos::prelude::*;
+use leptos_router::hooks::use_params;
+use leptos_router::params::Params;
 
 #[derive(Clone, Params, PartialEq)]
 struct PhoneParams {
@@ -9,15 +9,15 @@ struct PhoneParams {
 }
 
 #[component]
-pub fn Auth(authenticate: Action<Authenticate, Result<(), ServerFnError>>) -> impl IntoView {
-    let (pin_input, set_pin_input) = create_signal(String::with_capacity(6));
+pub fn Auth(authenticate: ServerAction<Authenticate>) -> impl IntoView {
+    let (pin_input, set_pin_input) = signal(String::with_capacity(6));
 
     let phone_params = use_params::<PhoneParams>();
     let pattern = "[0-9]{6}";
 
     let value = authenticate.value();
 
-    create_effect(move |_| {
+    Effect::new(move |_| {
         if pin_input().len() == 6 {
             leptos::logging::log!("Reached Max Length")
         }
@@ -36,14 +36,14 @@ pub fn Auth(authenticate: Action<Authenticate, Result<(), ServerFnError>>) -> im
                 {move || match phone_params() {
                     Ok(query) => {
                         view! {
-                            <ActionForm action=authenticate class="center-center solo-action">
+                            <ActionForm action=authenticate>
                                 <input type="hidden" value=query.phone name="phone"/>
                                 <label id="pin">"Enter Pin From SMS"</label>
                                 <input
                                     type="number"
                                     name="pin"
                                     pattern=pattern
-                                    inputMode="numeric"
+                                    inputmode="numeric"
                                     on:input=move |v| set_pin_input(event_target_value(&v))
                                 />
                                 <button type="submit">
@@ -61,7 +61,7 @@ pub fn Auth(authenticate: Action<Authenticate, Result<(), ServerFnError>>) -> im
                                 <div>{value}</div>
                             </Show>
                         }
-                            .into_view()
+                            .into_any()
                     }
                     Err(_e) => {
                         view! {
@@ -73,7 +73,7 @@ pub fn Auth(authenticate: Action<Authenticate, Result<(), ServerFnError>>) -> im
                                 </Show>
                             </div>
                         }
-                            .into_view()
+                            .into_any()
                     }
                 }}
 
@@ -84,6 +84,7 @@ pub fn Auth(authenticate: Action<Authenticate, Result<(), ServerFnError>>) -> im
 
 #[server]
 async fn authenticate(pin: i32, phone: String) -> Result<(), ServerFnError> {
+    use crate::app::server_fn::error::NoCustomError;
     use crate::models::pins::Pin;
     use crate::models::user::get_user_by_phone;
     use axum_session::SessionAnySession;
@@ -116,6 +117,7 @@ async fn authenticate(pin: i32, phone: String) -> Result<(), ServerFnError> {
 
 #[server]
 pub async fn logout() -> Result<(), ServerFnError> {
+    use crate::app::server_fn::error::NoCustomError;
     use axum_session::SessionAnySession;
     let session = use_context::<SessionAnySession>()
         .ok_or_else(|| ServerFnError::<NoCustomError>::ServerError("Session missing.".into()))?;

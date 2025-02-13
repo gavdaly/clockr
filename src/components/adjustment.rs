@@ -1,5 +1,5 @@
 use crate::models::adjustments::Adjustment as AdjustmentState;
-use leptos::*;
+use leptos::prelude::*;
 
 /// This function generates a view component that displays information about an adjustment.
 ///

@@ -1,7 +1,7 @@
-use leptos::*;
-use leptos_router::ActionForm;
-use leptos_meta::*;
 use crate::components::loading_progress::Loading;
+use leptos::prelude::*;
+use leptos_meta::*;
+use leptos_router::ActionForm;
 
 #[component]
 pub fn PhoneNumber() -> impl IntoView {
@@ -43,22 +43,22 @@ pub fn PhoneNumber() -> impl IntoView {
 
 #[server]
 pub(crate) async fn submit_phone_number(phone: String) -> Result<(), ServerFnError> {
+    use crate::models::pins::Pin;
     use crate::models::user::get_user_by_phone;
     use crate::service::sms::send_message;
-    use crate::models::pins::Pin;
 
     let phone = crate::utils::filter_phone_number(&phone);
 
-    leptos::tracing::info!("**| phone: {:?}", phone);
+    // leptos::tracing::info!("**| phone: {:?}", phone);
 
     let Ok(user) = get_user_by_phone(&phone).await else {
-        leptos::tracing::warn!("Could not find phone number: {:?}", phone);    
+        leptos::tracing::warn!("Could not find phone number: {:?}", phone);
         return Err(ServerFnError::Deserialization(
             "Could not Find Phone Number!".into(),
         ));
     };
 
-    leptos::tracing::info!("**| user: {:?}", user);
+    // leptos::tracing::info!("**| user: {:?}", user);
 
     let Ok(pin) = Pin::create_pin_for(user.id).await else {
         leptos::tracing::error!("Could not create pin: {}", user.id.to_string());

@@ -1,7 +1,8 @@
 use crate::components::loading_progress::Loading;
-use leptos::server_fn::error::NoCustomError;
-use leptos::*;
-use leptos_router::*;
+use leptos::prelude::*;
+use leptos_router::components::Redirect;
+use leptos_router::hooks::use_params;
+use leptos_router::params::Params;
 
 #[derive(Clone, Params, PartialEq)]
 struct ClockInLinkParams {
@@ -9,9 +10,7 @@ struct ClockInLinkParams {
 }
 
 #[component]
-pub fn ClockInLink(
-    clock_in_link: Action<ClockInLinkInitiateSession, Result<(), ServerFnError>>,
-) -> impl IntoView {
+pub fn ClockInLink(clock_in_link: ServerAction<ClockInLinkInitiateSession>) -> impl IntoView {
     let params = use_params::<ClockInLinkParams>();
     match params() {
         Ok(ClockInLinkParams { link }) => {
@@ -22,13 +21,15 @@ pub fn ClockInLink(
                     <Redirect path="/app"/>
                 </div>
             }
+            .into_any()
         }
-        Err(e) => view! { <div>"Something went wrong: " {e.to_string()}</div> },
+        Err(e) => view! { <div>"Something went wrong: " {e.to_string()}</div> }.into_any(),
     }
 }
 
 #[server]
 pub async fn clock_in_link_initiate_session(link: String) -> Result<(), ServerFnError> {
+    use crate::app::server_fn::error::NoCustomError;
     use crate::models::sessions::{close_session, get_open_session, new_session};
     use uuid::Uuid;
     // Get User

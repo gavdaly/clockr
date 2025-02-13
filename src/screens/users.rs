@@ -1,14 +1,17 @@
 use super::timesheets::load_hourly_users;
 use crate::components::icon::Icon;
 use crate::components::user_form::UserForm;
-use leptos::*;
-use leptos_router::*;
+use leptos::prelude::*;
 use uuid::Uuid;
+use leptos_router::components::A;
+use leptos_router::nested_router::Outlet;
+use leptos_router::hooks::use_params;
+use leptos_router::params::Params;
 
 /// Renders the home page of your application.
 #[component]
 pub fn Users() -> impl IntoView {
-    let users = create_resource(move || {}, move |_| load_hourly_users());
+    let users = Resource::new(move || {}, move |_| load_hourly_users()).read();
     view! {
         <section class="stack users_list">
             <table>
@@ -18,7 +21,7 @@ pub fn Users() -> impl IntoView {
                         <th>Phone Number</th>
                     </tr>
                 </thead>
-                {move || match users() {
+                {move || match users.clone() {
                     Some(Ok(users)) => {
                         users
                             .into_iter()
@@ -30,10 +33,10 @@ pub fn Users() -> impl IntoView {
                                     </tr>
                                 }
                             })
-                            .collect_view()
+                            .collect_view().into_any()
                     }
-                    Some(Err(e)) => view! { <div>"Error: " {e.to_string()}</div> }.into_view(),
-                    None => view! {}.into_view(),
+                    Some(Err(e)) => view! { <div>"Error: " {e.to_string()}</div> }.into_any(),
+                    None => view! {}.into_any(),
                 }}
 
             </table>
@@ -60,10 +63,10 @@ pub fn AdminUsers() -> impl IntoView {
 
 #[component]
 pub fn UsersList() -> impl IntoView {
-    let users = create_resource(move || {}, move |_| load_hourly_users());
+    let users = Resource::new(move || {}, move |_| load_hourly_users()).read();
     view! {
         <section class="stack">
-            {move || match users() {
+            {move || match users.clone() {
                 Some(Ok(users)) => {
                     view! {
                         <table>
@@ -92,10 +95,10 @@ pub fn UsersList() -> impl IntoView {
                                 .collect_view()}
                         </table>
                     }
-                        .into_view()
+                        .into_any()
                 }
-                Some(Err(e)) => view! { <div>"Error: " {e.to_string()}</div> }.into_view(),
-                None => view! {}.into_view(),
+                Some(Err(e)) => view! { <div>"Error: " {e.to_string()}</div> }.into_any(),
+                None => view! {}.into_any(),
             }}
 
         </section>
@@ -117,8 +120,8 @@ pub fn UserUpdate() -> impl IntoView {
     let params = use_params::<UserUpdateP>();
     {
         move || match params() {
-            Ok(UserUpdateP { uuid }) => view! { <UserForm uuid=Some(uuid)/> }.into_view(),
-            Err(e) => view! { <div data-state="error">{e.to_string()}</div> }.into_view(),
+            Ok(UserUpdateP { uuid }) => view! { <UserForm uuid=Some(uuid)/> }.into_any(),
+            Err(e) => view! { <div data-state="error">{e.to_string()}</div> }.into_any(),
         }
     }
 }

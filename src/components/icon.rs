@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::prelude::*;
 
 /// Creates an SVG icon element with the specified class and href attributes.
 ///

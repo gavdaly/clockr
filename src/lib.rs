@@ -1,4 +1,5 @@
 use cfg_if::cfg_if;
+
 pub mod app;
 pub mod components;
 pub mod database;
@@ -11,8 +12,9 @@ pub mod user;
 pub mod utils;
 
 cfg_if! { if #[cfg(feature = "hydrate")] {
-    use leptos::*;
+    use leptos::prelude::*;
     use wasm_bindgen::prelude::wasm_bindgen;
+    use leptos::mount::mount_to_body;
     use crate::app::*;
 
     #[wasm_bindgen]
@@ -21,6 +23,6 @@ cfg_if! { if #[cfg(feature = "hydrate")] {
         _ = console_log::init_with_level(log::Level::Debug);
         console_error_panic_hook::set_once();
 
-        leptos::mount_to_body(App);
+        mount_to_body(App);
     }
 }}

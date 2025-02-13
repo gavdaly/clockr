@@ -8,7 +8,7 @@ use {
         http::{Request, Response, StatusCode, Uri},
         response::IntoResponse,
     },
-    leptos::*,
+    leptos::prelude::*,
     tower::ServiceExt,
     tower_http::services::ServeDir,
 };

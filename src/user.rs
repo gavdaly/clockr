@@ -1,5 +1,4 @@
-use leptos::server_fn::error::NoCustomError;
-use leptos::*;
+use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::models::user::UserDisplay;
@@ -17,17 +16,17 @@ pub struct User {
 
 impl User {
     pub fn new() -> Self {
-        let log_out = create_server_action::<Logout>();
-        let _check_in = create_server_action::<CheckIn>();
-        let authenticate = create_server_action::<Authenticate>();
-        let _clock_in_link = create_server_action::<ClockInLinkInitiateSession>();
+        let log_out = ServerAction::<Logout>::new();
+        let _check_in = ServerAction::<CheckIn>::new();
+        let authenticate = ServerAction::<Authenticate>::new();
+        let _clock_in_link = ServerAction::<ClockInLinkInitiateSession>::new();
 
-        let user_fetch = create_resource(
+        let user_fetch = Resource::new(
             move || (log_out.version().get(), authenticate.version().get()),
             |_| get_curent_user(),
         );
 
-        let data = match user_fetch() {
+        let data = match user_fetch.read().clone() {
             Some(Ok(user)) => user,
             _ => None,
         };
@@ -35,7 +34,7 @@ impl User {
         Self { data }
     }
     pub fn log_out(&self) -> Result<(), ServerFnError> {
-        let log_out = create_server_action::<Logout>();
+        let log_out = ServerAction::<Logout>::new();
         log_out.dispatch(Logout {});
         Ok(())
     }
@@ -47,17 +46,17 @@ pub async fn get_curent_user() -> Result<Option<UserDisplay>, ServerFnError> {
     use uuid::Uuid;
 
     let Some(session) = use_context::<SessionAnySession>() else {
-        leptos::tracing::error!("| * Error getting settion");
+        // leptos::tracing::error!("| * Error getting settion");
         return Err(ServerFnError::ServerError("Error Finding Session".into()));
     };
 
     let Some(id) = session.get::<Uuid>("id") else {
-        leptos::tracing::info!("| * User not signed in");
+        // leptos::tracing::info!("| * User not signed in");
         return Ok(None);
     };
 
     let Ok(user) = UserDisplay::get(id).await else {
-        leptos::tracing::error!("| * Could not find User for session");
+        // leptos::tracing::error!("| * Could not find User for session");
         return Err(ServerFnError::ServerError("Could Not Find User.".into()));
     };
 
@@ -66,6 +65,7 @@ pub async fn get_curent_user() -> Result<Option<UserDisplay>, ServerFnError> {
 
 #[server]
 async fn authenticate(pin: i32, phone: String) -> Result<(), ServerFnError> {
+    use crate::app::server_fn::error::NoCustomError;
     use crate::models::pins::Pin;
     use crate::models::user::get_user_by_phone;
     use axum_session::SessionAnySession;
@@ -94,6 +94,7 @@ async fn authenticate(pin: i32, phone: String) -> Result<(), ServerFnError> {
 
 #[server]
 pub async fn logout() -> Result<(), ServerFnError> {
+    use crate::app::server_fn::error::NoCustomError;
     use axum_session::SessionAnySession;
     let session = use_context::<SessionAnySession>()
         .ok_or_else(|| ServerFnError::<NoCustomError>::ServerError("Session missing.".into()))?;
@@ -105,6 +106,7 @@ pub async fn logout() -> Result<(), ServerFnError> {
 
 #[server]
 async fn check_in(latitude: f64, longitude: f64, accuracy: f64) -> Result<(), ServerFnError> {
+    use crate::app::server_fn::error::NoCustomError;
     use crate::models::sessions::{close_session, get_open_session, new_session};
     use uuid::Uuid;
     // Get User
@@ -156,9 +158,9 @@ async fn is_close(latitude: f64, longitude: f64, accuracy: f64) -> Result<(), Se
         .parse::<f64>()
         .expect("`ACCURACY` to be a floating point number");
 
-    let _ = insert(latitude, longitude, accuracy)
-        .await
-        .map_err(|e| leptos::tracing::error!("Insert Tracing Error: {:?}", e));
+    let _ = insert(latitude, longitude, accuracy).await.map_err(|_e|
+            // leptos::tracing::error!("Insert Tracing Error: {:?}", e)
+                ());
     if caluclate_distance(latitude, longitude, base_latitude, base_longitude) > base_accuracy {
         return Err(ServerFnError::Request("You are too far away.".into()));
     };
@@ -172,6 +174,7 @@ async fn is_close(latitude: f64, longitude: f64, accuracy: f64) -> Result<(), Se
 
 #[server]
 pub async fn clock_in_link_initiate_session(link: String) -> Result<(), ServerFnError> {
+    use crate::app::server_fn::error::NoCustomError;
     use crate::models::sessions::{close_session, get_open_session, new_session};
     use uuid::Uuid;
     // Get User

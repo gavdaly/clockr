@@ -1,8 +1,7 @@
 use crate::components::icon::Icon;
-use crate::models::user::UserDisplay;
 use crate::screens::authenticate::Logout;
-use leptos::*;
-use leptos_router::*;
+use leptos::prelude::*;
+use leptos_router::components::A;
 
 /// Generates a menu component for a web application.
 ///
@@ -13,17 +12,11 @@ use leptos_router::*;
 /// * `show_menu` - A signal variable that indicates whether the menu should be shown or hidden.
 /// * `set_show_menu` - A signal variable that allows updating the value of `show_menu`.
 #[component]
-pub fn Menu<F, U>(
-    status: F,
-    user: U,
-    log_out: Action<Logout, Result<(), ServerFnError>>,
+pub fn Menu(
+    log_out: ServerAction<Logout>,
     show_menu: ReadSignal<bool>,
     set_show_menu: WriteSignal<bool>,
-) -> impl IntoView
-where
-    F: Fn() -> bool + 'static,
-    U: Fn() -> UserDisplay + 'static,
-{
+) -> impl IntoView {
     view! {
         <nav aria-label="Main Menu" id="nav" data-visible=move || show_menu().to_string()>
             <span>
@@ -33,43 +26,43 @@ where
             </span>
             <menu>
                 <li>
-                    <A href="/app" on:click=move |_| set_show_menu(false) class="link" exact=true>
+                    <A href="/app" exact=true>
                         "dashboard"
                     </A>
                 </li>
                 <li>
-                    <A href="/app/check_in" class="link" on:click=move |_| set_show_menu(false)>
-                        {move || if status() { "check out" } else { "check in" }}
+                    <A href="/app/check_in">
+                        "check in/out"
                     </A>
                 </li>
                 <li>
-                    <A href="/app/timesheet" class="link" on:click=move |_| set_show_menu(false)>
+                    <A href="/app/timesheet">
                         "timesheet"
                     </A>
                 </li>
                 <li>
-                    <A href="/app/vacations" class="link" on:click=move |_| set_show_menu(false)>
+                    <A href="/app/vacations" >
                         "vacations"
                     </A>
                 </li>
                 <li>
-                    <A href="/app/users" class="link" on:click=move |_| set_show_menu(false)>
+                    <A href="/app/users"  >
                         "users"
                     </A>
                 </li>
-                <Show when=move || user().state == 1>
+                // <Show when=move || user().state == 1>
                     <h2>"Admin"</h2>
                     <li>
-                        <A href="/admin/timesheets" class="link">
+                        <A href="/admin/timesheets" >
                             "timesheets"
                         </A>
                     </li>
                     <li>
-                        <A href="/admin/vacations" class="link">
+                        <A href="/admin/vacations">
                             "vacations"
                         </A>
                     </li>
-                </Show>
+                // </Show>
             </menu>
 
             <ActionForm action=log_out>
@@ -79,7 +72,7 @@ where
                 </button>
             </ActionForm>
         </nav>
-        <button class="nav-button" on:click=move |_| set_show_menu(true)>
+        <button class="nav-button" >
             <Icon name="horizontal-menu".into()/>
         </button>
     }

@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::prelude::*;
 use uuid::Uuid;
 
 use crate::models::user::UserUpdate;
@@ -34,9 +34,9 @@ pub fn UserForm(uuid: Option<Uuid>) -> impl IntoView {
         <form>
             {match uuid {
                 Some(u) => {
-                    view! { <input name="user_id" type="hidden" value=u.to_string()/> }.into_view()
+                    view! { <input name="user_id" type="hidden" value=u.to_string()/> }.into_any()
                 }
-                None => view! {}.into_view(),
+                None => view! {}.into_any(),
             }}
             <div>
                 <label>"First Name"</label>

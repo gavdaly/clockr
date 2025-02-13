@@ -22,7 +22,7 @@ pub enum State {
     Hourly = 2,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct UserDisplay {
     pub id: Uuid,
     pub first_name: String,
@@ -125,7 +125,7 @@ impl UserUpdate {
         query_as!(
             UserUpdate,
             r#"
-UPDATE users 
+UPDATE users
 SET first_name = $1, last_name = $2, phone_number = $3, state = $4
 WHERE id = $5
 RETURNING first_name, last_name, phone_number, state, id
@@ -150,8 +150,8 @@ RETURNING first_name, last_name, phone_number, state, id
         query_as!(
             UserUpdate,
             r#"
-INSERT INTO users(first_name, last_name, phone_number, state) 
-VALUES ($1, $2, $3, $4) 
+INSERT INTO users(first_name, last_name, phone_number, state)
+VALUES ($1, $2, $3, $4)
 RETURNING id, first_name, last_name, phone_number, state
         "#,
             first_name,
@@ -174,7 +174,7 @@ pub struct UserPhone {
 #[cfg(feature = "ssr")]
 pub async fn get_user_by_phone(phone: &str) -> Result<UserPhone, sqlx::Error> {
     use sqlx::*;
-    leptos::tracing::info!("-- Getting Phone Numeber: {}", phone);
+    // leptos::tracing::info!("-- Getting Phone Numeber: {}", phone);
 
     let db = get_db();
     let result = query_as!(
@@ -192,6 +192,6 @@ WHERE
     .fetch_one(db)
     .await;
 
-    leptos::tracing::info!("-- Got User: {:?}", result);
+    // leptos::tracing::info!("-- Got User: {:?}", result);
     result
 }

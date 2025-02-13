@@ -1,5 +1,5 @@
-use leptos::*;
-use leptos_router::ActionForm;
+use leptos::prelude::*;
+use leptos::form::ActionForm;
 use uuid::Uuid;
 
 #[cfg(feature = "ssr")]
@@ -29,33 +29,31 @@ use chrono::{DateTime, Local, NaiveDateTime, TimeZone};
 ///
 /// The generated form as an `IntoView`.
 #[component]
-pub fn CorrectionForm<F>(uuid: Option<Uuid>, date: F) -> impl IntoView
-where
-    F: Fn() -> Option<String> + 'static,
+pub fn CorrectionForm(uuid: Option<Uuid> /* , date: ReadSignal<Option<String>> */) -> impl IntoView
 {
-    let action = create_server_action::<SubmitCorrectionForm>();
+    let action = ServerAction::<SubmitCorrectionForm>::new();
     let value = action.value();
     view! {
-        <ActionForm action class="stack">
+        <ActionForm action>
             {move || match uuid {
                 Some(i) => {
-                    view! { <input type="hidden" name="id" value=i.to_string()/> }.into_view()
+                    view! { <input type="hidden" name="id" value=i.to_string()/> }.into_any()
                 }
-                None => view! { <span></span> }.into_view(),
+                None => view! { <span></span> }.into_any(),
             }}
 
-            {move || match date() {
-                Some(date) => view! { <input type="hidden" name="date" value=date/> }.into_view(),
-                None => {
-                    view! {
-                        <div class="input">
-                            <label>"Date"</label>
-                            <input type="date" name="date"/>
-                        </div>
-                    }
-                        .into_view()
-                }
-            }}
+            // {move || match date() {
+            //     Some(date) => view! { <input type="hidden" name="date" value=date/> }.into_any(),
+            //     None => {
+            //         view! {
+            //             <div class="input">
+            //                 <label>"Date"</label>
+            //                 <input type="date" name="date"/>
+            //             </div>
+            //         }
+            //             .into_any()
+            //     }
+            // }}
 
             <div class="input">
                 <label>"Start Time"</label>
@@ -72,12 +70,12 @@ where
             <button type="submit">"Ok"</button>
         </ActionForm>
         {move || match value() {
-            Some(Ok(_)) => view! { <div>"success"</div> }.into_view(),
+            Some(Ok(_)) => view! { <div>"success"</div> }.into_any(),
             Some(Err(e)) => {
                 view! { <div data-state="error">"Error making correction: " {e.to_string()}</div> }
-                    .into_view()
+                    .into_any()
             }
-            None => view! { <span>""</span> }.into_view(),
+            None => view! { <span>""</span> }.into_any(),
         }}
     }
 }

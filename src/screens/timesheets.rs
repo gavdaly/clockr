@@ -1,10 +1,11 @@
 use crate::components::loading_progress::Loading;
-use crate::components::timesheet::TimeSheetDisplay;
+// use crate::components::timesheet::TimeSheetDisplay;
 use crate::models::time_sheets::TimeSheet;
 use crate::models::user::UserDisplay;
 use chrono::NaiveDate;
-use leptos::*;
-use leptos_router::*;
+use leptos::prelude::*;
+use leptos_router::components::A;
+use leptos_router::nested_router::Outlet;
 use uuid::Uuid;
 
 /// Renders the home page of your application.
@@ -59,11 +60,11 @@ pub async fn load_hourly_users() -> Result<Vec<UserDisplay>, ServerFnError> {
 
 #[component]
 pub fn TimeSheetsList() -> impl IntoView {
-    let (current_user, set_current_user) = create_signal(String::new());
-    let users = create_resource(move || {}, move |_| load_hourly_users());
-    let timesheet = create_resource(current_user, load_timesheet_for);
+    let (current_user, set_current_user) = signal(String::new());
+    let users = Resource::new(move || {}, move |_| load_hourly_users());
+    // let timesheet = Resource::new(current_user, load_timesheet_for);
 
-    create_effect(move |_| leptos::logging::log!("{:?}", current_user()));
+    Effect::new(move |_| leptos::logging::log!("{:?}", current_user()));
 
     view! {
         <Suspense fallback=move || {
@@ -100,24 +101,14 @@ pub fn TimeSheetsList() -> impl IntoView {
                                     .collect_view()}
                             </select>
                         </div>
-                    }
+                    }.into_any()
                 }
-                _ => view! { <div>"Server Error"</div> },
+                _ => view! { <div>"Server Error"</div> }.into_any(),
             }}
             <Show when=move || {
                 !current_user().is_empty()
             }>
-                {move || match timesheet() {
-                    Some(Ok(timesheet)) => {
-                        view! {
-                            <div>
-                                <TimeSheetDisplay timesheet/>
-                            </div>
-                        }
-                    }
-                    Some(Err(e)) => view! { <div>"Error: " {e.to_string()}</div> },
-                    None => view! { <div>"Error loading timesheet"</div> },
-                }}
+              <p>"Show TimeSheet"</p>
 
             </Show>
 
@@ -127,8 +118,8 @@ pub fn TimeSheetsList() -> impl IntoView {
 
 #[component]
 pub fn TimeSheetsAdjustment() -> impl IntoView {
-    let users = create_resource(move || {}, move |_| load_hourly_users());
-    let create_adjustment = create_server_action::<CreateAdjustment>();
+    let users = Resource::new(move || {}, move |_| load_hourly_users());
+    let create_adjustment = ServerAction::<CreateAdjustment>::new();
     view! {
         <ActionForm action=create_adjustment>
             <Suspense fallback=move || {
@@ -158,9 +149,9 @@ pub fn TimeSheetsAdjustment() -> impl IntoView {
                                         .collect_view()}
                                 </select>
                             </div>
-                        }
+                        }.into_any()
                     }
-                    _ => view! { <div>"Server Error"</div> },
+                    _ => view! { <div>"Server Error"</div> }.into_any(),
                 }}
 
             </Suspense>

@@ -47,11 +47,11 @@ pub async fn get_sessions_for(
     let sessions = sqlx::query_as!(
         Session,
         r##"
-        SELECT 
+        SELECT
             id,
             start_time,
             end_time,
-            state, 
+            state,
             user_id
         FROM sessions
         WHERE user_id = $1 AND start_time BETWEEN $2 AND $3"##,
@@ -67,8 +67,8 @@ pub async fn get_sessions_for(
     for session in sessions {
         let correction = match get_corrections_for(&session.id).await {
             Ok(s) => s,
-            Err(e) => {
-                leptos::tracing::error!("Error getting collection: {e}");
+            Err(_e) => {
+                // leptos::tracing::error!("Error getting collection: {e}");
                 None
             }
         };
@@ -112,7 +112,7 @@ pub async fn add_correction(
             sqlx::query!("UPDATE sessions SET state = 3 WHERE id = $1", id)
                 .execute(db)
                 .await?;
-            sqlx::query!("INSERT INTO corrections(start_time, end_time, original_start_time, original_end_time, new_start_time, new_end_time, session_id, reason) 
+            sqlx::query!("INSERT INTO corrections(start_time, end_time, original_start_time, original_end_time, new_start_time, new_end_time, session_id, reason)
             VALUES ($1, $2, $1, $2, $3, $4, $5, $6)", session.start_time, session.end_time, start_time, end_time, id, reason).execute(db).await?;
         }
         None => {

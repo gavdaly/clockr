@@ -1,7 +1,8 @@
 use crate::components::loading_progress::Loading;
-use leptos::server_fn::error::NoCustomError;
-use leptos::*;
-use leptos_router::*;
+use leptos::prelude::*;
+use leptos_router::components::Redirect;
+use leptos_router::hooks::use_params;
+use leptos_router::params::Params;
 use uuid::Uuid;
 
 #[derive(Clone, Params, PartialEq)]
@@ -12,7 +13,7 @@ struct MagicLinkParams {
 #[component]
 pub fn MagicLink() -> impl IntoView {
     let params = use_params::<MagicLinkParams>();
-    let magic_sign_in = create_server_action::<MagicSignIn>();
+    let magic_sign_in = ServerAction::<MagicSignIn>::new();
     move || match params() {
         Ok(MagicLinkParams { link }) => {
             magic_sign_in.dispatch(MagicSignIn { link });
@@ -22,13 +23,15 @@ pub fn MagicLink() -> impl IntoView {
                     <Redirect path="/app"/>
                 </div>
             }
+            .into_any()
         }
-        Err(e) => view! { <div>"Error parsing Parameters: " {e.to_string()}</div> },
+        Err(e) => view! { <div>"Error parsing Parameters: " {e.to_string()}</div> }.into_any(),
     }
 }
 
 #[server]
 async fn magic_sign_in(link: Uuid) -> Result<(), ServerFnError> {
+    use crate::app::server_fn::error::NoCustomError;
     use crate::models::magic_link::MagicLink;
     use axum_session::SessionAnySession;
 

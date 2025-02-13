@@ -1,6 +1,8 @@
 use crate::app::CheckIn;
-use leptos::*;
-use leptos_router::*;
+use leptos::prelude::*;
+use leptos::form::ActionForm;
+use leptos::server::ServerAction;
+
 
 /// This function returns a view component based on whether it is being rendered on the server side or client side.
 ///
@@ -8,7 +10,7 @@ use leptos_router::*;
 ///
 /// * `check_in` - An `Action` object representing a check-in action.
 #[component]
-pub fn CheckInView(check_in: Action<CheckIn, Result<(), ServerFnError>>) -> impl IntoView {    
+pub fn CheckInView(check_in: ServerAction<CheckIn>) -> impl IntoView {
     // use leptos_use::{use_geolocation_with_options, UseGeolocationReturn};
 
     // let options = leptos_use::UseGeolocationOptions::default().enable_high_accuracy(true);
@@ -23,7 +25,7 @@ pub fn CheckInView(check_in: Action<CheckIn, Result<(), ServerFnError>>) -> impl
 
     view! {
         <div class="center-center stack">
-                            <ActionForm class="center-center" action=check_in>
+                            <ActionForm action=check_in>
                                 <input type="hidden" value="2" name="latitude"/>
                                 <input type="hidden" value="2" name="longitude"/>
                                 <input type="hidden" value="2" name="accuracy"/>
@@ -72,7 +74,6 @@ pub fn CheckInView(check_in: Action<CheckIn, Result<(), ServerFnError>>) -> impl
         // </Show>
     }
 }
-
 
 /// Returns a string message based on the given error number.
 ///

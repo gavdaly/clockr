@@ -2,9 +2,9 @@ use crate::models::corrections::Correction;
 use crate::models::sessions::SessionAndCorrection;
 use crate::utils::miliseconds_to_string;
 use chrono::Local;
-use leptos::server_fn::error::NoCustomError;
-use leptos::*;
-use leptos_router::{ActionForm, A};
+use leptos::form::ActionForm;
+use leptos::prelude::*;
+use leptos_router::components::A;
 use uuid::Uuid;
 
 /// Renders a session component that displays session information.
@@ -35,47 +35,47 @@ pub fn Session(session: SessionAndCorrection) -> impl IntoView {
                     </span>
 
                     {match session.state {
-                        0 => view! { <span class="state">"open"</span> }.into_view(),
+                        0 => view! { <span class="state">"open"</span> }.into_any(),
                         1 => {
                             view! {
-                                <A class="state" href=format!("/app/timesheet/edit/{}", id)>
+                                <A href=format!("/app/timesheet/edit/{}", id)>
                                     edit
                                 </A>
                             }
-                                .into_view()
+                                .into_any()
                         }
                         2 => {
                             view! {
-                                <A class="state" href=format!("/app/timesheet/edit/{}", id)>
+                                <A href=format!("/app/timesheet/edit/{}", id)>
                                     error
                                 </A>
                             }
-                                .into_view()
+                                .into_any()
                         }
-                        3 => view! { <span class="state">"pending"</span> }.into_view(),
-                        4 => view! { <span class="state">"accepted"</span> }.into_view(),
-                        5 => view! { <span class="state">"rejected"</span> }.into_view(),
-                        6 => view! { <span class="state">"done"</span> }.into_view(),
+                        3 => view! { <span class="state">"pending"</span> }.into_any(),
+                        4 => view! { <span class="state">"accepted"</span> }.into_any(),
+                        5 => view! { <span class="state">"rejected"</span> }.into_any(),
+                        6 => view! { <span class="state">"done"</span> }.into_any(),
                         _ => {
                             view! {
                                 <span class="state" data-state="error">
                                     "ERROR"
                                 </span>
                             }
-                                .into_view()
+                                .into_any()
                         }
                     }}
                 }
-                    .into_view()
+                    .into_any()
             }
-            None => view! { <span class="open">"Session not closed yet!"</span> }.into_view(),
+            None => view! { <span class="open">"Session not closed yet!"</span> }.into_any(),
         }}
 
         {match session.correction.clone() {
             Some(correction) => {
-                view! { <Correction correction session_state=session.state/> }
+                view! { <Correction correction session_state=session.state/> }.into_any()
             }
-            None => view! {}.into_view(),
+            None => view! {}.into_any(),
         }}
     }
 }
@@ -92,7 +92,7 @@ fn Correction(correction: Correction, session_state: i32) -> impl IntoView {
         .with_timezone(&Local)
         .format("%I:%M %P")
         .to_string();
-    let handle_correction_response = create_server_action::<HandleCorrectionResponse>();
+    let handle_correction_response = ServerAction::<HandleCorrectionResponse>::new();
     match session_state {
         3 => view! {
             <span>{start}</span>
@@ -121,13 +121,13 @@ fn Correction(correction: Correction, session_state: i32) -> impl IntoView {
                 <button type="submit">"submit"</button>
             </ActionForm>
         }
-        .into_view(),
+        .into_any(),
         4 | 5 => view! {
             <span>"response"</span>
             <span class="reason">{correction.response}</span>
         }
-        .into_view(),
-        _ => view! {}.into_view(),
+        .into_any(),
+        _ => view! {}.into_any(),
     }
 }
 
@@ -137,6 +137,7 @@ async fn handle_correction_response(
     status: u32,
     id: Uuid,
 ) -> Result<(), ServerFnError> {
+    use crate::app::server_fn::error::NoCustomError;
     use crate::models::corrections::correction_response;
     use crate::models::user::UserDisplay;
     use axum_session::SessionAnySession;

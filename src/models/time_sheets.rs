@@ -63,7 +63,7 @@ impl TimeSheet {
             sessions,
             adjustments,
         };
-        leptos::tracing::error!("###| {:?}", values);
+        // leptos::tracing::error!("###| {:?}", values);
         Ok(Self::from(values))
     }
 

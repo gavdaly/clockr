@@ -1,12 +1,11 @@
-use leptos::*;
-use leptos_router::A;
+use leptos::prelude::*;
+use leptos_router::components::A;
+
+// use crate::models::user::UserDisplay;
 
 /// Renders the home page of your application.
 #[component]
-pub fn HomePage<F>(status: F) -> impl IntoView
-where
-    F: Fn() -> bool + Copy + 'static,
-{
+pub fn HomePage() -> impl IntoView {
     // get settings
     // show week summary
     // upcomming vacations
@@ -15,22 +14,13 @@ where
             <A href="/app/check_in">
                 {move || {
                     view! {
-                        <aside id="checked_in" data-checked-in=status().to_string()>
-                            {if status() { "You are Checked In" } else { "You are Checked Out" }}
+                        <aside id="checked_in" data-checked-in="true">
+                            {if true { "You are Checked In" } else { "You are Checked Out" }}
                         </aside>
                     }
                 }}
 
             </A>
-        </section>
-    }
-}
-
-#[component]
-pub fn Settings() -> impl IntoView {
-    view! {
-        <section class="stack">
-            <h1>"Settings | To Do"</h1>
         </section>
     }
 }

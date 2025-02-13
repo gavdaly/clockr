@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::prelude::*;
 
 use crate::components::entry::Entry;
 use crate::models::sessions::Session;
@@ -18,15 +18,15 @@ pub fn TimeSheetDisplay(timesheet: TimeSheet) -> impl IntoView {
                         <th>"Day"</th>
                         <th>"Hours"</th>
                         {if statuatory_total > 0 {
-                            view! { <th>"Statutory"</th> }.into_view()
+                            view! { <th>"Statutory"</th> }.into_any()
                         } else {
-                            view! {}.into_view()
+                            view! {}.into_any()
                         }}
 
                         {if vacation_total > 0 {
-                            view! { <th>"Vacation"</th> }.into_view()
+                            view! { <th>"Vacation"</th> }.into_any()
                         } else {
-                            view! {}.into_view()
+                            view! {}.into_any()
                         }}
 
                     </tr>
@@ -41,16 +41,16 @@ pub fn TimeSheetDisplay(timesheet: TimeSheet) -> impl IntoView {
                                 <td data-title="Hours">{miliseconds_to_string(&(time + b))}</td>
                                 {if statuatory_total > 0 {
                                     view! { <td data-title="Statutory">{miliseconds_to_string(c)}</td> }
-                                        .into_view()
+                                        .into_any()
                                 } else {
-                                    view! {}.into_view()
+                                    view! {}.into_any()
                                 }}
 
                                 {if vacation_total > 0 {
                                     view! { <td data-title="Vacation">{miliseconds_to_string(d)}</td> }
-                                        .into_view()
+                                        .into_any()
                                 } else {
-                                    view! {}.into_view()
+                                    view! {}.into_any()
                                 }}
 
                             </tr>

@@ -1,5 +1,6 @@
-use leptos::*;
-use leptos_router::*;
+use leptos::prelude::*;
+use leptos_router::components::A;
+use leptos_router::nested_router::Outlet;
 
 /// Renders the home page of your application.
 #[component]
