@@ -29,8 +29,8 @@ pub fn ClockInLink(clock_in_link: ServerAction<ClockInLinkInitiateSession>) -> i
 
 #[server]
 pub async fn clock_in_link_initiate_session(link: String) -> Result<(), ServerFnError> {
-    use crate::app::server_fn::error::NoCustomError;
     use crate::models::sessions::{close_session, get_open_session, new_session};
+    use leptos::prelude::server_fn::error::*;
     use uuid::Uuid;
     // Get User
     use axum_session::SessionAnySession;

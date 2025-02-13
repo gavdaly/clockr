@@ -65,10 +65,10 @@ pub async fn get_curent_user() -> Result<Option<UserDisplay>, ServerFnError> {
 
 #[server]
 async fn authenticate(pin: i32, phone: String) -> Result<(), ServerFnError> {
-    use crate::app::server_fn::error::NoCustomError;
     use crate::models::pins::Pin;
     use crate::models::user::get_user_by_phone;
     use axum_session::SessionAnySession;
+    use leptos::prelude::server_fn::error::*;
 
     let Ok(pin) = Pin::get_pin(pin).await else {
         return Err(ServerFnError::<NoCustomError>::ServerError(
@@ -94,8 +94,8 @@ async fn authenticate(pin: i32, phone: String) -> Result<(), ServerFnError> {
 
 #[server]
 pub async fn logout() -> Result<(), ServerFnError> {
-    use crate::app::server_fn::error::NoCustomError;
     use axum_session::SessionAnySession;
+    use leptos::prelude::server_fn::error::*;
     let session = use_context::<SessionAnySession>()
         .ok_or_else(|| ServerFnError::<NoCustomError>::ServerError("Session missing.".into()))?;
     session.clear();
@@ -106,8 +106,8 @@ pub async fn logout() -> Result<(), ServerFnError> {
 
 #[server]
 async fn check_in(latitude: f64, longitude: f64, accuracy: f64) -> Result<(), ServerFnError> {
-    use crate::app::server_fn::error::NoCustomError;
     use crate::models::sessions::{close_session, get_open_session, new_session};
+    use leptos::prelude::server_fn::error::*;
     use uuid::Uuid;
     // Get User
     use axum_session::SessionAnySession;
@@ -174,8 +174,8 @@ async fn is_close(latitude: f64, longitude: f64, accuracy: f64) -> Result<(), Se
 
 #[server]
 pub async fn clock_in_link_initiate_session(link: String) -> Result<(), ServerFnError> {
-    use crate::app::server_fn::error::NoCustomError;
     use crate::models::sessions::{close_session, get_open_session, new_session};
+    use leptos::prelude::server_fn::error::*;
     use uuid::Uuid;
     // Get User
     use axum_session::SessionAnySession;

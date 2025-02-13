@@ -137,10 +137,10 @@ async fn handle_correction_response(
     status: u32,
     id: Uuid,
 ) -> Result<(), ServerFnError> {
-    use crate::app::server_fn::error::NoCustomError;
     use crate::models::corrections::correction_response;
     use crate::models::user::UserDisplay;
     use axum_session::SessionAnySession;
+    use leptos::prelude::server_fn::error::*;
 
     let session = use_context::<SessionAnySession>()
         .ok_or_else(|| ServerFnError::<NoCustomError>::ServerError("Session missing.".into()))?;

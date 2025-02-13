@@ -84,10 +84,10 @@ pub fn Auth(authenticate: ServerAction<Authenticate>) -> impl IntoView {
 
 #[server]
 async fn authenticate(pin: i32, phone: String) -> Result<(), ServerFnError> {
-    use crate::app::server_fn::error::NoCustomError;
     use crate::models::pins::Pin;
     use crate::models::user::get_user_by_phone;
     use axum_session::SessionAnySession;
+    use leptos::prelude::server_fn::error::*;
 
     let Ok(pin) = Pin::get_pin(pin).await else {
         return Err(ServerFnError::<NoCustomError>::ServerError(
@@ -117,8 +117,8 @@ async fn authenticate(pin: i32, phone: String) -> Result<(), ServerFnError> {
 
 #[server]
 pub async fn logout() -> Result<(), ServerFnError> {
-    use crate::app::server_fn::error::NoCustomError;
     use axum_session::SessionAnySession;
+    use leptos::prelude::server_fn::error::*;
     let session = use_context::<SessionAnySession>()
         .ok_or_else(|| ServerFnError::<NoCustomError>::ServerError("Session missing.".into()))?;
     session.clear();

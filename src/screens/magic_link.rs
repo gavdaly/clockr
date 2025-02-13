@@ -31,9 +31,9 @@ pub fn MagicLink() -> impl IntoView {
 
 #[server]
 async fn magic_sign_in(link: Uuid) -> Result<(), ServerFnError> {
-    use crate::app::server_fn::error::NoCustomError;
     use crate::models::magic_link::MagicLink;
     use axum_session::SessionAnySession;
+    use leptos::prelude::server_fn::error::*;
 
     let session = use_context::<SessionAnySession>()
         .ok_or_else(|| ServerFnError::<NoCustomError>::ServerError("Session missing.".into()))?;

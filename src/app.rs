@@ -1,4 +1,3 @@
-use crate::app::server_fn::error::NoCustomError;
 use crate::components::check_in::CheckInView;
 use crate::components::loading_progress::Loading;
 use crate::components::menu::Menu;
@@ -13,7 +12,6 @@ use crate::screens::timesheets::{
 };
 use crate::screens::users::{AdminUsers, UserCreate, UserUpdate, Users, UsersList};
 use leptos::prelude::*;
-use leptos_meta::Title;
 use leptos_meta::*;
 use leptos_router::components::{ParentRoute, Route, Router, Routes};
 use leptos_router::nested_router::Outlet;
@@ -138,6 +136,7 @@ pub struct Status {
 #[server]
 pub async fn get_curent_user() -> Result<Option<UserDisplay>, ServerFnError> {
     use axum_session::SessionAnySession;
+    use leptos::prelude::server_fn::error::*;
     use uuid::Uuid;
 
     let Some(session) = use_context::<SessionAnySession>() else {
@@ -164,6 +163,7 @@ pub async fn get_curent_user() -> Result<Option<UserDisplay>, ServerFnError> {
 async fn get_session_status() -> Result<bool, ServerFnError> {
     use crate::models::sessions::get_open_sessions;
     use axum_session::SessionAnySession;
+    use leptos::prelude::server_fn::error::*;
     use uuid::Uuid;
 
     let session = use_context::<SessionAnySession>()
@@ -182,6 +182,7 @@ async fn get_session_status() -> Result<bool, ServerFnError> {
 #[server]
 async fn check_in(_latitude: f64, _longitude: f64, _accuracy: f64) -> Result<(), ServerFnError> {
     use crate::models::sessions::{close_session, get_open_session, new_session};
+    use leptos::prelude::server_fn::error::*;
     use uuid::Uuid;
     // Get User
     use axum_session::SessionAnySession;
@@ -251,13 +252,14 @@ async fn submit_phone_number(phone: String) -> Result<(), ServerFnError> {
     use crate::models::pins::Pin;
     use crate::models::user::get_user_by_phone;
     use crate::service::sms::send_message;
+    use leptos::prelude::server_fn::error::*;
 
     let phone = crate::utils::filter_phone_number(&phone);
 
     // leptos::tracing::info!("**| phone: {:?}", phone);
 
     let Ok(user) = get_user_by_phone(&phone).await else {
-        leptos::tracing::warn!("Could not find phone number: {:?}", phone);
+        // leptos::tracing::warn!("Could not find phone number: {:?}", phone);
         return Err(ServerFnError::Deserialization(
             "Could not Find Phone Number!".into(),
         ));
