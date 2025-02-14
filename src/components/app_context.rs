@@ -1,49 +1,26 @@
+use std::ops::Deref;
+
 use crate::models::user::UserDisplay;
-use crate::screens::authenticate::{Auth, Authenticate, Logout};
-use crate::screens::clock_in_link::{ClockInLink, ClockInLinkInitiateSession};
 use leptos::prelude::*;
 
 #[derive(Clone)]
 pub struct AppContext {
-    pub log_out: ServerAction<Logout>,
-    pub check_in: ServerAction<CheckIn>,
-    pub authenticate: ServerAction<Authenticate>,
-    pub clock_in_link: ServerAction<ClockInLinkInitiateSession>,
-    pub user: Memo<Option<UserDisplay>>,
+    pub user: Option<UserDisplay>,
 }
 
 pub fn create_app_context() -> AppContext {
-    let log_out = ServerAction::<Logout>::new();
-    let check_in = ServerAction::<CheckIn>::new();
-    let authenticate = ServerAction::<Authenticate>::new();
-    let clock_in_link = ServerAction::<ClockInLinkInitiateSession>::new();
-
-    let user_fetch = Resource::new(
-        move || {
-            (
-                log_out.version().get(),
-                authenticate.version().get(),
-                check_in.version().get(),
-                clock_in_link.version().get(),
-            )
-        },
-        |_| get_curent_user(),
-    );
-
+    let user_fetch = LocalResource::new(get_curent_user);
     let user_fetch = user_fetch.read();
 
-    let user = Memo::new(move |_| match user_fetch.clone() {
-        Some(Ok(a)) => a,
-        _ => None,
-    });
+    let Some(user_fetch) = user_fetch.deref() else {
+        return AppContext { user: None };
+    };
 
-    AppContext {
-        log_out,
-        check_in,
-        authenticate,
-        clock_in_link,
-        user,
-    }
+    let Ok(user) = &**user_fetch else {
+        return AppContext { user: None };
+    };
+
+    AppContext { user: user.clone() }
 }
 
 #[server]

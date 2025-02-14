@@ -1,4 +1,4 @@
-use crate::components::app_context::AppContext;
+use crate::components::app_context::CheckIn;
 use leptos::form::ActionForm;
 use leptos::prelude::*;
 
@@ -9,7 +9,8 @@ use leptos::prelude::*;
 /// * `check_in` - An `Action` object representing a check-in action.
 #[component]
 pub fn CheckInView() -> impl IntoView {
-    let app_context = use_context::<AppContext>().expect("should be provided");
+    let check_in = ServerAction::<CheckIn>::new();
+
     // use leptos_use::{use_geolocation_with_options, UseGeolocationReturn};
 
     // let options = leptos_use::UseGeolocationOptions::default().enable_high_accuracy(true);
@@ -24,7 +25,7 @@ pub fn CheckInView() -> impl IntoView {
 
     view! {
         <div class="center-center stack">
-                            <ActionForm action=app_context.check_in>
+                            <ActionForm action=check_in>
                                 <input type="hidden" value="2" name="latitude"/>
                                 <input type="hidden" value="2" name="longitude"/>
                                 <input type="hidden" value="2" name="accuracy"/>

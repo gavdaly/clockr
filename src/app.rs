@@ -13,7 +13,7 @@ use crate::screens::timesheets::{
 use crate::screens::users::{AdminUsers, UserCreate, UserUpdate, Users, UsersList};
 use leptos::prelude::*;
 use leptos_meta::*;
-use leptos_router::components::{ParentRoute, Route, Router, Routes};
+use leptos_router::components::{ParentRoute, ProtectedParentRoute, Route, Router, Routes};
 use leptos_router::nested_router::Outlet;
 use leptos_router::path;
 use serde::{Deserialize, Serialize};
@@ -74,16 +74,13 @@ pub fn App() -> impl IntoView {
                 <Routes fallback=Loading>
                     <Route path=path!("/p/:phone") view=Auth />
                     <Route path=path!("/l/:link") view=MagicLink/>
-                    <ParentRoute
+                    <ProtectedParentRoute
                         path=path!("")
-                        view=move || {
-                            view! {
-                                <Show when=move || app_context.user.get().is_some() fallback=PhoneNumber>
-                                    <Outlet/>
-                                </Show>
-                            }
-                        }
-                    >
+                        fallback=Loading
+                        condition=move || Some(app_context.user.is_some())
+                        view=Outlet
+                        redirect_path=||"/login"
+                        >
 
                         <Route path=path!("") view=HomePage/>
                         <Route
@@ -110,7 +107,7 @@ pub fn App() -> impl IntoView {
                                 <Route path=path!("/edit/:id") view=UserUpdate/>
                             </ParentRoute>
                         </ParentRoute>
-                    </ParentRoute>
+                    </ProtectedParentRoute>
                 </Routes>
             </main>
         </Router>

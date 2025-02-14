@@ -1,4 +1,3 @@
-use crate::components::app_context::AppContext;
 use crate::components::icon::Icon;
 use leptos::prelude::*;
 use leptos_router::hooks::use_params;
@@ -9,9 +8,9 @@ struct PhoneParams {
     phone: Option<String>,
 }
 
-#[component]
+#[island]
 pub fn Auth() -> impl IntoView {
-    let app_context = use_context::<AppContext>().expect("should be provided");
+    let authenticate = ServerAction::<Authenticate>::new();
     let (pin_input, set_pin_input) = signal(String::with_capacity(6));
 
     let phone_params = use_params::<PhoneParams>();
@@ -36,21 +35,22 @@ pub fn Auth() -> impl IntoView {
                 {move || match phone_params.get() {
                     Ok(query) => {
                         view! {
-                            <ActionForm action={app_context.authenticate}>
-                                <input type="hidden" value=query.phone name="phone"/>
-                                <label id="pin">"Enter Pin From SMS"</label>
-                                <input
-                                    type="number"
-                                    name="pin"
-                                    pattern=pattern
-                                    inputmode="numeric"
-                                    on:input=move |v| set_pin_input.set(event_target_value(&v))
-                                />
-                                <button type="submit">
-                                    <Icon name="login".into()/>
-                                    <span>"Log In"</span>
-                                </button>
-
+                            <ActionForm action={authenticate}>
+                                <div class="stack">
+                                    <input type="hidden" value=query.phone name="phone"/>
+                                    <label id="pin">"Enter Pin From SMS"</label>
+                                    <input
+                                        type="number"
+                                        name="pin"
+                                        pattern=pattern
+                                        inputmode="numeric"
+                                        on:input=move |v| set_pin_input.set(event_target_value(&v))
+                                    />
+                                    <button type="submit">
+                                        <Icon name="login".into()/>
+                                        <span>"Log In"</span>
+                                    </button>
+                                </div>
                             </ActionForm>
                         }
                             .into_any()
