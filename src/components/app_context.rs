@@ -1,26 +1,25 @@
-use std::ops::Deref;
-
 use crate::models::user::UserDisplay;
 use leptos::prelude::*;
 
 #[derive(Clone)]
 pub struct AppContext {
-    pub user: Option<UserDisplay>,
+    pub user: ReadSignal<Option<UserDisplay>>,
 }
 
 pub fn create_app_context() -> AppContext {
-    let user_fetch = LocalResource::new(get_curent_user);
-    let user_fetch = user_fetch.read();
+    let (user, set_user) = signal(None);
 
-    let Some(user_fetch) = user_fetch.deref() else {
-        return AppContext { user: None };
-    };
+    let user_resource = LocalResource::new(get_curent_user);
 
-    let Ok(user) = &**user_fetch else {
-        return AppContext { user: None };
-    };
+    Effect::new(move |_| {
+        if let Some(wrapped) = user_resource.get() {
+            if let Ok(inner) = wrapped.as_ref() {
+                set_user.set(inner.clone());
+            }
+        }
+    });
 
-    AppContext { user: user.clone() }
+    AppContext { user }
 }
 
 #[server]

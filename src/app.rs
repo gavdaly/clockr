@@ -77,7 +77,7 @@ pub fn App() -> impl IntoView {
                     <ProtectedParentRoute
                         path=path!("")
                         fallback=Loading
-                        condition=move || Some(app_context.user.is_some())
+                        condition=move || Some(app_context.user.get().is_some())
                         view=Outlet
                         redirect_path=||"/login"
                         >

@@ -10,7 +10,7 @@ pub fn PhoneNumber() -> impl IntoView {
     view! {
         <Title text="Dental Care | Authentication"/>
 
-        <ActionForm class="center-center solo-action" action=submit>
+        <ActionForm class="center-center solo-action" action=submit attr:class="stack">
             <label>"Phone Number"</label>
             <input
                 id="phone"
