@@ -1,8 +1,6 @@
 pub mod app;
 pub mod components;
 pub mod database;
-pub mod error_template;
-pub mod fileserv;
 pub mod models;
 pub mod screens;
 pub mod service;
