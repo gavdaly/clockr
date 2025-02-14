@@ -1,6 +1,7 @@
 pub mod app;
 pub mod components;
 pub mod database;
+pub mod functions;
 pub mod models;
 pub mod screens;
 pub mod service;

@@ -1,7 +1,8 @@
-use crate::components::app_context::{create_app_context, AppContext};
 use crate::components::check_in::CheckInView;
 use crate::components::loading_progress::Loading;
 use crate::components::menu::Menu;
+use crate::functions::user::get_curent_user;
+use crate::models::user::UserDisplay;
 use crate::screens::authenticate::Auth;
 use crate::screens::clock_in_link::ClockInLink;
 use crate::screens::home::HomePage;
@@ -12,6 +13,7 @@ use crate::screens::timesheets::{
 };
 use crate::screens::users::{AdminUsers, UserCreate, UserUpdate, Users, UsersList};
 use leptos::prelude::*;
+use leptos::task::spawn_local;
 use leptos_meta::*;
 use leptos_router::components::{ParentRoute, ProtectedParentRoute, Route, Router, Routes};
 use leptos_router::nested_router::Outlet;
@@ -19,11 +21,6 @@ use leptos_router::path;
 use serde::{Deserialize, Serialize};
 
 pub static VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
-
-// <Link rel="icon" type_="image/png" sizes="48x48" href="/logo-48.png"/>
-// <Link rel="icon" type_="image/svg+xml" sizes="any" href="/logo.svg"/>
-// <Link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
-// <link rel="manifest" href="/site.webmanifest" />
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
@@ -47,12 +44,18 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
 pub fn App() -> impl IntoView {
     provide_meta_context();
 
-    let context = create_app_context();
-    provide_context(context.clone());
+    let (user, set_user) = signal::<Option<UserDisplay>>(None);
 
-    let app_context = use_context::<AppContext>().expect("should be provided");
+    provide_context(user);
 
     let content = r#"oklch(36.94% 0.1685 354.12)"#;
+
+    spawn_local(async move {
+        let current_user = get_curent_user().await;
+        if let Ok(user) = current_user {
+            set_user.set(user)
+        }
+    });
 
     view! {
 
@@ -60,6 +63,10 @@ pub fn App() -> impl IntoView {
         <Meta name="theme-color" content />
 
         <Stylesheet id="leptos" href="/pkg/clkr.css"/>
+        <Link rel="icon" type_="image/png" sizes="48x48" href="/logo-48.png"/>
+        <Link rel="icon" type_="image/svg+xml" sizes="any" href="/logo.svg"/>
+        <Link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+        <Link rel="manifest" href="/site.webmanifest" />
         <Router>
             <header id="header">
                 <h1>
@@ -77,7 +84,7 @@ pub fn App() -> impl IntoView {
                     <ProtectedParentRoute
                         path=path!("")
                         fallback=Loading
-                        condition=move || Some(app_context.user.get().is_some())
+                        condition=move || Some(user.get().is_some())
                         view=Outlet
                         redirect_path=||"/login"
                         >

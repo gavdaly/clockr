@@ -1,27 +1,6 @@
 use crate::models::user::UserDisplay;
 use leptos::prelude::*;
 
-#[derive(Clone)]
-pub struct AppContext {
-    pub user: ReadSignal<Option<UserDisplay>>,
-}
-
-pub fn create_app_context() -> AppContext {
-    let (user, set_user) = signal(None);
-
-    let user_resource = LocalResource::new(get_curent_user);
-
-    Effect::new(move |_| {
-        if let Some(wrapped) = user_resource.get() {
-            if let Ok(inner) = wrapped.as_ref() {
-                set_user.set(inner.clone());
-            }
-        }
-    });
-
-    AppContext { user }
-}
-
 #[server]
 pub async fn get_curent_user() -> Result<Option<UserDisplay>, ServerFnError> {
     use axum_session::SessionAnySession;

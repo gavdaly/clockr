@@ -1,5 +1,4 @@
 pub mod adjustment;
-pub mod app_context;
 pub mod check_in;
 pub mod entry;
 pub mod icon;

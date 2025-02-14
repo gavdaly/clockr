@@ -1,4 +1,4 @@
-use crate::components::app_context::CheckIn;
+use crate::functions::user::CheckIn;
 use leptos::form::ActionForm;
 use leptos::prelude::*;
 

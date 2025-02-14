@@ -1,11 +1,12 @@
 use crate::components::icon::Icon;
+use crate::models::user::UserDisplay;
 use crate::screens::authenticate::Logout;
 use leptos::html::Dialog;
 use leptos::prelude::*;
 
 #[island]
 pub fn Menu() -> impl IntoView {
-    // let app_context = use_context::<AppContext>().expect("should be provided");
+    let _user = expect_context::<ReadSignal<Option<UserDisplay>>>();
     let log_out = ServerAction::<Logout>::new();
     let dialog_ref = NodeRef::<Dialog>::new();
     let open_dialog = move |_| {
