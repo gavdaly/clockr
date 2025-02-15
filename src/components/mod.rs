@@ -6,5 +6,6 @@ pub mod loading_progress;
 pub mod menu;
 pub mod session;
 pub mod session_form;
+pub mod time_view;
 pub mod timesheet;
 pub mod user_form;
