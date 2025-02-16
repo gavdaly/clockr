@@ -2,6 +2,16 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+pub struct UserToday {
+    pub id: Uuid,
+    pub first_name: String,
+    pub last_name: String,
+    pub state: State,
+    pub check_ins: Vec<DateTime<Utc>>,
+    pub week_duration: u64,
+    pub previous_day_possible_errors: u16,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct User {
     pub id: Uuid,

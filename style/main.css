@@ -20,7 +20,6 @@ html {
 
 #main {
     height: 100%;
-    padding: var(--size-4);
     grid-area: main;
     background-color: var(--surface-1);
     border-radius: var(--radius-3);
@@ -208,12 +207,21 @@ nav.subWrapper [aria-current="page"] {
 #checked_in {
     margin: var(--size-5);
     padding: var(--size-5);
-    box-shadow: var(--shadow-5);
+    box-shadow: var(--shadow-4);
     border: none;
     border-radius: 4rem;
     font-weight: var(--font-weight-9);
     font-size: var(--font-size-7);
     text-align: center;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+#checked_in:hover {
+    transform: translateY(calc(-1 * var(--size-2)));
+    box-shadow: var(--shadow-6);
+    cursor: pointer;
 }
 
 [data-checked-in="true"] {
@@ -242,4 +250,21 @@ svg.loading {
 
 .reason {
     grid-column: span 3;
+}
+
+.card {
+    background-color: var(--surface-3);
+    padding: var(--size-3);
+    margin: var(--size-3);
+    border-radius: var(--size-3);
+    box-shadow: var(--shadow-2);
+    h2 {
+        font-size: var(--font-size-4);
+        font-weight: var(--font-weight-6);
+        margin-bottom: var(--size-2);
+    }
+    &.small {
+        aspect-ratio: 1/1;
+        width: 25%;
+    }
 }

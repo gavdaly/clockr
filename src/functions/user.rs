@@ -28,7 +28,7 @@ pub async fn get_curent_user() -> Result<Option<UserDisplay>, ServerFnError> {
 }
 
 #[server]
-async fn check_in(_latitude: f64, _longitude: f64, _accuracy: f64) -> Result<(), ServerFnError> {
+async fn check_in() -> Result<UserDisplay, ServerFnError> {
     use crate::models::sessions::{close_session, get_open_session, new_session};
     use leptos::prelude::server_fn::error::*;
     use uuid::Uuid;
@@ -40,24 +40,11 @@ async fn check_in(_latitude: f64, _longitude: f64, _accuracy: f64) -> Result<(),
         ServerFnError::<NoCustomError>::ServerError("Error getting Session!".into())
     })?;
 
-    // match is_close(latitude, longitude, accuracy).await {
-    //     Ok(_) => (),
-    //     Err(e) => return Err(e),
-    // };
-
-    // check for existing session
-    match get_open_session(&id).await {
-        Ok(sess) => {
-            // if no session create new session
-            let _ = close_session(&sess.id).await;
-        }
-        Err(_) => {
-            // else close exsiting session
-            let _ = new_session(&id).await;
-        }
-    };
-
     leptos_axum::redirect("/app");
 
-    Ok(())
+    let user = crate::models::user::UserDisplay::get(id)
+        .await
+        .map_err(|_| ServerFnError::<NoCustomError>::ServerError("Could Not Find User.".into()))?;
+
+    Ok(user)
 }
