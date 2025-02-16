@@ -10,6 +10,7 @@ pub struct LocationTracker {
 }
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument]
 pub async fn insert(lat: f64, long: f64, accuracy: f64) -> Result<LocationTracker, sqlx::Error> {
     use crate::database::get_db;
     let db = get_db();

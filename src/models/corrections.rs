@@ -15,6 +15,7 @@ pub struct Correction {
 }
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument]
 pub async fn get_corrections_for(session_id: &Uuid) -> Result<Option<Correction>, sqlx::Error> {
     use crate::database::get_db;
     let db = get_db();
@@ -26,6 +27,7 @@ pub async fn get_corrections_for(session_id: &Uuid) -> Result<Option<Correction>
 }
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument]
 pub async fn correction_response(id: Uuid, state: u32, response: &str) -> Result<(), sqlx::Error> {
     use crate::database::get_db;
     let db = get_db();

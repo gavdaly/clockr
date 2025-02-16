@@ -37,6 +37,7 @@ pub struct SessionAndCorrection {
 use crate::database::get_db;
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument]
 pub async fn get_sessions_for(
     user_id: &Uuid,
     start_date: DateTime<Utc>,
@@ -90,6 +91,7 @@ pub async fn get_sessions_for(
 use chrono::Local;
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument]
 pub async fn add_correction(
     id: Option<Uuid>,
     start_time: DateTime<Local>,
@@ -134,6 +136,7 @@ pub async fn add_correction(
 }
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument]
 pub async fn get_open_sessions(user_id: &Uuid) -> Result<Vec<Session>, sqlx::Error> {
     let db = get_db();
 
@@ -150,6 +153,7 @@ pub async fn get_open_sessions(user_id: &Uuid) -> Result<Vec<Session>, sqlx::Err
 }
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument]
 pub async fn get_session(uuid: &str) -> Result<Session, sqlx::Error> {
     let Ok(uuid) = Uuid::parse_str(uuid) else {
         panic!("invalid uuid")
@@ -169,6 +173,7 @@ pub async fn get_session(uuid: &str) -> Result<Session, sqlx::Error> {
 }
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument]
 pub async fn get_open_session(user_id: &Uuid) -> Result<Session, sqlx::Error> {
     let db = get_db();
 
@@ -185,6 +190,7 @@ pub async fn get_open_session(user_id: &Uuid) -> Result<Session, sqlx::Error> {
 }
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument]
 pub async fn close_session(id: &Uuid) -> Result<(), sqlx::Error> {
     let db = get_db();
     sqlx::query!(
@@ -197,6 +203,7 @@ pub async fn close_session(id: &Uuid) -> Result<(), sqlx::Error> {
 }
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument]
 pub async fn new_session(user_id: &Uuid) -> Result<Session, sqlx::Error> {
     let db = get_db();
     sqlx::query_as!(Session, "

@@ -32,6 +32,7 @@ pub enum State {
 }
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument]
 pub async fn create_adjustment(
     user_id: &Uuid,
     date: NaiveDate,
@@ -56,6 +57,7 @@ pub async fn create_adjustment(
 }
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument]
 pub async fn get_adjustments_for(
     user_id: &Uuid,
     start_date: NaiveDate,

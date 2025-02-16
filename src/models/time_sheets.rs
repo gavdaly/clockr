@@ -42,6 +42,7 @@ struct InputValues {
 
 #[cfg(feature = "ssr")]
 impl TimeSheet {
+    #[tracing::instrument]
     pub async fn generate_for(
         user_id: Uuid,
         start_date: NaiveDate,
@@ -67,6 +68,7 @@ impl TimeSheet {
         Ok(Self::from(values))
     }
 
+    #[tracing::instrument]
     fn from(vals: InputValues) -> Self {
         let UserDisplay {
             id,
@@ -93,6 +95,7 @@ impl TimeSheet {
 }
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument]
 fn _calculate_statuatory_hours(
     number_of_days: i64,
     entries: &BTreeMap<NaiveDate, Vec<Entry>>,
@@ -118,6 +121,7 @@ fn _calculate_statuatory_hours(
 }
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument]
 /// Generates a summary from entries summary is (Entries, Adjustment, Vacation, Statuatory)
 fn generate_summary(
     entries: &BTreeMap<NaiveDate, Vec<Entry>>,
@@ -157,6 +161,7 @@ fn generate_summary(
 }
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument]
 fn generate_entries(
     adjustments: Vec<Adjustment>,
     sessions: Vec<SessionAndCorrection>,
@@ -188,6 +193,7 @@ fn generate_entries(
 }
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument]
 fn generate_summary_totals(
     summary: &BTreeMap<NaiveDate, (i64, i64, i64, i64)>,
 ) -> (i64, i64, i64, i64) {

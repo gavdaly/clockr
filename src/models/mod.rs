@@ -8,5 +8,3 @@ pub mod pins;
 pub mod sessions;
 pub mod time_sheets;
 pub mod user;
-pub mod vacation_pays;
-pub mod vacations;

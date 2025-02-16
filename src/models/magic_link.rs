@@ -10,6 +10,7 @@ use {crate::database::get_db, sqlx::query_as};
 
 #[cfg(feature = "ssr")]
 impl MagicLink {
+    #[tracing::instrument]
     pub async fn create(user_id: Uuid) -> Result<Uuid, sqlx::Error> {
         let db = get_db();
         let link = query_as!(
@@ -26,6 +27,7 @@ impl MagicLink {
         .await?;
         Ok(link.id)
     }
+    #[tracing::instrument]
     pub async fn get(id: &str) -> Result<Uuid, sqlx::Error> {
         let Ok(id) = Uuid::parse_str(id) else {
             panic!("invalid id")

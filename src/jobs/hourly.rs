@@ -1,7 +1,8 @@
 use tokio_cron_scheduler::{Job, JobBuilder, JobSchedulerError};
-use tracing::info;
+use tracing::{info, instrument};
 
 /// Create a new job that runs every hour
+#[instrument]
 pub fn create() -> Result<Job, JobSchedulerError> {
     JobBuilder::new()
         .with_cron_job_type()

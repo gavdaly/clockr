@@ -1,6 +1,7 @@
 use tokio_cron_scheduler::{Job, JobBuilder, JobSchedulerError};
 use tracing::info;
 
+#[tracing::instrument]
 pub fn create() -> Result<Job, JobSchedulerError> {
     JobBuilder::new()
         .with_cron_job_type()

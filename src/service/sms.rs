@@ -5,6 +5,7 @@ use {
 };
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument]
 pub async fn send_message(
     message: String,
     to: String,

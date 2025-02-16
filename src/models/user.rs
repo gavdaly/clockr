@@ -56,6 +56,7 @@ use {crate::database::get_db, sqlx::*};
 
 #[cfg(feature = "ssr")]
 impl UserDisplay {
+    #[tracing::instrument]
     pub async fn get_all_hourly() -> Result<Vec<Self>, sqlx::Error> {
         let db = get_db();
         query_as!(
@@ -92,6 +93,7 @@ ORDER BY
         .await
     }
 
+    #[tracing::instrument]
     pub async fn get(id: Uuid) -> Result<Self, sqlx::Error> {
         let db = get_db();
         query_as!(
@@ -130,6 +132,7 @@ WHERE
 
 #[cfg(feature = "ssr")]
 impl UserUpdate {
+    #[tracing::instrument]
     pub async fn update(&self) -> Result<Self, sqlx::Error> {
         let db = get_db();
         query_as!(
@@ -150,6 +153,7 @@ RETURNING first_name, last_name, phone_number, state, id
         .await
     }
 
+    #[tracing::instrument]
     pub async fn insert(
         first_name: &str,
         last_name: &str,
@@ -182,6 +186,7 @@ pub struct UserPhone {
 }
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument]
 pub async fn get_user_by_phone(phone: &str) -> Result<UserPhone, sqlx::Error> {
     use sqlx::*;
     // leptos::tracing::info!("-- Getting Phone Numeber: {}", phone);

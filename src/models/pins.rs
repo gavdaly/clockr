@@ -10,6 +10,7 @@ pub struct Pin {
 
 #[cfg(feature = "ssr")]
 impl Pin {
+    #[tracing::instrument]
     pub async fn create_pin_for(user_id: Uuid) -> Result<Self, sqlx::Error> {
         use crate::database;
         let db = database::get_db();
@@ -32,6 +33,7 @@ impl Pin {
         .await
     }
 
+    #[tracing::instrument]
     pub async fn get_pin(number: i32) -> Result<Pin, sqlx::Error> {
         use crate::database;
         let db = database::get_db();
