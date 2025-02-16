@@ -26,31 +26,22 @@ pub fn Menu() -> impl IntoView {
         dialog.close();
     };
     view! {
-        <dialog node_ref=dialog_ref>
+        <dialog node_ref=dialog_ref class="menu-dialog">
             <nav aria-label="Main Menu">
                 <button class="close-button" on:click=close_dialog>
                     <Icon name="close".into()/>
                     <span class="sr-only">"Close Navigation Menu"</span>
                 </button>
                 <menu>
+                <ul>
                     <li>
                         <a href="/app">
                             "dashboard"
                         </a>
                     </li>
                     <li>
-                        <a href="/app/check_in">
-                            "check in/out"
-                        </a>
-                    </li>
-                    <li>
                         <a href="/app/timesheet">
                             "timesheet"
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/app/users"  >
-                            "users"
                         </a>
                     </li>
                     // <Show when=move || user().state == 1>
@@ -60,19 +51,26 @@ pub fn Menu() -> impl IntoView {
                                 "timesheets"
                             </a>
                         </li>
+                            <li>
+                                <a href="/admin/users" >
+                                    "users"
+                                </a>
+                            </li>
                     // </Show>
+                    </ul>
                 </menu>
-
-                <ActionForm action={log_out}>
-                    <button class="logout-button" type="submit">
-                        <span>"Logout"</span>
-                        <Icon name="logout".into()/>
-                    </button>
-                </ActionForm>
             </nav>
         </dialog>
-        <button id="nav" on:click=open_dialog>
-            <Icon name="horizontal-menu".into()/>
-        </button>
+        <div id="nav">
+            <ActionForm action={log_out}>
+                <button class="logout-button" type="submit">
+                    <span>"Logout"</span>
+                    <Icon name="logout".into()/>
+                </button>
+            </ActionForm>
+            <button  on:click=open_dialog>
+                <Icon name="horizontal-menu".into()/>
+            </button>
+        </div>
     }
 }
