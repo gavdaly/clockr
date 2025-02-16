@@ -1,23 +1,18 @@
-use crate::components::check_in::CheckInView;
 use crate::components::loading_progress::Loading;
 use crate::components::menu::Menu;
-use crate::functions::user::get_curent_user;
+use crate::functions::get_curent_user;
 use crate::models::user::UserDisplay;
-use crate::screens::authenticate::Auth;
-use crate::screens::clock_in_link::ClockInLink;
-use crate::screens::home::HomePage;
-use crate::screens::magic_link::MagicLink;
-use crate::screens::timesheet::{TimeSheetDisplay, TimeSheetEdit, TimeSheetMissing};
-use crate::screens::timesheets::{
-    TimeSheets, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending,
+use crate::screens::{
+    AdminUsers, Auth, Dashboard, HomePage, MagicLink, TimeSheetDisplay, TimeSheetEdit,
+    TimeSheetMissing, TimeSheets, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending,
+    UserCreate, UserUpdate, Users, UsersList,
 };
-use crate::screens::users::{AdminUsers, UserCreate, UserUpdate, Users, UsersList};
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_meta::*;
 use leptos_router::components::{ParentRoute, ProtectedParentRoute, Route, Router, Routes};
 use leptos_router::nested_router::Outlet;
-use leptos_router::path;
+use leptos_router::*;
 use serde::{Deserialize, Serialize};
 
 pub static VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
@@ -44,18 +39,18 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
 pub fn App() -> impl IntoView {
     provide_meta_context();
 
-    let (user, set_user) = signal::<Option<UserDisplay>>(None);
+    let (user, _set_user) = signal::<Option<UserDisplay>>(None);
 
-    provide_context(user);
+    // provide_context(user);
 
     let content = r#"oklch(36.94% 0.1685 354.12)"#;
 
-    spawn_local(async move {
-        let current_user = get_curent_user().await;
-        if let Ok(user) = current_user {
-            set_user.set(user)
-        }
-    });
+    // spawn_local(async move {
+    //     let current_user = get_curent_user().await;
+    //     if let Ok(user) = current_user {
+    //         set_user.set(user)
+    //     }
+    // });
 
     view! {
 
@@ -74,59 +69,41 @@ pub fn App() -> impl IntoView {
                     <span class="version">{VERSION.clone()}</span>
                 </h1>
             </header>
-
             <Menu />
-
             <main id="main">
                 <Routes fallback=Loading>
                     <Route path=path!("/p/:phone") view=Auth />
+                    <Route path=path!("/login") view=PhoneNumber />
                     <Route path=path!("/l/:link") view=MagicLink/>
+                    <Route path=path!("") view=HomePage />
+                    <Route path=path!("/a") view=Dashboard/>
                     <ProtectedParentRoute
-                        path=path!("")
-                        fallback=Loading
+                        path=path!("/app")
                         condition=move || Some(user.get().is_some())
                         view=Outlet
                         redirect_path=||"/login"
-                        >
-
-                        <Route path=path!("") view=HomePage/>
-                        <Route
-                            path=path!("/c/:link")
-                            view=ClockInLink
-                        />
-                        <ParentRoute path=path!("/app") view= || view! { <Outlet/> }>
-                        <Route path=path!("") view=HomePage/>
-                            <Route path=path!("/timesheet") view=TimeSheetDisplay/>
-                            <Route path=path!("/timesheet/edit/:uuid") view=TimeSheetEdit/>
-                            <Route path=path!("/timesheet/missing") view=TimeSheetMissing/>
-                            <Route path=path!("/users") view=Users/>
-                            <Route path=path!("/check_in") view=CheckInView/>
-                        </ParentRoute>
-                        <ParentRoute path=path!("/admin") view=move || view! { <Outlet/> }>
-                            <ParentRoute path=path!("/timesheets") view=TimeSheets>
-                                <Route path=path!("") view=TimeSheetsList/>
-                                <Route path=path!("/adjustment") view=TimeSheetsAdjustment/>
-                                <Route path=path!("/pending") view=TimeSheetsPending/>
-                            </ParentRoute>
-                            <ParentRoute path=path!("/users") view=AdminUsers>
-                                <Route path=path!("") view=UsersList/>
-                                <Route path=path!("/create") view=UserCreate/>
-                                <Route path=path!("/edit/:id") view=UserUpdate/>
-                            </ParentRoute>
-                        </ParentRoute>
+                    >
+                        <Route path=path!("") view=Dashboard/>
+                        <Route path=path!("/timesheet") view=TimeSheetDisplay/>
+                        <Route path=path!("/timesheet/edit/:uuid") view=TimeSheetEdit/>
+                        <Route path=path!("/timesheet/missing") view=TimeSheetMissing/>
+                        <Route path=path!("/users") view=Users/>
+                        // <ParentRoute path=path!("/admin") view=move || view! { <Outlet/> }>
+                        //     <ParentRoute path=path!("/timesheets") view=TimeSheets>
+                        //         <Route path=path!("") view=TimeSheetsList/>
+                        //         <Route path=path!("/adjustment") view=TimeSheetsAdjustment/>
+                        //         <Route path=path!("/pending") view=TimeSheetsPending/>
+                        //     </ParentRoute>
+                        //     <ParentRoute path=path!("/users") view=AdminUsers>
+                        //         <Route path=path!("") view=UsersList/>
+                        //         <Route path=path!("/create") view=UserCreate/>
+                        //         <Route path=path!("/edit/:id") view=UserUpdate/>
+                        //     </ParentRoute>
+                        // </ParentRoute>
                     </ProtectedParentRoute>
                 </Routes>
             </main>
         </Router>
-    }
-}
-
-#[island]
-fn Counter() -> impl IntoView {
-    let count = RwSignal::new(0);
-    let on_click = move |_| *count.write() += 1;
-    view! {
-        <button on:click=on_click>"Click Me: " {count}</button>
     }
 }
 
@@ -149,45 +126,13 @@ async fn get_session_status() -> Result<bool, ServerFnError> {
     let id = session.get::<Uuid>("id").ok_or_else(|| {
         ServerFnError::<NoCustomError>::ServerError("Error getting Session!".into())
     })?;
-    match get_open_sessions(&id).await {
-        Ok(a) => Ok(!a.is_empty()),
-        Err(_) => Err(ServerFnError::<NoCustomError>::ServerError(
+
+    let Ok(result) = get_open_sessions(&id).await else {
+        return Err(ServerFnError::<NoCustomError>::ServerError(
             "Error getting one".into(),
-        )),
-    }
-}
-
-#[cfg(feature = "ssr")]
-async fn _is_close(latitude: f64, longitude: f64, accuracy: f64) -> Result<(), ServerFnError> {
-    use crate::models::location_trackers::insert;
-    use crate::utils::caluclate_distance;
-    use std::env;
-
-    let base_latitude: f64 = env::var("LATITUDE")
-        .expect("To have ENV VAR: LATITUDE")
-        .parse::<f64>()
-        .expect("`LATITUDE` to be a floating point number");
-    let base_longitude: f64 = env::var("LONGITUDE")
-        .expect("To have ENV VAR: LONGITUDE")
-        .parse::<f64>()
-        .expect("`LONGITUDE` to be a floating point number");
-    let base_accuracy: f64 = env::var("ACCURACY")
-        .expect("To have ENV VAR: ACCURACY")
-        .parse::<f64>()
-        .expect("`ACCURACY` to be a floating point number");
-
-    let _ = insert(latitude, longitude, accuracy).await.map_err(|_e|
-            // leptos::tracing::error!("Insert Tracing Error: {:?}", e)
-            ());
-    if caluclate_distance(latitude, longitude, base_latitude, base_longitude) > base_accuracy {
-        return Err(ServerFnError::Request("You are too far away.".into()));
-    };
-    if accuracy > base_accuracy {
-        return Err(ServerFnError::Request(
-            "The location is not accurate enough.".into(),
         ));
     };
-    Ok(())
+    Ok(!result.is_empty())
 }
 
 #[server]

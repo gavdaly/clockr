@@ -6,7 +6,7 @@ use leptos::prelude::*;
 
 #[island]
 pub fn Menu() -> impl IntoView {
-    let _user = expect_context::<ReadSignal<Option<UserDisplay>>>();
+    // let _user = expect_context::<ReadSignal<Option<UserDisplay>>>();
     let log_out = ServerAction::<Logout>::new();
     let dialog_ref = NodeRef::<Dialog>::new();
     let open_dialog = move |_| {

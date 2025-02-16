@@ -72,8 +72,14 @@ dialog::backdrop {
 
 #nav {
     position: fixed;
+    display: flex;
+    gap: var(--size-3);
     top: var(--size-3);
     right: var(--size-3);
+}
+
+#nav form {
+    display: inline;
 }
 
 menu {
@@ -162,10 +168,11 @@ nav.subWrapper [aria-current="page"] {
     background: var(--surface-1);
 }
 
-aside#checked_in {
+#checked_in {
     margin: var(--size-5);
     padding: var(--size-5);
     box-shadow: var(--shadow-5);
+    border: none;
     border-radius: 4rem;
     font-weight: var(--font-weight-9);
     font-size: var(--font-size-7);

@@ -101,27 +101,28 @@ pub async fn submit_correction_form(
     reason: String,
     date: String,
 ) -> Result<(), ServerFnError> {
-    use crate::components::app_context::get_curent_user;
+    use crate::functions::user::get_curent_user;
     use crate::models::sessions::add_correction;
 
     let start_date = convert_string_to_local_datetime(&date, &start_time)?;
     let end_date = convert_string_to_local_datetime(&date, &end_time)?;
-    let Ok(Some(user_id)) = get_curent_user().await else {
-        return Err(ServerFnError::Args("Unathorized".into()));
-    };
-    match add_correction(id, start_date, end_date, reason, user_id.id).await {
-        Ok(_) => {
-            leptos_axum::redirect("/app/timesheet");
-            Ok(())
-        }
-        Err(e) => {
-            leptos::logging::error!("Error adding correction: {}", e.to_string());
-            Err(ServerFnError::MissingArg(format!(
-                "Error adding correction: {}",
-                e
-            )))
-        }
-    }
+    // let Ok(Some(user_id)) = get_curent_user().await else {
+    //     return Err(ServerFnError::Args("Unathorized".into()));
+    // };
+    // match add_correction(id, start_date, end_date, reason, user_id.id).await {
+    //     Ok(_) => {
+    //         leptos_axum::redirect("/app/timesheet");
+    //         Ok(())
+    //     }
+    //     Err(e) => {
+    //         leptos::logging::error!("Error adding correction: {}", e.to_string());
+    //         Err(ServerFnError::MissingArg(format!(
+    //             "Error adding correction: {}",
+    //             e
+    //         )))
+    //     }
+    // }
+    Ok(())
 }
 
 /// Converts a date and time string to a `DateTime` object in the local timezone.
