@@ -77,30 +77,28 @@ pub fn App() -> impl IntoView {
                     <Route path=path!("/l/:link") view=MagicLink/>
                     <Route path=path!("") view=HomePage />
                     <Route path=path!("/a") view=Dashboard/>
-                    <ProtectedParentRoute
+                    <ParentRoute
                         path=path!("/app")
-                        condition=move || Some(user.get().is_some())
                         view=Outlet
-                        redirect_path=||"/login"
                     >
                         <Route path=path!("") view=Dashboard/>
                         <Route path=path!("/timesheet") view=TimeSheetDisplay/>
                         <Route path=path!("/timesheet/edit/:uuid") view=TimeSheetEdit/>
                         <Route path=path!("/timesheet/missing") view=TimeSheetMissing/>
                         <Route path=path!("/users") view=Users/>
-                        // <ParentRoute path=path!("/admin") view=move || view! { <Outlet/> }>
-                        //     <ParentRoute path=path!("/timesheets") view=TimeSheets>
-                        //         <Route path=path!("") view=TimeSheetsList/>
-                        //         <Route path=path!("/adjustment") view=TimeSheetsAdjustment/>
-                        //         <Route path=path!("/pending") view=TimeSheetsPending/>
-                        //     </ParentRoute>
-                        //     <ParentRoute path=path!("/users") view=AdminUsers>
-                        //         <Route path=path!("") view=UsersList/>
-                        //         <Route path=path!("/create") view=UserCreate/>
-                        //         <Route path=path!("/edit/:id") view=UserUpdate/>
-                        //     </ParentRoute>
-                        // </ParentRoute>
-                    </ProtectedParentRoute>
+                        <ParentRoute path=path!("/admin") view=move || view! { <Outlet/> }>
+                            <ParentRoute path=path!("/timesheets") view=TimeSheets>
+                                <Route path=path!("") view=TimeSheetsList/>
+                                <Route path=path!("/adjustment") view=TimeSheetsAdjustment/>
+                                <Route path=path!("/pending") view=TimeSheetsPending/>
+                            </ParentRoute>
+                            <ParentRoute path=path!("/users") view=AdminUsers>
+                                <Route path=path!("") view=UsersList/>
+                                <Route path=path!("/create") view=UserCreate/>
+                                <Route path=path!("/edit/:id") view=UserUpdate/>
+                            </ParentRoute>
+                        </ParentRoute>
+                    </ParentRoute>
                 </Routes>
             </main>
         </Router>

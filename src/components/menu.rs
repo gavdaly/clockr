@@ -62,6 +62,7 @@ pub fn Menu() -> impl IntoView {
             </nav>
         </dialog>
         <div id="nav">
+            // TODO: add login action
             <ActionForm action={log_out}>
                 <button class="logout-button" type="submit">
                     <span>"Logout"</span>
