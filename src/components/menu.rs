@@ -1,4 +1,4 @@
-use crate::components::icon::Icon;
+use crate::components::Icon;
 use crate::models::user::UserDisplay;
 use crate::screens::authenticate::Logout;
 use leptos::html::Dialog;

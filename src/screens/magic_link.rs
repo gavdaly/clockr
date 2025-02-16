@@ -37,23 +37,23 @@ async fn magic_sign_in(link: String) -> Result<(), ServerFnError> {
     use crate::models::magic_link::MagicLink;
     use axum_session::SessionAnySession;
     use leptos::prelude::server_fn::error::*;
+    use tracing::{error, info};
 
     let Some(session) = use_context::<SessionAnySession>() else {
-        //log error
+        error!("COULD NOT GET SESSION CONTEXT");
         return Err(ServerFnError::<NoCustomError>::ServerError(
             "Session missing.".into(),
         ));
     };
 
     let Ok(user_id) = MagicLink::get(&link).await else {
-        // log expired link
+        error!("COULD NOT GET USER FROM MAGIC LINK");
         return Err(ServerFnError::<NoCustomError>::ServerError(
             "The link has expired".into(),
         ));
     };
 
-    // find session
-    leptos::logging::log!("magic_link: {link}");
+    info!("Signed in user id: {} with magic link.", user_id);
 
     session.set_longterm(true);
     session.set("id", user_id);

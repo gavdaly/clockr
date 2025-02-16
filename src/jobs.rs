@@ -1,8 +1,10 @@
 mod daily;
+mod hourly;
 mod monthly;
 mod weekly;
 
 use tokio_cron_scheduler::{JobScheduler, JobSchedulerError};
+use tracing::info;
 
 pub async fn jobs() -> Result<(), JobSchedulerError> {
     let mut sched = JobScheduler::new().await?;
@@ -10,14 +12,15 @@ pub async fn jobs() -> Result<(), JobSchedulerError> {
     // Add code to be run during/after shutdown
     sched.set_shutdown_handler(Box::new(|| {
         Box::pin(async move {
-            println!("Shut down done");
+            info!("Shut down jobs");
         })
     }));
 
     sched.add(daily::create()?).await?;
+    // sched.add(hourly::create()?).await?;
     sched.add(weekly::create()?).await?;
-    sched.add(monthly::create()?).await?;
-    
+    // sched.add(monthly::create()?).await?;
+
     sched.start().await?;
 
     Ok(())

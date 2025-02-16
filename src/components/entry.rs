@@ -1,5 +1,4 @@
-use crate::components::adjustment::Adjustment;
-use crate::components::session::Session;
+use crate::components::{Adjustment, Session};
 use crate::models::time_sheets::Entry;
 use leptos::prelude::*;
 

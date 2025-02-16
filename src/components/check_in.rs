@@ -1,6 +1,7 @@
-use crate::functions::user::CheckIn;
+use crate::functions::CheckIn;
 use leptos::form::ActionForm;
 use leptos::prelude::*;
+// use tracing::{error, info};
 
 /// This function returns a view component based on whether it is being rendered on the server side or client side.
 ///
@@ -11,27 +12,36 @@ use leptos::prelude::*;
 pub fn CheckInView() -> impl IntoView {
     let check_in = ServerAction::<CheckIn>::new();
 
-    // use leptos_use::{use_geolocation_with_options, UseGeolocationReturn};
+    let loc = match window().navigator().geolocation() {
+        Ok(geolocation) => geolocation,
+        Err(err) => {
+            // error!("Error getting geolocation: {}", err);
+            return view! {
+                <div class="center-center stack">
+                    <p>"Error getting geolocation"</p>
+                </div>
+            };
+        }
+    };
 
-    // let options = leptos_use::UseGeolocationOptions::default().enable_high_accuracy(true);
+    use leptos_use::{use_geolocation_with_options, UseGeolocationReturn};
 
-    // let UseGeolocationReturn {
-    //     coords,
-    //     located_at: _,
-    //     error,
-    //     resume: _,
-    //     pause: _,
-    // } = use_geolocation_with_options(options);
+    let options = leptos_use::UseGeolocationOptions::default().enable_high_accuracy(true);
+
+    let UseGeolocationReturn {
+        coords,
+        located_at: _,
+        error,
+        resume: _,
+        pause: _,
+    } = use_geolocation_with_options(options);
 
     view! {
         <div class="center-center stack">
                             <ActionForm action=check_in>
-                                <input type="hidden" value="2" name="latitude"/>
-                                <input type="hidden" value="2" name="longitude"/>
-                                <input type="hidden" value="2" name="accuracy"/>
-                                <button type="submit" data-size="huge">
+
                                     "Click"
-                                </button>
+
                             </ActionForm>
                         </div>
         // <Show when=move || {

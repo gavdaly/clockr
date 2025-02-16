@@ -1,4 +1,5 @@
 use tokio_cron_scheduler::{Job, JobBuilder, JobSchedulerError};
+use tracing::info;
 
 pub fn create() -> Result<Job, JobSchedulerError> {
     JobBuilder::new()
@@ -7,7 +8,7 @@ pub fn create() -> Result<Job, JobSchedulerError> {
         .unwrap()
         .with_run_async(Box::new(|_uuid, mut _l| {
             Box::pin(async move {
-                println!("I run async every Week");
+                info!("I run async every Week");
             })
         }))
         .build()

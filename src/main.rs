@@ -9,18 +9,25 @@ async fn main() {
     use axum_session_sqlx::SessionPgPool;
     use clkr::app::*;
     use jobs::jobs;
-    use leptos::logging::log;
     use leptos::prelude::*;
     use leptos_axum::{generate_route_list, LeptosRoutes};
     use sqlx::postgres::PgPoolOptions;
+    use tracing::{error, info};
 
     dotenv::dotenv().ok();
 
-    jobs().await.expect("jobs should run");
+    tracing_subscriber::fmt::init();
 
-    clkr::database::init_db()
-        .await
-        .expect("Should create database pool");
+    dbg!(ulid::Ulid::new().to_string());
+
+    if let Err(e) = jobs().await {
+        error!("jobs failed: {}", e);
+    }
+
+    if let Err(e) = clkr::database::init_db().await {
+        error!("database failed to initialize.");
+        panic!("database failed: {:#?}", e);
+    }
 
     let session_config = SessionConfig::default().with_table_name("user_sessions");
 
@@ -55,7 +62,7 @@ async fn main() {
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
-    log!("listening on http://{}", &addr);
+    info!("listening on http://{}", &addr);
     let listener = tokio::net::TcpListener::bind(&addr)
         .await
         .expect("should bind to address");
