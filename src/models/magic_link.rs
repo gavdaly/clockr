@@ -22,6 +22,7 @@ impl MagicLink {
     /// * `Err(sqlx::Error)` - If there was an error inserting into the database
     #[tracing::instrument]
     pub async fn create(user_id: Uuid) -> Result<Uuid, sqlx::Error> {
+        info!("Creating magic link for user {}", user_id);
         let db = get_db();
         let link = query_as!(
             MagicLink,
@@ -49,6 +50,7 @@ impl MagicLink {
     /// * `Err(sqlx::Error)` - If the magic link is invalid or not found
     #[tracing::instrument]
     pub async fn get(id: &str) -> Result<Uuid, sqlx::Error> {
+        info!("Getting magic link for id {}", id);
         let Ok(id) = Uuid::parse_str(id) else {
             error!("invalid id");
             return Err(sqlx::Error::RowNotFound);

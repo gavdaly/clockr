@@ -1,6 +1,8 @@
 use crate::models::user::UserDisplay;
 use leptos::prelude::*;
-use tracing::{error, info, instrument};
+
+#[cfg(feature = "ssr")]
+use tracing::{error, info};
 
 /// Retrieves the current user from the session, if one exists
 ///
@@ -9,20 +11,18 @@ use tracing::{error, info, instrument};
 /// - `Ok(None)` if no user is authenticated
 /// - `Err(ServerFnError)` if there are session or database errors
 #[server]
-#[instrument]
+#[tracing::instrument]
 pub async fn get_curent_user() -> Result<Option<UserDisplay>, ServerFnError> {
-    use axum_session::SessionAnySession;
-    use leptos::prelude::server_fn::error::*;
     use uuid::Uuid;
 
-    let Some(session) = use_context::<SessionAnySession>() else {
-        error!("Error getting settion");
-        return Err(ServerFnError::ServerError(
-            "Error Finding Session 30".into(),
-        ));
+    let Some(session) = use_context::<UserSession>() else {
+        error!("Error getting session");
+        return Err(ServerFnError::ServerError("Error Finding Session".into()));
     };
 
-    let Some(id) = session.get::<Uuid>("id") else {
+    info!("Session: {:?}", session.0);
+
+    let Some(id) = session.0.get("id") else {
         info!("User not Authenticated");
         return Ok(None);
     };
@@ -41,9 +41,9 @@ pub async fn get_curent_user() -> Result<Option<UserDisplay>, ServerFnError> {
 /// - `Ok(UserDisplay)` if a valid user is found
 /// - `Err(ServerFnError)` if session is missing, user is not authenticated, or user cannot be found
 #[server]
-#[instrument]
+#[tracing::instrument]
 async fn check_in() -> Result<UserDisplay, ServerFnError> {
-    use crate::models::sessions::{close_session, get_open_session, new_session};
+    // use crate::models::sessions::{close_session, get_open_session, new_session};
     use axum_session::SessionAnySession;
     use leptos::prelude::server_fn::error::*;
     use uuid::Uuid;

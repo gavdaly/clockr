@@ -95,17 +95,17 @@ pub fn CorrectionForm(
 /// - `Err(ServerFnError)`: If there is an error adding the correction.
 #[server]
 pub async fn submit_correction_form(
-    id: Option<Uuid>,
+    _id: Option<Uuid>,
     start_time: String,
     end_time: String,
-    reason: String,
+    _reason: String,
     date: String,
 ) -> Result<(), ServerFnError> {
-    use crate::functions::user::get_curent_user;
-    use crate::models::sessions::add_correction;
+    // use crate::functions::user::get_curent_user;
+    // use crate::models::sessions::add_correction;
 
-    let start_date = convert_string_to_local_datetime(&date, &start_time)?;
-    let end_date = convert_string_to_local_datetime(&date, &end_time)?;
+    let _start_date = convert_string_to_local_datetime(&date, &start_time)?;
+    let _end_date = convert_string_to_local_datetime(&date, &end_time)?;
     // let Ok(Some(user_id)) = get_curent_user().await else {
     //     return Err(ServerFnError::Args("Unathorized".into()));
     // };

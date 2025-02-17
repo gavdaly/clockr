@@ -1,16 +1,13 @@
 use crate::components::loading_progress::Loading;
 use crate::components::menu::Menu;
-use crate::functions::get_curent_user;
-use crate::models::user::UserDisplay;
 use crate::screens::{
     AdminUsers, Auth, Dashboard, HomePage, MagicLink, TimeSheetDisplay, TimeSheetEdit,
     TimeSheetMissing, TimeSheets, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending,
     UserCreate, UserUpdate, Users, UsersList,
 };
 use leptos::prelude::*;
-use leptos::task::spawn_local;
 use leptos_meta::*;
-use leptos_router::components::{ParentRoute, ProtectedParentRoute, Route, Router, Routes};
+use leptos_router::components::{ParentRoute, Route, Router, Routes};
 use leptos_router::nested_router::Outlet;
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
@@ -36,21 +33,13 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
 }
 
 #[component]
+#[tracing::instrument]
 pub fn App() -> impl IntoView {
     provide_meta_context();
 
-    let (user, _set_user) = signal::<Option<UserDisplay>>(None);
-
-    // provide_context(user);
-
     let content = r#"oklch(36.94% 0.1685 354.12)"#;
 
-    // spawn_local(async move {
-    //     let current_user = get_curent_user().await;
-    //     if let Ok(user) = current_user {
-    //         set_user.set(user)
-    //     }
-    // });
+    tracing::info!("App component Rendered");
 
     view! {
 
@@ -142,19 +131,19 @@ async fn submit_phone_number(phone: String) -> Result<(), ServerFnError> {
 
     let phone = crate::utils::filter_phone_number(&phone);
 
-    // leptos::tracing::info!("**| phone: {:?}", phone);
+    tracing::info!("phone: {:?}", phone);
 
     let Ok(user) = get_user_by_phone(&phone).await else {
-        // leptos::tracing::warn!("Could not find phone number: {:?}", phone);
+        tracing::error!("Could not find phone number: {:?}", phone);
         return Err(ServerFnError::Deserialization(
             "Could not Find Phone Number!".into(),
         ));
     };
 
-    // leptos::tracing::info!("**| user: {:?}", user);
+    tracing::info!("user: {:?}", user);
 
     let Ok(pin) = Pin::create_pin_for(user.id).await else {
-        // leptos::tracing::error!("Could not create pin: {}", user.id.to_string());
+        tracing::error!("Could not create pin: {}", user.id.to_string());
         return Err(ServerFnError::ServerError("Error Creating Pin!".into()));
     };
 

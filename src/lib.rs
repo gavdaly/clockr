@@ -5,6 +5,7 @@ pub mod functions;
 pub mod models;
 pub mod screens;
 pub mod service;
+pub mod user_session;
 pub mod utils;
 
 #[cfg(feature = "hydrate")]

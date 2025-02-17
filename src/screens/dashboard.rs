@@ -14,7 +14,7 @@ struct TimeEntry {
 /// Renders the home page of your application.
 #[component]
 pub fn Dashboard() -> impl IntoView {
-    let (user, set_user) = signal::<Option<UserDisplay>>(None);
+    let (_user, _set_user) = signal::<Option<UserDisplay>>(None);
 
     let timestamp = |time| {
         chrono::NaiveTime::parse_from_str(time, "%H:%M")
@@ -40,7 +40,7 @@ pub fn Dashboard() -> impl IntoView {
         },
     ]);
 
-    let delete_item = move |id: String| {
+    let _delete_item = move |id: String| {
         set_times.update(|t| {
             t.retain(|entry| entry.id != id);
         });

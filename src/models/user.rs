@@ -2,15 +2,18 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-pub struct UserToday {
-    pub id: Uuid,
-    pub first_name: String,
-    pub last_name: String,
-    pub state: State,
-    pub check_ins: Vec<DateTime<Utc>>,
-    pub week_duration: u64,
-    pub previous_day_possible_errors: u16,
-}
+// pub struct UserToday {
+//     pub id: Uuid,
+//     pub first_name: String,
+//     pub last_name: String,
+//     pub state: State,
+//     pub check_ins: Vec<DateTime<Utc>>,
+//     pub week_duration: u64,
+//     pub previous_day_possible_errors: u16,
+// }
+
+pub type UserToday = UserDisplay;
+pub type CurrentUser = Option<UserToday>;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct User {
@@ -52,16 +55,13 @@ pub struct UserUpdate {
 }
 
 #[cfg(feature = "ssr")]
-use {
-    crate::database::get_db,
-    sqlx::*,
-    tracing::{info, warn},
-};
+use {crate::database::get_db, sqlx::*};
 
 #[cfg(feature = "ssr")]
 impl UserDisplay {
     #[tracing::instrument]
     pub async fn get_all_hourly() -> Result<Vec<Self>, sqlx::Error> {
+        tracing::info!("Fetching all hourly users");
         let db = get_db();
         query_as!(
             UserDisplay,
@@ -193,7 +193,7 @@ pub struct UserPhone {
 #[tracing::instrument]
 pub async fn get_user_by_phone(phone: &str) -> Result<UserPhone, sqlx::Error> {
     use sqlx::*;
-    info!("Getting user by Phone Numeber: {}", phone);
+    tracing::info!("Getting user by Phone Numeber: {}", phone);
 
     let db = get_db();
     let result = query_as!(
@@ -211,6 +211,6 @@ WHERE
     .fetch_one(db)
     .await;
 
-    info!("Got User: {:?}", result);
+    tracing::info!("Got User: {:?}", result);
     result
 }
