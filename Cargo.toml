@@ -13,9 +13,9 @@ crate-type = ["cdylib", "rlib"]
 axum = { version = "0.7", optional = true }
 console_error_panic_hook = { version = "0.1", optional = true }
 leptos = { version = "^0.7.0", features = ["islands", "tracing"] }
-leptos_axum = { version = "^0.7.0", optional = true }
-leptos_meta = { version = "^0.7.0" }
+leptos_axum = { version = "^0.7.0", features = ["tracing"], optional = true }
 leptos_router = { version = "^0.7.0" }
+leptos_meta = { version = "^0.7.0", features = ["tracing"] }
 tokio = { version = "1", features = [
     "rt-multi-thread",
     "tracing",
@@ -25,7 +25,7 @@ tokio-cron-scheduler = { version = "0.13.0", features = [
     "tracing-subscriber",
 ], optional = true }
 wasm-bindgen = { version = "=0.2.100", optional = true }
-tracing = { version = "0.1.40", optional = true }
+tracing = { version = "0.1.40" }
 tracing-subscriber = { version = "0.3", optional = true }
 axum_session = { version = "0.16.0", optional = true }
 axum_session_sqlx = { version = "0.5.0", optional = true }
@@ -62,7 +62,6 @@ ssr = [
     "dep:sqlx",
     "dep:rand",
     "dep:twilio",
-    "dep:tracing",
     "dep:tracing-subscriber",
     "dep:openssl",
     "dep:tokio-cron-scheduler",

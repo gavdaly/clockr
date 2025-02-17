@@ -1805,6 +1805,7 @@ dependencies = [
  "tokio",
  "tower",
  "tower-http",
+ "tracing",
 ]
 
 [[package]]
@@ -1904,6 +1905,7 @@ dependencies = [
  "once_cell",
  "or_poisoned",
  "send_wrapper",
+ "tracing",
  "wasm-bindgen",
  "web-sys",
 ]
