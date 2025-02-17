@@ -11,6 +11,7 @@ pub fn create() -> Result<Job, JobSchedulerError> {
         .with_run_async(Box::new(|_uuid, mut _l| {
             Box::pin(async move {
                 info!("I run async day at 4am UTC");
+                // Send messages to users that have invalid timesheets
             })
         }))
         .build()

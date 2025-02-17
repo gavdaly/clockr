@@ -4,6 +4,7 @@ use leptos_meta::*;
 use leptos_router::ActionForm;
 
 #[component]
+#[tracing::instrument]
 pub fn PhoneNumber() -> impl IntoView {
     let submit = create_server_action::<SubmitPhoneNumber>();
     let value = submit.value();

@@ -39,9 +39,7 @@ impl Pin {
         let db = database::get_db();
         sqlx::query_as!(
             Pin,
-            "
-                    SELECT id, user_id, number FROM pins WHERE number = $1
-                ",
+            "SELECT id, user_id, number FROM pins WHERE number = $1",
             number
         )
         .fetch_one(db)

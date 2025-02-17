@@ -52,7 +52,11 @@ pub struct UserUpdate {
 }
 
 #[cfg(feature = "ssr")]
-use {crate::database::get_db, sqlx::*};
+use {
+    crate::database::get_db,
+    sqlx::*,
+    tracing::{info, warn},
+};
 
 #[cfg(feature = "ssr")]
 impl UserDisplay {
@@ -189,7 +193,7 @@ pub struct UserPhone {
 #[tracing::instrument]
 pub async fn get_user_by_phone(phone: &str) -> Result<UserPhone, sqlx::Error> {
     use sqlx::*;
-    // leptos::tracing::info!("-- Getting Phone Numeber: {}", phone);
+    info!("Getting user by Phone Numeber: {}", phone);
 
     let db = get_db();
     let result = query_as!(
@@ -207,6 +211,6 @@ WHERE
     .fetch_one(db)
     .await;
 
-    // leptos::tracing::info!("-- Got User: {:?}", result);
+    info!("Got User: {:?}", result);
     result
 }

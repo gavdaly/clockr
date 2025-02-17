@@ -10,7 +10,8 @@ pub fn create() -> Result<Job, JobSchedulerError> {
         .unwrap()
         .with_run_async(Box::new(|_uuid, mut _l| {
             Box::pin(async move {
-                info!("I run async every hour");
+                info!("Running hourly jobs");
+                // Clear all TTL needed entries
             })
         }))
         .build()
