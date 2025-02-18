@@ -64,11 +64,11 @@ async fn main() {
     let leptos_options = conf.leptos_options;
     let routes = generate_route_list(App);
     let app = Router::new()
-        .layer(SessionLayer::new(session_store.clone()))
         .leptos_routes(&leptos_options, routes, {
             let leptos_options = leptos_options.clone();
             move || shell(leptos_options.clone())
         })
+        .layer(SessionLayer::new(session_store.clone()))
         .fallback(leptos_axum::file_and_error_handler(shell))
         .with_state(leptos_options);
 

@@ -30,6 +30,7 @@ tracing-subscriber = { version = "0.3", optional = true }
 axum_session = { version = "0.16.0", optional = true }
 axum_session_sqlx = { version = "0.5.0", optional = true }
 serde = { version = "1.0.201", features = ["derive"] }
+http = { version = "1.1" }
 sqlx = { version = "0.8.2", features = [
     "runtime-tokio-rustls",
     "sqlx-postgres",
@@ -40,13 +41,13 @@ sqlx = { version = "0.8.2", features = [
     "bigdecimal",
 ], optional = true }
 uuid = { version = "1.8.0", features = ["v4", "js", "serde"] }
-ulid = { version = "1.2.0", features = ["serde", "postgres"], optional = true }
+# ulid = { version = "1.2.0", features = ["serde", "postgres"] }
 base32 = { version = "0.5.1", optional = true }
 chrono = { version = "0.4.38", features = ["serde"] }
 rand = { version = "0.9.0", features = ["nightly"], optional = true }
 dotenv = { version = "0.15.0", optional = true }
 leptos-use = { version = "0.15.6" }
-web-sys = { version = "0.3.69", features = ["Geolocation"] }
+web-sys = { version = "0.3.69" }
 twilio = { path = "libs/twilio", optional = true }
 openssl = { version = "0.10", optional = true, features = ["vendored"] }
 
@@ -66,7 +67,6 @@ ssr = [
     "dep:openssl",
     "dep:tokio-cron-scheduler",
     "dep:base32",
-    "dep:ulid",
     "leptos/ssr",
     "leptos_meta/ssr",
     "leptos_router/ssr",

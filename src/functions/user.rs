@@ -13,16 +13,16 @@ use tracing::{error, info};
 #[server]
 #[tracing::instrument]
 pub async fn get_curent_user() -> Result<Option<UserDisplay>, ServerFnError> {
+    use axum::extract::Extension;
+    use axum_session::Session;
+    use axum_session_sqlx::SessionPgPool;
+    use leptos_axum::extract;
     use uuid::Uuid;
 
-    let Some(session) = use_context::<UserSession>() else {
-        error!("Error getting session");
-        return Err(ServerFnError::ServerError("Error Finding Session".into()));
-    };
+    let session: Extension<Session<SessionPgPool>> = extract().await?;
+    info!("Session: {:?}", session);
 
-    info!("Session: {:?}", session.0);
-
-    let Some(id) = session.0.get("id") else {
+    let Some(id) = session.get("id") else {
         info!("User not Authenticated");
         return Ok(None);
     };

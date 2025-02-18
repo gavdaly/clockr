@@ -1,5 +1,6 @@
 use crate::components::loading_progress::Loading;
 use crate::components::menu::Menu;
+use crate::functions::get_curent_user;
 use crate::screens::{
     AdminUsers, Auth, Dashboard, HomePage, MagicLink, TimeSheetDisplay, TimeSheetEdit,
     TimeSheetMissing, TimeSheets, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending,
@@ -36,6 +37,8 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
 #[tracing::instrument]
 pub fn App() -> impl IntoView {
     provide_meta_context();
+
+    let _current_user = Resource::new(|| {}, |_| get_curent_user());
 
     let content = r#"oklch(36.94% 0.1685 354.12)"#;
 
