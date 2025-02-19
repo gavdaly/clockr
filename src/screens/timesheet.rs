@@ -32,7 +32,7 @@ pub fn TimeSheetDisplay() -> impl IntoView {
 
 #[component]
 pub fn TimeSheetMissing() -> impl IntoView {
-    view! { <CorrectionForm uuid=None /> }
+    view! { <CorrectionForm uuid=None/> }
 }
 
 #[derive(Params, Clone, PartialEq)]
@@ -53,11 +53,11 @@ pub fn TimeSheetEdit() -> impl IntoView {
         Ok(TimeSheetEditParams { uuid: Some(uuid) }) => {
             session.dispatch(GetSession { uuid: uuid.clone() });
 
-            view! { <CorrectionForm uuid=Some(uuid) /> }.into_any()
+            view! { <CorrectionForm uuid=Some(uuid)/> }.into_any()
         }
         Err(e) => view! { <div data-state="error">"Error getting session: " {e.to_string()}</div> }
             .into_any(),
-        _ => view! {<div data-state="error">"Coult Not find the user you are looking for!"</div>}
+        _ => view! { <div data-state="error">"Coult Not find the user you are looking for!"</div> }
             .into_any(),
     }
 }

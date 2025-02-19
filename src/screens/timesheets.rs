@@ -1,7 +1,7 @@
 use crate::components::loading_progress::Loading;
 // use crate::components::timesheet::TimeSheetDisplay;
 use crate::models::time_sheets::TimeSheet;
-use crate::models::user::UserDisplay;
+use crate::models::user::UserToday;
 use chrono::NaiveDate;
 use leptos::prelude::*;
 use leptos_router::components::A;
@@ -51,8 +51,8 @@ async fn load_timesheet_for<'a>(user_id: String) -> Result<TimeSheet, ServerFnEr
 }
 
 #[server]
-pub async fn load_hourly_users() -> Result<Vec<UserDisplay>, ServerFnError> {
-    match UserDisplay::get_all_hourly().await {
+pub async fn load_hourly_users() -> Result<Vec<UserToday>, ServerFnError> {
+    match UserToday::get_all_hourly().await {
         Ok(v) => Ok(v),
         Err(_) => Err(ServerFnError::ServerError("Server Error".to_string())),
     }
@@ -67,7 +67,9 @@ pub fn TimeSheetsList() -> impl IntoView {
     Effect::new(move |_| leptos::logging::log!("{:?}", current_user.get()));
 
     view! {
-        <Suspense fallback=move || { view! { <Loading/> } }>
+        <Suspense fallback=move || {
+            view! { <Loading/> }
+        }>
             {move || match users.get() {
                 Some(Ok(a)) => {
                     view! {
@@ -95,14 +97,13 @@ pub fn TimeSheetsList() -> impl IntoView {
                                     .collect_view()}
                             </select>
                         </div>
-                    }.into_any()
+                    }
+                        .into_any()
                 }
                 _ => view! { <div>"Server Error"</div> }.into_any(),
             }}
-            <Show when=move || {
-                !current_user.get().is_empty()
-            }>
-              <p>"Show TimeSheet"</p>
+            <Show when=move || { !current_user.get().is_empty() }>
+                <p>"Show TimeSheet"</p>
 
             </Show>
 
@@ -139,7 +140,8 @@ pub fn TimeSheetsAdjustment() -> impl IntoView {
                                         .collect_view()}
                                 </select>
                             </div>
-                        }.into_any()
+                        }
+                            .into_any()
                     }
                     _ => view! { <div>"Server Error"</div> }.into_any(),
                 }}

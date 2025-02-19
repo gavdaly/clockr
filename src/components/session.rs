@@ -37,19 +37,11 @@ pub fn Session(session: SessionAndCorrection) -> impl IntoView {
                     {match session.state {
                         0 => view! { <span class="state">"open"</span> }.into_any(),
                         1 => {
-                            view! {
-                                <A href=format!("/app/timesheet/edit/{}", id)>
-                                    edit
-                                </A>
-                            }
+                            view! { <A href=format!("/app/timesheet/edit/{}", id)>edit</A> }
                                 .into_any()
                         }
                         2 => {
-                            view! {
-                                <A href=format!("/app/timesheet/edit/{}", id)>
-                                    error
-                                </A>
-                            }
+                            view! { <A href=format!("/app/timesheet/edit/{}", id)>error</A> }
                                 .into_any()
                         }
                         3 => view! { <span class="state">"pending"</span> }.into_any(),
@@ -138,7 +130,7 @@ async fn handle_correction_response(
     id: Uuid,
 ) -> Result<(), ServerFnError> {
     use crate::models::corrections::correction_response;
-    use crate::models::user::UserDisplay;
+    use crate::models::user::UserToday;
     use axum_session::SessionAnySession;
     use leptos::prelude::server_fn::error::*;
 
@@ -147,7 +139,7 @@ async fn handle_correction_response(
     let user_id = session.get::<Uuid>("id").ok_or_else(|| {
         ServerFnError::<NoCustomError>::ServerError("Error getting Session!".into())
     })?;
-    let user = UserDisplay::get(user_id).await?;
+    let user = UserToday::get(user_id).await?;
 
     if user.state != 1 {
         return Err(ServerFnError::<NoCustomError>::ServerError(

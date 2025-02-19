@@ -12,12 +12,10 @@ pub fn MagicLink() -> impl IntoView {
     let params = use_params::<MagicLinkParams>();
 
     match params.get() {
-        Ok(MagicLinkParams { link: Some(link) }) => view! {
-            <MagicClick link />
-        }
+        Ok(MagicLinkParams { link: Some(link) }) => view! { <MagicClick link/> }
         .into_any(),
         Err(e) => view! { <div>"Error parsing Parameters: " {e.to_string()}</div> }.into_any(),
-        _ => view! {<div>"The link has expired, please try again!"</div>}.into_any(),
+        _ => view! { <div>"The link has expired, please try again!"</div> }.into_any(),
     }
 }
 
@@ -26,7 +24,7 @@ fn MagicClick(link: String) -> impl IntoView {
     let magic_sign_in = ServerAction::<MagicSignIn>::new();
     view! {
         <ActionForm action=magic_sign_in>
-            <input type="hidden" name="link" value={link} />
+            <input type="hidden" name="link" value=link/>
             <button type="submit">Sign In</button>
         </ActionForm>
     }
@@ -35,16 +33,16 @@ fn MagicClick(link: String) -> impl IntoView {
 #[server]
 async fn magic_sign_in(link: String) -> Result<(), ServerFnError> {
     use crate::models::magic_link::MagicLink;
+    use axum::extract::Extension;
+    use axum_session::Session;
     use axum_session::SessionAnySession;
+    use axum_session_sqlx::SessionPgPool;
     use leptos::prelude::server_fn::error::*;
+    use leptos_axum::extract;
     use tracing::{error, info};
 
-    let Some(session) = use_context::<SessionAnySession>() else {
-        error!("COULD NOT GET SESSION CONTEXT");
-        return Err(ServerFnError::<NoCustomError>::ServerError(
-            "Session missing.".into(),
-        ));
-    };
+    let session: Extension<Session<SessionPgPool>> = extract().await?;
+    info!("Session: {:?}", session);
 
     let Ok(user_id) = MagicLink::get(&link).await else {
         error!("COULD NOT GET USER FROM MAGIC LINK");

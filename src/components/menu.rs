@@ -5,7 +5,7 @@ use leptos::prelude::*;
 
 #[island]
 pub fn Menu() -> impl IntoView {
-    // let _user = expect_context::<ReadSignal<Option<UserDisplay>>>();
+    // let _user = expect_context::<ReadSignal<Option<UserToday>>>();
     let log_out = ServerAction::<Logout>::new();
     let dialog_ref = NodeRef::<Dialog>::new();
     let open_dialog = move |_| {
@@ -32,29 +32,21 @@ pub fn Menu() -> impl IntoView {
                     <span class="sr-only">"Close Navigation Menu"</span>
                 </button>
                 <menu>
-                <ul>
-                    <li>
-                        <a href="/app">
-                            "dashboard"
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/app/timesheet">
-                            "timesheet"
-                        </a>
-                    </li>
-                    // <Show when=move || user().state == 1>
+                    <ul>
+                        <li>
+                            <a href="/app">"dashboard"</a>
+                        </li>
+                        <li>
+                            <a href="/app/timesheet">"timesheet"</a>
+                        </li>
+                        // <Show when=move || user().state == 1>
                         <h2>"Admin"</h2>
                         <li>
-                            <a href="/admin/timesheets" >
-                                "timesheets"
-                            </a>
+                            <a href="/admin/timesheets">"timesheets"</a>
                         </li>
-                            <li>
-                                <a href="/admin/users" >
-                                    "users"
-                                </a>
-                            </li>
+                        <li>
+                            <a href="/admin/users">"users"</a>
+                        </li>
                     // </Show>
                     </ul>
                 </menu>
@@ -62,13 +54,13 @@ pub fn Menu() -> impl IntoView {
         </dialog>
         <div id="nav">
             // TODO: add login action
-            <ActionForm action={log_out}>
+            <ActionForm action=log_out>
                 <button class="logout-button" type="submit">
                     <span>"Logout"</span>
                     <Icon name="logout".into()/>
                 </button>
             </ActionForm>
-            <button  on:click=open_dialog>
+            <button on:click=open_dialog>
                 <Icon name="horizontal-menu".into()/>
             </button>
         </div>

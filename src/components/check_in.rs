@@ -13,9 +13,7 @@ pub fn CheckInView() -> impl IntoView {
 
     view! {
         <div class="center-center stack">
-            <ActionForm action=check_in>
-                "Click"
-            </ActionForm>
+            <ActionForm action=check_in>"Click"</ActionForm>
         </div>
     }
 }

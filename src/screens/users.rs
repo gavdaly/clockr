@@ -4,7 +4,6 @@ use crate::components::user_form::UserForm;
 use leptos::prelude::*;
 use leptos_router::components::A;
 use leptos_router::hooks::use_params;
-use leptos_router::nested_router::Outlet;
 use leptos_router::params::Params;
 
 /// Renders the home page of your application.
@@ -32,7 +31,8 @@ pub fn Users() -> impl IntoView {
                                     </tr>
                                 }
                             })
-                            .collect_view().into_any()
+                            .collect_view()
+                            .into_any()
                     }
                     Some(Err(e)) => view! { <div>"Error: " {e.to_string()}</div> }.into_any(),
                     None => view! {}.into_any(),
@@ -44,7 +44,7 @@ pub fn Users() -> impl IntoView {
 }
 
 #[component]
-pub fn AdminUsers() -> impl IntoView {
+pub fn AdminUsers(children: Children) -> impl IntoView {
     view! {
         <nav class="subWrapper">
             <A href="" exact=true>
@@ -54,9 +54,7 @@ pub fn AdminUsers() -> impl IntoView {
                 "Add New User"
             </A>
         </nav>
-        <section class="stack admin users_list">
-            <Outlet/>
-        </section>
+        <section class="stack admin users_list">{children()}</section>
     }
 }
 
@@ -64,49 +62,55 @@ pub fn AdminUsers() -> impl IntoView {
 pub fn UsersList() -> impl IntoView {
     let users = Resource::new(move || {}, move |_| load_hourly_users()).read();
     view! {
-        <section class="stack">
-            {move || match users.clone() {
-                Some(Ok(users)) => {
-                    view! {
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Phone Number</th>
-                                    <th>Edit</th>
-                                </tr>
-                            </thead>
-                            {users
-                                .into_iter()
-                                .map(|user| {
-                                    view! {
-                                        <div class="user_list">
-                                            <span>{user.last_name} ", " {user.first_name}</span>
-                                            <span>{user.phone_number}</span>
-                                            <span>
-                                                <A href=format!("/admin/user/edit/{}", user.id.to_string())>
-                                                    <Icon name="pencil".into()/>
-                                                </A>
-                                            </span>
-                                        </div>
-                                    }
-                                })
-                                .collect_view()}
-                        </table>
+        <AdminUsers>
+            <section class="stack">
+                {move || match users.clone() {
+                    Some(Ok(users)) => {
+                        view! {
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Phone Number</th>
+                                        <th>Edit</th>
+                                    </tr>
+                                </thead>
+                                {users
+                                    .into_iter()
+                                    .map(|user| {
+                                        view! {
+                                            <div class="user_list">
+                                                <span>{user.last_name} ", " {user.first_name}</span>
+                                                <span>{user.phone_number}</span>
+                                                <span>
+                                                    <A href=format!("/admin/user/edit/{}", user.id.to_string())>
+                                                        <Icon name="pencil".into()/>
+                                                    </A>
+                                                </span>
+                                            </div>
+                                        }
+                                    })
+                                    .collect_view()}
+                            </table>
+                        }
+                            .into_any()
                     }
-                        .into_any()
-                }
-                Some(Err(e)) => view! { <div>"Error: " {e.to_string()}</div> }.into_any(),
-                None => view! {}.into_any(),
-            }}
+                    Some(Err(e)) => view! { <div>"Error: " {e.to_string()}</div> }.into_any(),
+                    None => view! {}.into_any(),
+                }}
 
-        </section>
+            </section>
+        </AdminUsers>
     }
 }
 
 #[component]
 pub fn UserCreate() -> impl IntoView {
-    view! { <UserForm uuid=None/> }
+    view! {
+        <AdminUsers>
+            <UserForm uuid=None/>
+        </AdminUsers>
+    }
 }
 
 #[derive(Clone, Params, PartialEq)]
@@ -117,13 +121,28 @@ struct UserUpdateParams {
 #[component]
 pub fn UserUpdate() -> impl IntoView {
     let params = use_params::<UserUpdateParams>();
-    let binding = params.read();
-    let Ok(uuid) = binding.as_ref() else {
-        return view! {<div>"Invalid ID"</div>}.into_any();
-    };
 
-    match &uuid.uuid {
-        Some(uuid) => view! { <UserForm uuid=Some(uuid.into())/> }.into_any(),
-        None => view! { <div data-state="error">{"Did not find the user!"}</div>}.into_any(),
+    view! {
+        {move || {
+            match params.read().clone() {
+                Ok(p) => {
+                    match p.uuid {
+                        Some(uuid) => {
+                            view! {
+                                <AdminUsers>
+                                    <UserForm uuid=Some(uuid.clone())/>
+                                </AdminUsers>
+                            }
+                                .into_any()
+                        }
+                        None => {
+                            view! { <div data-state="error">{"Did not find the user!"}</div> }
+                                .into_any()
+                        }
+                    }
+                }
+                Err(_) => view! { <div>"Invalid ID"</div> }.into_any(),
+            }
+        }}
     }
 }

@@ -1,10 +1,11 @@
 use crate::components::loading_progress::Loading;
 use crate::components::menu::Menu;
-use crate::functions::get_curent_user;
+use crate::functions::get_current_user;
+use crate::models::user::UserToday;
 use crate::screens::{
-    AdminUsers, Auth, Dashboard, HomePage, MagicLink, TimeSheetDisplay, TimeSheetEdit,
-    TimeSheetMissing, TimeSheets, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending,
-    UserCreate, UserUpdate, Users, UsersList,
+    Auth, Dashboard, HomePage, MagicLink, TimeSheetDisplay, TimeSheetEdit, TimeSheetMissing,
+    TimeSheets, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending, UserCreate, UserUpdate,
+    Users, UsersList,
 };
 use leptos::prelude::*;
 use leptos_meta::*;
@@ -17,12 +18,12 @@ pub static VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
-        <!DOCTYPE html>
+        <!DOCTYPE html> 
         <html lang="en">
             <head>
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-                <AutoReload options=options.clone() />
+                <AutoReload options=options.clone()/>
                 <HydrationScripts options islands=true/>
                 <MetaTags/>
             </head>
@@ -38,41 +39,45 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
 pub fn App() -> impl IntoView {
     provide_meta_context();
 
-    let _current_user = Resource::new(|| {}, |_| get_curent_user());
+    let resource_user = Resource::new(
+        || {},
+        async move |_| match get_current_user().await {
+            Ok(user) => user,
+            Err(_) => {
+                tracing::error!("Failed to get current user");
+                None
+            }
+        },
+    );
 
     let content = r#"oklch(36.94% 0.1685 354.12)"#;
 
     tracing::info!("App component Rendered");
 
     view! {
-
-        <Title text="Clkr"/>
-        <Meta name="theme-color" content />
-
-        <Stylesheet id="leptos" href="/pkg/clkr.css"/>
-        <Link rel="icon" type_="image/png" sizes="48x48" href="/logo-48.png"/>
-        <Link rel="icon" type_="image/svg+xml" sizes="any" href="/logo.svg"/>
-        <Link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
-        <Link rel="manifest" href="/site.webmanifest" />
         <Router>
+            <Title text="Clkr"/>
+            <Meta name="theme-color" content=content/>
+
+            <Stylesheet id="leptos" href="/pkg/clkr.css"/>
+            <Link rel="icon" type_="image/png" sizes="48x48" href="/logo-48.png"/>
+            <Link rel="icon" type_="image/svg+xml" sizes="any" href="/logo.svg"/>
+            <Link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+            <Link rel="manifest" href="/site.webmanifest"/>
             <header id="header">
                 <h1>
-                    <span>"Click "</span>
+                    <span>"Clkr"</span>
                     <span class="version">{VERSION.clone()}</span>
                 </h1>
             </header>
-            <Menu />
+            <Menu/>
             <main id="main">
                 <Routes fallback=Loading>
-                    <Route path=path!("/p/:phone") view=Auth />
-                    <Route path=path!("/login") view=PhoneNumber />
+                    <Route path=path!("") view=HomePage/>
+                    <Route path=path!("/p/:phone") view=Auth/>
+                    <Route path=path!("/login") view=PhoneNumber/>
                     <Route path=path!("/l/:link") view=MagicLink/>
-                    <Route path=path!("") view=HomePage />
-                    <Route path=path!("/a") view=Dashboard/>
-                    <ParentRoute
-                        path=path!("/app")
-                        view=Outlet
-                    >
+                    <ParentRoute path=path!("/app") view=Outlet>
                         <Route path=path!("") view=Dashboard/>
                         <Route path=path!("/timesheet") view=TimeSheetDisplay/>
                         <Route path=path!("/timesheet/edit/:uuid") view=TimeSheetEdit/>
@@ -84,11 +89,15 @@ pub fn App() -> impl IntoView {
                                 <Route path=path!("/adjustment") view=TimeSheetsAdjustment/>
                                 <Route path=path!("/pending") view=TimeSheetsPending/>
                             </ParentRoute>
-                            <ParentRoute path=path!("/users") view=AdminUsers>
-                                <Route path=path!("") view=UsersList/>
-                                <Route path=path!("/create") view=UserCreate/>
-                                <Route path=path!("/edit/:id") view=UserUpdate/>
-                            </ParentRoute>
+                            <Route path=path!("/users") view=move || view! { <UsersList/> }/>
+                            <Route
+                                path=path!("/users/create")
+                                view=move || view! { <UserCreate/> }
+                            />
+                            <Route
+                                path=path!("/users/edit/:id")
+                                view=move || view! { <UserUpdate/> }
+                            />
                         </ParentRoute>
                     </ParentRoute>
                 </Routes>
@@ -184,7 +193,9 @@ pub fn PhoneNumber() -> impl IntoView {
             value.get().is_some()
         }>
             {match value.get() {
-                Some(Err(e)) => view! { <div data-state="error">"Error: " {e.to_string()}</div> }.into_any(),
+                Some(Err(e)) => {
+                    view! { <div data-state="error">"Error: " {e.to_string()}</div> }.into_any()
+                }
                 _ => view! { <div data-state="error">"something is messed up"</div> }.into_any(),
             }}
 

@@ -25,7 +25,7 @@ pub fn ClockInLink() -> impl IntoView {
             .into_any()
         }
         Err(e) => view! { <div>"Something went wrong: " {e.to_string()}</div> }.into_any(),
-        _ => view! {<div>"Could not find Link"</div>}.into_any(),
+        _ => view! { <div>"Could not find Link"</div> }.into_any(),
     }
 }
 

@@ -234,6 +234,14 @@ nav.subWrapper [aria-current="page"] {
     background: var(--gradient-20);
 }
 
+[data-state="error"] {
+    color: black;
+    background: red;
+    margin-block: var(--size-1);
+    padding: var(--size-2);
+    border-radius: var(--radius-1);
+}
+
 svg.loading {
     animation: var(--animation-spin) forwards;
 }

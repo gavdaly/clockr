@@ -2,7 +2,7 @@ use chrono::Timelike;
 use leptos::prelude::*;
 use leptos::{form::ActionForm, tachys::dom::window};
 
-use crate::{functions::user::CheckIn, models::user::UserDisplay};
+use crate::{functions::user::CheckIn, models::user::UserToday};
 
 #[derive(Clone, Debug)]
 struct TimeEntry {
@@ -14,7 +14,7 @@ struct TimeEntry {
 /// Renders the home page of your application.
 #[component]
 pub fn Dashboard() -> impl IntoView {
-    let (_user, _set_user) = signal::<Option<UserDisplay>>(None);
+    let (_user, _set_user) = signal::<Option<UserToday>>(None);
 
     let timestamp = |time| {
         chrono::NaiveTime::parse_from_str(time, "%H:%M")
@@ -71,29 +71,34 @@ pub fn Dashboard() -> impl IntoView {
     let week = Memo::new(move |_| 23554);
     view! {
         <section class="stack">
-            <ClkIn />
+            <ClkIn/>
             <div id="check-ins" class="card wide">
                 <h2>"Check Ins"</h2>
-                <p> "add time +"</p>
+                <p>"add time +"</p>
                 <ul class="slide-list">
-                            {move || times.get().into_iter().map(|entry| {
-
+                    {move || {
+                        times
+                            .get()
+                            .into_iter()
+                            .map(|entry| {
                                 view! {
                                     <li>
                                         <time datetime="">{entry.time}</time>
                                         <div class="delete-indicator">Delete</div>
                                     </li>
                                 }
-                            }).collect::<Vec<_>>()}
-                        </ul>
+                            })
+                            .collect::<Vec<_>>()
+                    }}
+                </ul>
             </div>
             <div class="card small">
                 <h2>"Today"</h2>
-                <DurationHourDisplay seconds={today} />
+                <DurationHourDisplay seconds=today/>
             </div>
             <div class="card small">
                 <h2>"Week"</h2>
-                <DurationHourDisplay seconds={week} />
+                <DurationHourDisplay seconds=week/>
             </div>
         </section>
     }
@@ -106,7 +111,7 @@ fn DurationHourDisplay(seconds: Memo<u64>) -> impl IntoView {
     let s = seconds.get() % 60;
     let hours = seconds.get() as f32 / 3600.0;
     let time = format!("PT{h}H{m}M{s}S");
-    view! {<time datetime={time}>{format!("{:.2}h", hours)}</time>}
+    view! { <time datetime=time>{format!("{:.2}h", hours)}</time> }
 }
 
 #[island]
@@ -126,15 +131,17 @@ fn ClkIn() -> impl IntoView {
                 {if true { "You are Checked In" } else { "You are Checked Out" }}
             </button>
         </ActionForm>
-        <ShowError error={error} />
+        <ShowError error=error/>
     }
 }
 
 #[component]
 fn ShowError(error: Memo<Option<ServerFnError>>) -> impl IntoView {
     view! {
-        <div class="error">
-            {move || error.get().as_ref().map(|e| view! {<p>{e.to_string()}</p>})}
-        </div>
+        <Show when=move || { error.get().is_some() }>
+            <div data-state="error">
+                {move || error.get().as_ref().map(|e| view! { <p>{e.to_string()}</p> })}
+            </div>
+        </Show>
     }
 }

@@ -50,6 +50,7 @@ leptos-use = { version = "0.15.6" }
 web-sys = { version = "0.3.69" }
 twilio = { path = "libs/twilio", optional = true }
 openssl = { version = "0.10", optional = true, features = ["vendored"] }
+reactive_stores = "0.1.7"
 
 [features]
 hydrate = ["leptos/hydrate", "dep:console_error_panic_hook", "dep:wasm-bindgen"]

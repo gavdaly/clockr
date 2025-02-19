@@ -40,18 +40,17 @@ pub fn CorrectionForm(
                 <input type="hidden" name="id" value/>
             </Show>
 
-
             // {move || match date() {
-            //     Some(date) => view! { <input type="hidden" name="date" value=date/> }.into_any(),
-            //     None => {
-            //         view! {
-            //             <div class="input">
-            //                 <label>"Date"</label>
-            //                 <input type="date" name="date"/>
-            //             </div>
-            //         }
-            //             .into_any()
-            //     }
+            // Some(date) => view! { <input type="hidden" name="date" value=date/> }.into_any(),
+            // None => {
+            // view! {
+            // <div class="input">
+            // <label>"Date"</label>
+            // <input type="date" name="date"/>
+            // </div>
+            // }
+            // .into_any()
+            // }
             // }}
 
             <div class="input">
@@ -101,12 +100,12 @@ pub async fn submit_correction_form(
     _reason: String,
     date: String,
 ) -> Result<(), ServerFnError> {
-    // use crate::functions::user::get_curent_user;
+    // use crate::functions::user::get_current_user;
     // use crate::models::sessions::add_correction;
 
     let _start_date = convert_string_to_local_datetime(&date, &start_time)?;
     let _end_date = convert_string_to_local_datetime(&date, &end_time)?;
-    // let Ok(Some(user_id)) = get_curent_user().await else {
+    // let Ok(Some(user_id)) = get_current_user().await else {
     //     return Err(ServerFnError::Args("Unathorized".into()));
     // };
     // match add_correction(id, start_date, end_date, reason, user_id.id).await {

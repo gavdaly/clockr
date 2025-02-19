@@ -35,7 +35,7 @@ pub fn Auth() -> impl IntoView {
                 {move || match phone_params.get() {
                     Ok(query) => {
                         view! {
-                            <ActionForm action={authenticate}>
+                            <ActionForm action=authenticate>
                                 <div class="stack">
                                     <input type="hidden" value=query.phone name="phone"/>
                                     <label id="pin">"Enter Pin From SMS"</label>

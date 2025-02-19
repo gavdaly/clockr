@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use reactive_stores::Store;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -12,20 +13,9 @@ use uuid::Uuid;
 //     pub previous_day_possible_errors: u16,
 // }
 
-pub type UserToday = UserDisplay;
-pub type CurrentUser = Option<UserToday>;
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct User {
-    pub id: Uuid,
-    pub first_name: String,
-    pub last_name: String,
-    pub provider: Option<i32>,
-    pub phone_number: String,
-    pub display_name: Option<String>,
-    pub api_id: Option<i32>,
-    pub state: State,
-    pub settings: String,
+#[derive(Clone, Debug, Default, Store)]
+pub struct CurrentUser {
+    current: Option<UserToday>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -35,8 +25,8 @@ pub enum State {
     Hourly = 2,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
-pub struct UserDisplay {
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct UserToday {
     pub id: Uuid,
     pub first_name: String,
     pub last_name: String,
@@ -58,13 +48,13 @@ pub struct UserUpdate {
 use {crate::database::get_db, sqlx::*};
 
 #[cfg(feature = "ssr")]
-impl UserDisplay {
+impl UserToday {
     #[tracing::instrument]
     pub async fn get_all_hourly() -> Result<Vec<Self>, sqlx::Error> {
         tracing::info!("Fetching all hourly users");
         let db = get_db();
         query_as!(
-            UserDisplay,
+            UserToday,
             r#"
 SELECT
     u.id,
@@ -101,7 +91,7 @@ ORDER BY
     pub async fn get(id: Uuid) -> Result<Self, sqlx::Error> {
         let db = get_db();
         query_as!(
-            UserDisplay,
+            UserToday,
             r#"
 SELECT
     u.id,

@@ -40,14 +40,18 @@ pub fn TimeSheetDisplay(timesheet: TimeSheet) -> impl IntoView {
                                 <td data-title="Day">{day.to_string()}</td>
                                 <td data-title="Hours">{miliseconds_to_string(&(time + b))}</td>
                                 {if statuatory_total > 0 {
-                                    view! { <td data-title="Statutory">{miliseconds_to_string(c)}</td> }
+                                    view! {
+                                        <td data-title="Statutory">{miliseconds_to_string(c)}</td>
+                                    }
                                         .into_any()
                                 } else {
                                     view! {}.into_any()
                                 }}
 
                                 {if vacation_total > 0 {
-                                    view! { <td data-title="Vacation">{miliseconds_to_string(d)}</td> }
+                                    view! {
+                                        <td data-title="Vacation">{miliseconds_to_string(d)}</td>
+                                    }
                                         .into_any()
                                 } else {
                                     view! {}.into_any()
