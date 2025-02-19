@@ -43,7 +43,7 @@ pub async fn clock_in_link_initiate_session(link: String) -> Result<(), ServerFn
     })?;
 
     // check to see if link is valid!!
-    leptos::logging::log!("link: {link}");
+    tracing::info!("link: {link}");
 
     // check for existing session
     match get_open_session(&id).await {

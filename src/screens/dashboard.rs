@@ -73,8 +73,10 @@ pub fn Dashboard() -> impl IntoView {
         <section class="stack">
             <ClkIn/>
             <div id="check-ins" class="card wide">
-                <h2>"Check Ins"</h2>
-                <p>"add time +"</p>
+                <div>
+                    <h2>"Check Ins"</h2>
+                    <a href="/app/time/add">"add time +"</a>
+                </div>
                 <ul class="slide-list">
                     {move || {
                         times
@@ -82,7 +84,7 @@ pub fn Dashboard() -> impl IntoView {
                             .into_iter()
                             .map(|entry| {
                                 view! {
-                                    <li>
+                                    <li data-id={entry.id}>
                                         <time datetime="">{entry.time}</time>
                                         <div class="delete-indicator">Delete</div>
                                     </li>
