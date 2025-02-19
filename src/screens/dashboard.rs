@@ -14,7 +14,7 @@ struct TimeEntry {
 /// Renders the home page of your application.
 #[component]
 pub fn Dashboard() -> impl IntoView {
-    let (_user, _set_user) = signal::<Option<UserToday>>(None);
+    let (user, set_user) = signal::<Option<UserToday>>(None);
 
     let timestamp = |time| {
         chrono::NaiveTime::parse_from_str(time, "%H:%M")
@@ -120,15 +120,24 @@ fn ClkIn() -> impl IntoView {
     let action = ServerAction::<CheckIn>::new();
     let result = action.value();
     let error = Memo::new(move |_| result.get().and_then(|r| r.err()));
+    let (disabled, set_disabled) = signal(false);
 
-    if let Some(Ok(_)) = result.get_untracked() {
-        // also play a sound
-        let _ = window().navigator().vibrate_with_duration(100);
-    }
+    Effect::new(move |_| {
+        if let Some(Ok(_)) = result.get() {
+            let _ = window().navigator().vibrate_with_duration(100);
+            set_disabled.set(true);
+            set_timeout(
+                move || {
+                    set_disabled.set(false);
+                },
+                std::time::Duration::from_secs(10),
+            );
+        }
+    });
 
     view! {
         <ActionForm action attr:id="clk-in">
-            <button id="checked_in" data-checked-in="true">
+            <button id="checked_in" data-checked-in="true" prop:disabled=disabled>
                 {if true { "You are Checked In" } else { "You are Checked Out" }}
             </button>
         </ActionForm>
