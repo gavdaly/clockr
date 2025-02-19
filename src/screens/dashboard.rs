@@ -90,6 +90,7 @@ pub fn Dashboard() -> impl IntoView {
                             })
                             .collect::<Vec<_>>()
                     }}
+
                 </ul>
             </div>
             <div class="card small">

@@ -13,9 +13,11 @@ use uuid::Uuid;
 //     pub previous_day_possible_errors: u16,
 // }
 
-#[derive(Clone, Debug, Default, Store)]
-pub struct CurrentUser {
-    current: Option<UserToday>,
+#[derive(Clone, Debug, Default, Store, Deserialize, Serialize)]
+pub enum CurrentUser {
+    Authenticated(UserToday),
+    #[default]
+    Guest,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -25,7 +27,7 @@ pub enum State {
     Hourly = 2,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Store, Deserialize, Serialize)]
 pub struct UserToday {
     pub id: Uuid,
     pub first_name: String,

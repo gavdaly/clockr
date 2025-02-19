@@ -1,25 +1,24 @@
 use crate::components::Icon;
+use crate::models::UserToday;
 use crate::screens::authenticate::Logout;
 use leptos::html::Dialog;
 use leptos::prelude::*;
 
 #[island]
-pub fn Menu() -> impl IntoView {
-    // let _user = expect_context::<ReadSignal<Option<UserToday>>>();
+pub fn Menu(user: UserToday) -> impl IntoView {
     let log_out = ServerAction::<Logout>::new();
     let dialog_ref = NodeRef::<Dialog>::new();
     let open_dialog = move |_| {
         let Some(dialog) = dialog_ref.get() else {
-            // !TODO: log error
+            tracing::error!("Dialog reference is None");
             return;
         };
         dialog.show_modal().expect("Dialog should open");
     };
 
-    // Handler to close the dialog.
     let close_dialog = move |_| {
         let Some(dialog) = dialog_ref.get() else {
-            // !TODO: log error
+            tracing::error!("Dialog reference is None");
             return;
         };
         dialog.close();
@@ -39,21 +38,21 @@ pub fn Menu() -> impl IntoView {
                         <li>
                             <a href="/app/timesheet">"timesheet"</a>
                         </li>
-                        // <Show when=move || user().state == 1>
-                        <h2>"Admin"</h2>
-                        <li>
-                            <a href="/admin/timesheets">"timesheets"</a>
-                        </li>
-                        <li>
-                            <a href="/admin/users">"users"</a>
-                        </li>
-                    // </Show>
+                        <Show when=move || user.state == 1>
+                            <h2>"Admin"</h2>
+                            <li>
+                                <a href="/admin/timesheets">"timesheets"</a>
+                            </li>
+                            <li>
+                                <a href="/admin/users">"users"</a>
+                            </li>
+                        </Show>
                     </ul>
                 </menu>
             </nav>
         </dialog>
+
         <div id="nav">
-            // TODO: add login action
             <ActionForm action=log_out>
                 <button class="logout-button" type="submit">
                     <span>"Logout"</span>

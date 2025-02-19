@@ -1,7 +1,6 @@
 use crate::components::loading_progress::Loading;
 use crate::components::menu::Menu;
 use crate::functions::get_current_user;
-use crate::models::user::UserToday;
 use crate::screens::{
     Auth, Dashboard, HomePage, MagicLink, TimeSheetDisplay, TimeSheetEdit, TimeSheetMissing,
     TimeSheets, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending, UserCreate, UserUpdate,
@@ -18,7 +17,7 @@ pub static VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
-        <!DOCTYPE html> 
+        <!DOCTYPE html>
         <html lang="en">
             <head>
                 <meta charset="utf-8"/>
@@ -70,7 +69,14 @@ pub fn App() -> impl IntoView {
                     <span class="version">{VERSION.clone()}</span>
                 </h1>
             </header>
-            <Menu/>
+
+            <Suspense>
+                {move || match resource_user.read().clone() {
+                    Some(Some(user)) => view! { <Menu user /> }.into_any(),
+                    _ => view! { <span>"log in"</span> }.into_any(),
+                }}
+
+            </Suspense>
             <main id="main">
                 <Routes fallback=Loading>
                     <Route path=path!("") view=HomePage/>
