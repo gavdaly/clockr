@@ -1,6 +1,7 @@
 use crate::components::loading_progress::Loading;
 use crate::components::menu::Menu;
-use crate::functions::get_current_user;
+use crate::functions::user::{use_user, UserProvider};
+use crate::models::user::CurrentUser;
 use crate::screens::{
     Auth, Dashboard, HomePage, MagicLink, TimeSheetDisplay, TimeSheetEdit, TimeSheetMissing,
     TimeSheets, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending, UserCreate, UserUpdate,
@@ -38,76 +39,68 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
 pub fn App() -> impl IntoView {
     provide_meta_context();
 
-    let resource_user = Resource::new(
-        || {},
-        async move |_| match get_current_user().await {
-            Ok(user) => user,
-            Err(_) => {
-                tracing::error!("Failed to get current user");
-                None
-            }
-        },
-    );
-
     let content = r#"oklch(36.94% 0.1685 354.12)"#;
 
     tracing::info!("App component Rendered");
 
     view! {
         <Router>
-            <Title text="Clkr"/>
-            <Meta name="theme-color" content=content/>
+            <UserProvider>
+                <Title text="Clkr"/>
+                <Meta name="theme-color" content=content/>
 
-            <Stylesheet id="leptos" href="/pkg/clkr.css"/>
-            <Link rel="icon" type_="image/png" sizes="48x48" href="/logo-48.png"/>
-            <Link rel="icon" type_="image/svg+xml" sizes="any" href="/logo.svg"/>
-            <Link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
-            <Link rel="manifest" href="/site.webmanifest"/>
-            <header id="header">
-                <h1>
-                    <span>"Clkr"</span>
-                    <span class="version">{VERSION.clone()}</span>
-                </h1>
-            </header>
+                <Stylesheet id="leptos" href="/pkg/clkr.css"/>
+                <Link rel="icon" type_="image/png" sizes="48x48" href="/logo-48.png"/>
+                <Link rel="icon" type_="image/svg+xml" sizes="any" href="/logo.svg"/>
+                <Link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+                <Link rel="manifest" href="/site.webmanifest"/>
+                <header id="header">
+                    <h1>
+                        <span>"Clkr"</span>
+                        <span class="version">{VERSION.clone()}</span>
+                    </h1>
+                </header>
 
-            <Suspense>
-                {move || match resource_user.read().clone() {
-                    Some(Some(user)) => view! { <Menu user /> }.into_any(),
-                    _ => view! { <span>"log in"</span> }.into_any(),
+                {move || {
+                    let user_context = use_user();
+                    match user_context.get() {
+                        CurrentUser::Authenticated(user) => view! { <Menu user /> }.into_any(),
+                        CurrentUser::Guest => view! { <span>"log in"</span> }.into_any()
+                    }
                 }}
 
-            </Suspense>
-            <main id="main">
-                <Routes fallback=Loading>
-                    <Route path=path!("") view=HomePage/>
-                    <Route path=path!("/p/:phone") view=Auth/>
-                    <Route path=path!("/login") view=PhoneNumber/>
-                    <Route path=path!("/l/:link") view=MagicLink/>
-                    <ParentRoute path=path!("/app") view=Outlet>
-                        <Route path=path!("") view=Dashboard/>
-                        <Route path=path!("/timesheet") view=TimeSheetDisplay/>
-                        <Route path=path!("/timesheet/edit/:uuid") view=TimeSheetEdit/>
-                        <Route path=path!("/timesheet/missing") view=TimeSheetMissing/>
-                        <Route path=path!("/users") view=Users/>
-                        <ParentRoute path=path!("/admin") view=move || view! { <Outlet/> }>
-                            <ParentRoute path=path!("/timesheets") view=TimeSheets>
-                                <Route path=path!("") view=TimeSheetsList/>
-                                <Route path=path!("/adjustment") view=TimeSheetsAdjustment/>
-                                <Route path=path!("/pending") view=TimeSheetsPending/>
+                <main id="main">
+                    <Routes fallback=Loading>
+                        <Route path=path!("") view=HomePage/>
+                        <Route path=path!("/p/:phone") view=Auth/>
+                        <Route path=path!("/login") view=PhoneNumber/>
+                        <Route path=path!("/l/:link") view=MagicLink/>
+                        <ParentRoute path=path!("/app") view=Outlet>
+                            <Route path=path!("") view=Dashboard/>
+                            <Route path=path!("/timesheet") view=TimeSheetDisplay/>
+                            <Route path=path!("/timesheet/edit/:uuid") view=TimeSheetEdit/>
+                            <Route path=path!("/timesheet/missing") view=TimeSheetMissing/>
+                            <Route path=path!("/users") view=Users/>
+                            <ParentRoute path=path!("/admin") view=move || view! { <Outlet/> }>
+                                <ParentRoute path=path!("/timesheets") view=TimeSheets>
+                                    <Route path=path!("") view=TimeSheetsList/>
+                                    <Route path=path!("/adjustment") view=TimeSheetsAdjustment/>
+                                    <Route path=path!("/pending") view=TimeSheetsPending/>
+                                </ParentRoute>
+                                <Route path=path!("/users") view=move || view! { <UsersList/> }/>
+                                <Route
+                                    path=path!("/users/create")
+                                    view=move || view! { <UserCreate/> }
+                                />
+                                <Route
+                                    path=path!("/users/edit/:id")
+                                    view=move || view! { <UserUpdate/> }
+                                />
                             </ParentRoute>
-                            <Route path=path!("/users") view=move || view! { <UsersList/> }/>
-                            <Route
-                                path=path!("/users/create")
-                                view=move || view! { <UserCreate/> }
-                            />
-                            <Route
-                                path=path!("/users/edit/:id")
-                                view=move || view! { <UserUpdate/> }
-                            />
                         </ParentRoute>
-                    </ParentRoute>
-                </Routes>
-            </main>
+                    </Routes>
+                </main>
+            </UserProvider>
         </Router>
     }
 }

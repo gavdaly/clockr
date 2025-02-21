@@ -1,4 +1,4 @@
-use crate::models::user::UserToday;
+use crate::models::user::{UserToday, CurrentUser};
 use leptos::prelude::*;
 
 #[cfg(feature = "ssr")]
@@ -77,4 +77,47 @@ async fn check_in() -> Result<UserToday, ServerFnError> {
         return Err(ServerFnError::ServerError("Could Not Find User.".into()));
     };
     Ok(user)
+}
+
+/// Creates and provides the user context to all children
+#[component]
+pub fn UserProvider(children: Children) -> impl IntoView {
+    // Create a signal to store the current user state
+    let user = RwSignal::new(CurrentUser::default());
+    
+    // Create the resource to load the user
+    let _user_resource = Resource::new(
+        || (),
+        move |_| async move {
+            match get_current_user().await {
+                Ok(Some(user_data)) => {
+                    user.set(CurrentUser::Authenticated(user_data));
+                    Ok(())
+                }
+                Ok(None) => {
+                    user.set(CurrentUser::Guest);
+                    Ok(())
+                }
+                Err(e) => {
+                    tracing::error!("Failed to get current user: {}", e);
+                    user.set(CurrentUser::Guest);
+                    Err(e)
+                }
+            }
+        }
+    );
+
+    // Provide the user context directly
+    provide_context(user);
+
+    view! {
+        <Suspense fallback=move || view! { <span>"Loading..."</span> }>
+            {children()}
+        </Suspense>
+    }
+}
+
+/// Helper function to get the current user signal
+pub fn use_user() -> RwSignal<CurrentUser> {
+    use_context::<RwSignal<CurrentUser>>().expect("User context not found. Did you wrap your app in <UserProvider>?")
 }

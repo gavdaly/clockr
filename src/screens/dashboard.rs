@@ -2,7 +2,7 @@ use chrono::Timelike;
 use leptos::prelude::*;
 use leptos::{form::ActionForm, tachys::dom::window};
 
-use crate::{functions::user::CheckIn, models::user::UserToday};
+use crate::{functions::user::CheckIn};
 
 #[derive(Clone, Debug)]
 struct TimeEntry {
@@ -14,7 +14,6 @@ struct TimeEntry {
 /// Renders the home page of your application.
 #[component]
 pub fn Dashboard() -> impl IntoView {
-    let (user, set_user) = signal::<Option<UserToday>>(None);
 
     let timestamp = |time| {
         chrono::NaiveTime::parse_from_str(time, "%H:%M")
