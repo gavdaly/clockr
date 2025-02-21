@@ -83,7 +83,7 @@ pub fn Dashboard() -> impl IntoView {
                             .into_iter()
                             .map(|entry| {
                                 view! {
-                                    <li data-id={entry.id}>
+                                    <li data-id=entry.id>
                                         <time datetime="">{entry.time}</time>
                                         <div class="delete-indicator">Delete</div>
                                     </li>

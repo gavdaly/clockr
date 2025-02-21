@@ -94,7 +94,7 @@ async fn get_active_user_timesheet() -> Result<TimeSheet, ServerFnError> {
 
     match TimeSheet::generate_for(id, three_weeks_before, end_of_week).await {
         Ok(ts) => {
-            // leptos::tracing::info!("######| {:?}", ts);
+            tracing::info!("{:?}", ts);
             Ok(ts)
         }
         Err(_) => Err(ServerFnError::ServerError(

@@ -17,7 +17,6 @@ pub async fn get_current_user() -> Result<Option<UserToday>, ServerFnError> {
     use axum_session::Session;
     use axum_session_sqlx::SessionPgPool;
     use leptos_axum::extract;
-    use uuid::Uuid;
 
     let session: Extension<Session<SessionPgPool>> = extract().await?;
     info!("Session: {:?}", session);
@@ -48,7 +47,6 @@ async fn check_in() -> Result<UserToday, ServerFnError> {
     use axum_session::Session;
     use axum_session_sqlx::SessionPgPool;
     use leptos_axum::extract;
-    use uuid::Uuid;
 
     let session: Extension<Session<SessionPgPool>> = extract().await?;
     info!("Session: {:?}", session);
@@ -110,11 +108,7 @@ pub fn UserProvider(children: Children) -> impl IntoView {
     // Provide the user context directly
     provide_context(user);
 
-    view! {
-        <Suspense fallback=move || view! { <span>"Loading..."</span> }>
-            {children()}
-        </Suspense>
-    }
+    view! { <Suspense fallback=move || view! { <span>"Loading..."</span> }>{children()}</Suspense> }
 }
 
 /// Helper function to get the current user signal

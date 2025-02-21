@@ -35,7 +35,6 @@ async fn magic_sign_in(link: String) -> Result<(), ServerFnError> {
     use crate::models::magic_link::MagicLink;
     use axum::extract::Extension;
     use axum_session::Session;
-    use axum_session::SessionAnySession;
     use axum_session_sqlx::SessionPgPool;
     use leptos::prelude::server_fn::error::*;
     use leptos_axum::extract;
