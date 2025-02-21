@@ -4,17 +4,12 @@ use crate::models::time_sheets::TimeSheet;
 use leptos::prelude::*;
 use leptos_router::components::A;
 use leptos_router::hooks::use_params;
-use leptos_router::nested_router::Outlet;
 use leptos_router::params::Params;
 
 /// Renders the home page of your application.
 #[component]
-pub fn TimeSheetIndex() -> impl IntoView {
-    view! {
-        <section class="stack">
-            <Outlet/>
-        </section>
-    }
+pub fn TimeSheetLayout(children: Children) -> impl IntoView {
+    view! { <section class="stack">{children()}</section> }
 }
 
 #[component]
@@ -22,17 +17,23 @@ pub fn TimeSheetDisplay() -> impl IntoView {
     // let timesheet = Resource::new(|| {}, |_| get_active_user_timesheet()).read();
     {
         view! {
-            <section class="stack">
-                <A href="/app/timesheet/missing">"Add missing time"</A>
-                <p>"Time Sheet"</p>
-            </section>
+            <TimeSheetLayout>
+                <section class="stack">
+                    <A href="/app/timesheet/missing">"Add missing time"</A>
+                    <p>"Time Sheet"</p>
+                </section>
+            </TimeSheetLayout>
         }
     }
 }
 
 #[component]
 pub fn TimeSheetMissing() -> impl IntoView {
-    view! { <CorrectionForm uuid=None/> }
+    view! {
+        <TimeSheetLayout>
+            <CorrectionForm uuid=None/>
+        </TimeSheetLayout>
+    }
 }
 
 #[derive(Params, Clone, PartialEq)]
@@ -53,7 +54,11 @@ pub fn TimeSheetEdit() -> impl IntoView {
         Ok(TimeSheetEditParams { uuid: Some(uuid) }) => {
             session.dispatch(GetSession { uuid: uuid.clone() });
 
-            view! { <CorrectionForm uuid=Some(uuid)/> }.into_any()
+            view! {
+                <TimeSheetLayout>
+                    <CorrectionForm uuid=Some(uuid)/>
+                </TimeSheetLayout>
+            }.into_any()
         }
         Err(e) => view! { <div data-state="error">"Error getting session: " {e.to_string()}</div> }
             .into_any(),

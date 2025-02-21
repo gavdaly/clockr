@@ -5,12 +5,11 @@ use crate::models::user::UserToday;
 use chrono::NaiveDate;
 use leptos::prelude::*;
 use leptos_router::components::A;
-use leptos_router::nested_router::Outlet;
 use uuid::Uuid;
 
 /// Renders the home page of your application.
 #[component]
-pub fn TimeSheets() -> impl IntoView {
+pub fn TimeSheetsLayout(children: Children) -> impl IntoView {
     view! {
         <nav class="subWrapper">
             <A href="" exact=true>
@@ -23,9 +22,7 @@ pub fn TimeSheets() -> impl IntoView {
                 "Pending Corrections"
             </A>
         </nav>
-        <section class="stack">
-            <Outlet/>
-        </section>
+        <section class="stack">{children()}</section>
     }
 }
 
@@ -67,56 +64,7 @@ pub fn TimeSheetsList() -> impl IntoView {
     Effect::new(move |_| leptos::logging::log!("{:?}", current_user.get()));
 
     view! {
-        <Suspense fallback=move || {
-            view! { <Loading/> }
-        }>
-            {move || match users.get() {
-                Some(Ok(a)) => {
-                    view! {
-                        <div>
-                            <label for="user_selected"></label>
-                            <select
-                                name="user_selected"
-                                id="user_selected"
-                                on:change=move |e| set_current_user.set(event_target_value(&e))
-                            >
-                                <Show when=move || current_user.get().is_empty()>
-                                    <option value="">"-- Select User --"</option>
-                                </Show>
-                                {a
-                                    .iter()
-                                    .map(|user| {
-                                        view! {
-                                            <option value=user
-                                                .id
-                                                .to_string()>
-                                                {user.last_name.clone()} ", " {user.first_name.clone()}
-                                            </option>
-                                        }
-                                    })
-                                    .collect_view()}
-                            </select>
-                        </div>
-                    }
-                        .into_any()
-                }
-                _ => view! { <div>"Server Error"</div> }.into_any(),
-            }}
-            <Show when=move || { !current_user.get().is_empty() }>
-                <p>"Show TimeSheet"</p>
-
-            </Show>
-
-        </Suspense>
-    }
-}
-
-#[component]
-pub fn TimeSheetsAdjustment() -> impl IntoView {
-    let users = Resource::new(move || {}, move |_| load_hourly_users());
-    let create_adjustment = ServerAction::<CreateAdjustment>::new();
-    view! {
-        <ActionForm action=create_adjustment>
+        <TimeSheetsLayout>
             <Suspense fallback=move || {
                 view! { <Loading/> }
             }>
@@ -124,8 +72,15 @@ pub fn TimeSheetsAdjustment() -> impl IntoView {
                     Some(Ok(a)) => {
                         view! {
                             <div>
-                                <label for="user_id">"User"</label>
-                                <select name="user_id" id="user_id">
+                                <label for="user_selected"></label>
+                                <select
+                                    name="user_selected"
+                                    id="user_selected"
+                                    on:change=move |e| set_current_user.set(event_target_value(&e))
+                                >
+                                    <Show when=move || current_user.get().is_empty()>
+                                        <option value="">"-- Select User --"</option>
+                                    </Show>
                                     {a
                                         .iter()
                                         .map(|user| {
@@ -145,18 +100,64 @@ pub fn TimeSheetsAdjustment() -> impl IntoView {
                     }
                     _ => view! { <div>"Server Error"</div> }.into_any(),
                 }}
+                <Show when=move || { !current_user.get().is_empty() }>
+                    <p>"Show TimeSheet"</p>
+
+                </Show>
 
             </Suspense>
-            <div>
-                <label for="date">"Date"</label>
-                <input type="date" name="date" id="date"/>
-            </div>
-            <div>
-                <label for="hours">"Hours"</label>
-                <input type="number" name="hours" id="hours"/>
-            </div>
-            <button type="submit">"Submit"</button>
-        </ActionForm>
+        </TimeSheetsLayout>
+    }
+}
+
+#[component]
+pub fn TimeSheetsAdjustment() -> impl IntoView {
+    let users = Resource::new(move || {}, move |_| load_hourly_users());
+    let create_adjustment = ServerAction::<CreateAdjustment>::new();
+    view! {
+        <TimeSheetsLayout>
+            <ActionForm action=create_adjustment>
+                <Suspense fallback=move || {
+                    view! { <Loading/> }
+                }>
+                    {move || match users.get() {
+                        Some(Ok(a)) => {
+                            view! {
+                                <div>
+                                    <label for="user_id">"User"</label>
+                                    <select name="user_id" id="user_id">
+                                        {a
+                                            .iter()
+                                            .map(|user| {
+                                                view! {
+                                                    <option value=user
+                                                        .id
+                                                        .to_string()>
+                                                        {user.last_name.clone()} ", " {user.first_name.clone()}
+                                                    </option>
+                                                }
+                                            })
+                                            .collect_view()}
+                                    </select>
+                                </div>
+                            }
+                                .into_any()
+                        }
+                        _ => view! { <div>"Server Error"</div> }.into_any(),
+                    }}
+
+                </Suspense>
+                <div>
+                    <label for="date">"Date"</label>
+                    <input type="date" name="date" id="date"/>
+                </div>
+                <div>
+                    <label for="hours">"Hours"</label>
+                    <input type="number" name="hours" id="hours"/>
+                </div>
+                <button type="submit">"Submit"</button>
+            </ActionForm>
+        </TimeSheetsLayout>
     }
 }
 
@@ -177,5 +178,9 @@ pub async fn create_adjustment(
 
 #[component]
 pub fn TimeSheetsPending() -> impl IntoView {
-    view! { <h1>"TimeSheets | To Do"</h1> }
+    view! {
+        <TimeSheetsLayout>
+            <h1>"TimeSheets | To Do"</h1>
+        </TimeSheetsLayout>
+    }
 }

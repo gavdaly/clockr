@@ -3,14 +3,11 @@ use crate::components::menu::Menu;
 use crate::functions::user::{use_user, UserProvider};
 use crate::models::user::CurrentUser;
 use crate::screens::{
-    Auth, Dashboard, HomePage, MagicLink, TimeSheetDisplay, TimeSheetEdit, TimeSheetMissing,
-    TimeSheets, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending, UserCreate, UserUpdate,
-    Users, UsersList,
+    Auth, Dashboard, HomePage, MagicLink, TimeSheetDisplay, TimeSheetEdit, TimeSheetMissing, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending, UserCreate, UserUpdate,Users, UsersList,
 };
 use leptos::prelude::*;
 use leptos_meta::*;
-use leptos_router::components::{ParentRoute, Route, Router, Routes};
-use leptos_router::nested_router::Outlet;
+use leptos_router::components::{Route, Router, FlatRoutes};
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
 
@@ -18,7 +15,7 @@ pub static VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
-        <!DOCTYPE html>
+        <!DOCTYPE html> 
         <html lang="en">
             <head>
                 <meta charset="utf-8"/>
@@ -64,41 +61,32 @@ pub fn App() -> impl IntoView {
                 {move || {
                     let user_context = use_user();
                     match user_context.get() {
-                        CurrentUser::Authenticated(user) => view! { <Menu user /> }.into_any(),
-                        CurrentUser::Guest => view! { <span>"log in"</span> }.into_any()
+                        CurrentUser::Authenticated(user) => view! { <Menu user/> }.into_any(),
+                        CurrentUser::Guest => view! { <span>"log in"</span> }.into_any(),
                     }
                 }}
 
                 <main id="main">
-                    <Routes fallback=Loading>
+                    <FlatRoutes fallback=Loading>
                         <Route path=path!("") view=HomePage/>
                         <Route path=path!("/p/:phone") view=Auth/>
                         <Route path=path!("/login") view=PhoneNumber/>
                         <Route path=path!("/l/:link") view=MagicLink/>
-                        <ParentRoute path=path!("/app") view=Outlet>
-                            <Route path=path!("") view=Dashboard/>
-                            <Route path=path!("/timesheet") view=TimeSheetDisplay/>
-                            <Route path=path!("/timesheet/edit/:uuid") view=TimeSheetEdit/>
-                            <Route path=path!("/timesheet/missing") view=TimeSheetMissing/>
-                            <Route path=path!("/users") view=Users/>
-                            <ParentRoute path=path!("/admin") view=move || view! { <Outlet/> }>
-                                <ParentRoute path=path!("/timesheets") view=TimeSheets>
-                                    <Route path=path!("") view=TimeSheetsList/>
-                                    <Route path=path!("/adjustment") view=TimeSheetsAdjustment/>
-                                    <Route path=path!("/pending") view=TimeSheetsPending/>
-                                </ParentRoute>
-                                <Route path=path!("/users") view=move || view! { <UsersList/> }/>
-                                <Route
-                                    path=path!("/users/create")
-                                    view=move || view! { <UserCreate/> }
-                                />
-                                <Route
-                                    path=path!("/users/edit/:id")
-                                    view=move || view! { <UserUpdate/> }
-                                />
-                            </ParentRoute>
-                        </ParentRoute>
-                    </Routes>
+                        <Route path=path!("/app") view=Dashboard/>
+                        <Route path=path!("/app/timesheet") view=TimeSheetDisplay/>
+                        <Route path=path!("/app/timesheet/edit/:uuid") view=TimeSheetEdit/>
+                        <Route path=path!("/app/timesheet/missing") view=TimeSheetMissing/>
+                        <Route path=path!("/app/users") view=Users/>
+                        <Route path=path!("/app/admin/timesheets") view=TimeSheetsList/>
+                        <Route
+                            path=path!("/app/admin/timesheets/adjustment")
+                            view=TimeSheetsAdjustment
+                        />
+                        <Route path=path!("/app/admin/timesheets/pending") view=TimeSheetsPending/>
+                        <Route path=path!("/app/admin/users") view=UsersList/>
+                        <Route path=path!("/app/admin/users/create") view=UserCreate/>
+                        <Route path=path!("/app/admin/users/edit/:id") view=UserUpdate/>
+                    </FlatRoutes>
                 </main>
             </UserProvider>
         </Router>
