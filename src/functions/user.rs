@@ -12,26 +12,30 @@ use tracing::{error, info, trace};
 /// - `Err(ServerFnError)` if there are session or database errors
 #[server]
 #[tracing::instrument]
-pub async fn get_current_user() -> Result<Option<UserToday>, ServerFnError> {
+pub async fn get_current_user() -> Result<CurrentUser, ServerFnError> {
     use axum::extract::Extension;
     use axum_session::Session;
     use axum_session_sqlx::SessionPgPool;
+    use leptos::prelude::server_fn::error::*;
     use leptos_axum::extract;
 
     let session: Extension<Session<SessionPgPool>> = extract().await?;
+    
     info!("Session: {:?}", session);
 
     let Some(id) = session.get("id") else {
         trace!("User not Authenticated, Could not find ID: {:?}", session);
-        return Ok(None);
+        session.clear();
+        return Ok(CurrentUser::Guest);
     };
 
     let Ok(user) = UserToday::get(id).await else {
         error!("Could not find User for session");
-        return Err(ServerFnError::ServerError("Could Not Find User.".into()));
+        session.clear();
+        return Ok(CurrentUser::Guest);
     };
 
-    Ok(Some(user))
+    Ok(CurrentUser::Authenticated(user))
 }
 
 /// Retrieves and verifies the currently authenticated user
@@ -45,6 +49,7 @@ async fn check_in() -> Result<UserToday, ServerFnError> {
     use crate::models::sessions::{close_session, get_open_session, new_session};
     use axum::extract::Extension;
     use axum_session::Session;
+    use leptos::prelude::server_fn::error::*;
     use axum_session_sqlx::SessionPgPool;
     use leptos_axum::extract;
 
@@ -53,12 +58,12 @@ async fn check_in() -> Result<UserToday, ServerFnError> {
 
     let Some(id) = session.get("id") else {
         trace!("User not Authenticated, Could not find ID: {:?}", session);
-        return Err(ServerFnError::ServerError("User not authenticated".into()));
+        return Err(ServerFnError::<NoCustomError>::ServerError("User not authenticated".into()));
     };
 
     let Ok(user) = UserToday::get(id).await else {
         error!("Could not find User for session");
-        return Err(ServerFnError::ServerError("Could Not Find User.".into()));
+        return Err(ServerFnError::<NoCustomError>::ServerError("Could Not Find User.".into()));
     };
 
     match get_open_session(&user.id).await {
@@ -72,7 +77,7 @@ async fn check_in() -> Result<UserToday, ServerFnError> {
 
     let Ok(user) = UserToday::get(id).await else {
         error!("Could not find User for session");
-        return Err(ServerFnError::ServerError("Could Not Find User.".into()));
+        return Err(ServerFnError::<NoCustomError>::ServerError("Could Not Find User.".into()));
     };
     Ok(user)
 }
@@ -88,18 +93,12 @@ pub fn UserProvider(children: Children) -> impl IntoView {
         || (),
         move |_| async move {
             match get_current_user().await {
-                Ok(Some(user_data)) => {
-                    user.set(CurrentUser::Authenticated(user_data));
-                    Ok(())
-                }
-                Ok(None) => {
-                    user.set(CurrentUser::Guest);
-                    Ok(())
-                }
+                Ok(u) => {
+                    user.set(u);
+                },
                 Err(e) => {
                     tracing::error!("Failed to get current user: {}", e);
                     user.set(CurrentUser::Guest);
-                    Err(e)
                 }
             }
         }

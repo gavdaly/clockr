@@ -1,7 +1,6 @@
 use crate::components::loading_progress::Loading;
 use crate::components::menu::Menu;
-use crate::functions::user::{use_user, UserProvider};
-use crate::models::user::CurrentUser;
+use crate::functions::user::UserProvider;
 use crate::screens::{
     Auth, Dashboard, HomePage, MagicLink, TimeSheetDisplay, TimeSheetEdit, TimeSheetMissing, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending, UserCreate, UserUpdate,Users, UsersList,
 };
@@ -58,13 +57,7 @@ pub fn App() -> impl IntoView {
                     </h1>
                 </header>
 
-                {move || {
-                    let user_context = use_user();
-                    match user_context.get() {
-                        CurrentUser::Authenticated(user) => view! { <Menu user/> }.into_any(),
-                        CurrentUser::Guest => view! { <span>"log in"</span> }.into_any(),
-                    }
-                }}
+                <Menu/>
 
                 <main id="main">
                     <FlatRoutes fallback=Loading>
@@ -101,27 +94,7 @@ pub struct Status {
 }
 
 #[server]
-async fn get_session_status() -> Result<bool, ServerFnError> {
-    use crate::models::sessions::get_open_sessions;
-    use axum_session::SessionAnySession;
-    use leptos::prelude::server_fn::error::*;
-    use uuid::Uuid;
-
-    let session = use_context::<SessionAnySession>()
-        .ok_or_else(|| ServerFnError::<NoCustomError>::ServerError("Session missing.".into()))?;
-    let id = session.get::<Uuid>("id").ok_or_else(|| {
-        ServerFnError::<NoCustomError>::ServerError("Error getting Session!".into())
-    })?;
-
-    let Ok(result) = get_open_sessions(&id).await else {
-        return Err(ServerFnError::<NoCustomError>::ServerError(
-            "Error getting one".into(),
-        ));
-    };
-    Ok(!result.is_empty())
-}
-
-#[server]
+#[tracing::instrument]
 async fn submit_phone_number(phone: String) -> Result<(), ServerFnError> {
     use crate::models::pins::Pin;
     use crate::models::user::get_user_by_phone;

@@ -1,19 +1,19 @@
-use crate::components::Icon;
-use crate::models::UserToday;
-use crate::screens::authenticate::Logout;
+use crate::components::{Icon, Loading};
+use crate::functions::user::use_user;
+use crate::models::user::CurrentUser;
 use leptos::html::Dialog;
 use leptos::prelude::*;
 
 #[island]
-pub fn Menu(user: UserToday) -> impl IntoView {
-    let log_out = ServerAction::<Logout>::new();
+pub fn Menu() -> impl IntoView {
+    let current_user = use_user();
     let dialog_ref = NodeRef::<Dialog>::new();
     let open_dialog = move |_| {
         let Some(dialog) = dialog_ref.get() else {
             tracing::error!("Dialog reference is None");
             return;
         };
-        dialog.show_modal().expect("Dialog should open");
+        let _ = dialog.show_modal();
     };
 
     let close_dialog = move |_| {
@@ -38,7 +38,13 @@ pub fn Menu(user: UserToday) -> impl IntoView {
                         <li>
                             <a href="/app/timesheet">"timesheet"</a>
                         </li>
-                        <Show when=move || user.state == 1>
+                        <Show when=move || {
+                            if let CurrentUser::Authenticated(user) = current_user.get() {
+                                user.state == 1
+                            } else {
+                                false
+                            }
+                        }>
                             <h2>"Admin"</h2>
                             <li>
                                 <a href="/admin/timesheets">"timesheets"</a>
@@ -53,15 +59,26 @@ pub fn Menu(user: UserToday) -> impl IntoView {
         </dialog>
 
         <div id="nav">
-            <ActionForm action=log_out>
-                <button class="logout-button" type="submit">
-                    <span>"Logout"</span>
-                    <Icon name="logout".into()/>
-                </button>
-            </ActionForm>
-            <button on:click=open_dialog>
-                <Icon name="horizontal-menu".into()/>
-            </button>
+
+            <Suspense fallback=move || {
+                view! { <Loading/> }
+            }>
+                {move || {
+                    let user_context = use_user();
+                    match user_context.get() {
+                        CurrentUser::Authenticated(_) => {
+                            view! {
+                                <button on:click=open_dialog>
+                                    <Icon name="horizontal-menu".into()/>
+                                </button>
+                            }
+                                .into_any()
+                        }
+                        CurrentUser::Guest => view! { <button id="nav">"login"</button> }.into_any(),
+                    }
+                }}
+
+            </Suspense>
         </div>
     }
 }
