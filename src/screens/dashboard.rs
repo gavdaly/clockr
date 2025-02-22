@@ -1,8 +1,6 @@
 use chrono::Timelike;
 use leptos::prelude::*;
-use leptos::{form::ActionForm, tachys::dom::window};
-
-use crate::{functions::user::CheckIn};
+use crate::components::ShowError;
 
 #[derive(Clone, Debug)]
 struct TimeEntry {
@@ -118,6 +116,9 @@ fn DurationHourDisplay(seconds: Memo<u64>) -> impl IntoView {
 
 #[island]
 fn ClkIn() -> impl IntoView {
+    use crate::functions::user::CheckIn;
+    use leptos::{form::ActionForm, tachys::dom::window};
+
     let action = ServerAction::<CheckIn>::new();
     let result = action.value();
     let error = Memo::new(move |_| result.get().and_then(|r| r.err()));
@@ -146,13 +147,4 @@ fn ClkIn() -> impl IntoView {
     }
 }
 
-#[component]
-fn ShowError(error: Memo<Option<ServerFnError>>) -> impl IntoView {
-    view! {
-        <Show when=move || { error.get().is_some() }>
-            <div data-state="error">
-                {move || error.get().as_ref().map(|e| view! { <p>{e.to_string()}</p> })}
-            </div>
-        </Show>
-    }
-}
+
