@@ -1,6 +1,5 @@
 use leptos::prelude::*;
 
-use crate::components::entry::Entry;
 use crate::models::sessions::Session;
 use crate::models::time_sheets::TimeSheet;
 use crate::utils::miliseconds_to_string;
@@ -80,7 +79,7 @@ pub fn TimeSheetDisplay(timesheet: TimeSheet) -> impl IntoView {
                                 <td class="entries">
                                     {entries
                                         .iter()
-                                        .map(|entry| view! { <Entry entry=entry.clone()/> })
+                                        .map(|_| view! {  })
                                         .collect_view()}
                                 </td>
                             </tr>

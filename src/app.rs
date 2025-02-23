@@ -2,7 +2,7 @@ use crate::components::loading_progress::Loading;
 use crate::components::menu::Menu;
 use crate::functions::user::UserProvider;
 use crate::screens::{
-    Auth, Dashboard, HomePage, MagicLink, TimeSheetDisplay, TimeSheetEdit, TimeSheetMissing, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending, UserCreate, UserUpdate,Users, UsersList,
+    Auth, Dashboard, HomePage, MagicLink, TimeSheetDisplay, TimeSheetEdit, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending, UserCreate, UserUpdate,Users, UsersList,
 };
 use leptos::prelude::*;
 use leptos_meta::*;
@@ -68,7 +68,6 @@ pub fn App() -> impl IntoView {
                         <Route path=path!("/app") view=Dashboard/>
                         <Route path=path!("/app/timesheet") view=TimeSheetDisplay/>
                         <Route path=path!("/app/timesheet/edit/:uuid") view=TimeSheetEdit/>
-                        <Route path=path!("/app/timesheet/missing") view=TimeSheetMissing/>
                         <Route path=path!("/app/users") view=Users/>
                         <Route path=path!("/app/admin/timesheets") view=TimeSheetsList/>
                         <Route
