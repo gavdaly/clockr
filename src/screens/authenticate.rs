@@ -8,7 +8,7 @@ struct PhoneParams {
     phone: Option<String>,
 }
 
-#[island]
+#[component]
 pub fn Auth() -> impl IntoView {
     let authenticate = ServerAction::<Authenticate>::new();
     let (pin_input, set_pin_input) = signal(String::with_capacity(6));

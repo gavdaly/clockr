@@ -12,7 +12,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 axum = { version = "^0.7", optional = true }
 console_error_panic_hook = { version = "^0.1", optional = true }
-leptos = { version = "^0.7.0", features = ["islands", "tracing"] }
+leptos = { version = "^0.7.0", features = ["tracing"] }
 leptos_axum = { version = "^0.7.0", features = ["tracing"], optional = true }
 leptos_router = { version = "^0.7.0" }
 leptos_meta = { version = "^0.7.0", features = ["tracing"] }

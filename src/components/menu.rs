@@ -4,7 +4,7 @@ use crate::models::user::CurrentUser;
 use leptos::html::Dialog;
 use leptos::prelude::*;
 
-#[island]
+#[component]
 pub fn Menu() -> impl IntoView {
     let current_user = use_user();
     let dialog_ref = NodeRef::<Dialog>::new();

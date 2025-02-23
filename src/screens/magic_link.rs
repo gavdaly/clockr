@@ -19,7 +19,7 @@ pub fn MagicLink() -> impl IntoView {
     }
 }
 
-#[island]
+#[component]
 fn MagicClick(link: String) -> impl IntoView {
     let magic_sign_in = ServerAction::<MagicSignIn>::new();
     view! {
