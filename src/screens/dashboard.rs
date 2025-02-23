@@ -1,47 +1,15 @@
-use chrono::Timelike;
 use leptos::prelude::*;
 use crate::components::ShowError;
-
-#[derive(Clone, Debug)]
-struct TimeEntry {
-    id: String,
-    time: String,
-    timestamp: u64,
-}
+use crate::models::TimeLog;
 
 /// Renders the home page of your application.
 #[component]
 pub fn Dashboard() -> impl IntoView {
-
-    let timestamp = |time| {
-        chrono::NaiveTime::parse_from_str(time, "%H:%M")
-            .unwrap()
-            .num_seconds_from_midnight() as u64
-    };
-
-    let (times, set_times) = signal(vec![
-        TimeEntry {
-            id: "1".to_string(),
-            time: "8:03 AM".to_string(),
-            timestamp: timestamp("08:03"),
-        },
-        TimeEntry {
-            id: "2".to_string(),
-            time: "12:00 PM".to_string(),
-            timestamp: timestamp("12:00"),
-        },
-        TimeEntry {
-            id: "3".to_string(),
-            time: "3:00 PM".to_string(),
-            timestamp: timestamp("15:00"),
-        },
+    let (times, _set_times) = signal(vec![
+        TimeLog::new("1".to_string(), 8 * 3600 + 3 * 60),      // 08:03 = (8 * 3600) + (3 * 60) = 29,580 seconds
+        TimeLog::new("1".to_string(), 12 * 3600),              // 12:00 = (12 * 3600) = 43,200 seconds
+        TimeLog::new("1".to_string(), 15 * 3600),              // 15:00 = (15 * 3600) = 54,000 seconds
     ]);
-
-    let _delete_item = move |id: String| {
-        set_times.update(|t| {
-            t.retain(|entry| entry.id != id);
-        });
-    };
 
     let today = Memo::new(move |_| {
         let t = times.get();
@@ -49,11 +17,11 @@ pub fn Dashboard() -> impl IntoView {
         if len == 0 {
             return 0;
         }
-        let prev: u64 = t
+        let prev = t
             .chunks(2)
             .map(|te| {
                 if te.len() == 2 {
-                    te[1].timestamp - te[0].timestamp
+                    te[1].event_time - te[0].event_time
                 } else {
                     0
                 }
@@ -82,7 +50,7 @@ pub fn Dashboard() -> impl IntoView {
                             .map(|entry| {
                                 view! {
                                     <li data-id=entry.id>
-                                        <time datetime="">{entry.time}</time>
+                                        <time datetime="">{entry.event_time}</time>
                                         <div class="delete-indicator">Delete</div>
                                     </li>
                                 }
@@ -105,7 +73,7 @@ pub fn Dashboard() -> impl IntoView {
 }
 
 #[component]
-fn DurationHourDisplay(seconds: Memo<u64>) -> impl IntoView {
+fn DurationHourDisplay(seconds: Memo<i64>) -> impl IntoView {
     let h = seconds.get() / 3600;
     let m = (seconds.get() % 3600) / 60;
     let s = seconds.get() % 60;

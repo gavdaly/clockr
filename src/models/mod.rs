@@ -8,5 +8,7 @@ pub mod pins;
 pub mod sessions;
 pub mod time_sheets;
 pub mod user;
+pub mod time_log;
 
 pub use user::*;
+pub use time_log::*;
