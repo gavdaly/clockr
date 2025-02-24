@@ -18,6 +18,7 @@ pub async fn get_current_user() -> Result<CurrentUser, ServerFnError> {
     use axum_session_sqlx::SessionPgPool;
     use leptos::prelude::server_fn::error::*;
     use leptos_axum::extract;
+    use crate::models::UserDB;
 
     let session: Extension<Session<SessionPgPool>> = extract().await?;
     
@@ -29,13 +30,14 @@ pub async fn get_current_user() -> Result<CurrentUser, ServerFnError> {
         return Ok(CurrentUser::Guest);
     };
 
-    let Ok(user) = UserToday::get(id).await else {
+    let Ok(user) = UserDB::get(id).await else {
         error!("Could not find User for session");
         session.clear();
         return Ok(CurrentUser::Guest);
     };
 
-    Ok(CurrentUser::Authenticated(user))
+
+    Ok(CurrentUser::Authenticated(user.into()))
 }
 
 /// Retrieves and verifies the currently authenticated user
@@ -45,41 +47,28 @@ pub async fn get_current_user() -> Result<CurrentUser, ServerFnError> {
 /// - `Err(ServerFnError)` if session is missing, user is not authenticated, or user cannot be found
 #[server]
 #[tracing::instrument]
-async fn check_in() -> Result<UserToday, ServerFnError> {
-    use crate::models::sessions::{close_session, get_open_session, new_session};
+async fn check_in() -> Result<(), ServerFnError> {
+    use crate::models::TimeLogDB;
     use axum::extract::Extension;
     use axum_session::Session;
     use leptos::prelude::server_fn::error::*;
     use axum_session_sqlx::SessionPgPool;
     use leptos_axum::extract;
+    use uuid::Uuid;
 
     let session: Extension<Session<SessionPgPool>> = extract().await?;
     info!("Session: {:?}", session);
 
-    let Some(id) = session.get("id") else {
+    let Some(id) = session.get::<String>("id") else {
         trace!("User not Authenticated, Could not find ID: {:?}", session);
         return Err(ServerFnError::<NoCustomError>::ServerError("User not authenticated".into()));
     };
 
-    let Ok(user) = UserToday::get(id).await else {
-        error!("Could not find User for session");
-        return Err(ServerFnError::<NoCustomError>::ServerError("Could Not Find User.".into()));
-    };
+    let id = Uuid::parse_str(&id).expect("Should be valid uuid");
 
-    match get_open_session(&user.id).await {
-        Ok(user_session) => {
-            close_session(&user_session.id).await?;
-        }
-        _ => {
-            new_session(&user.id).await?;
-        }
-    };
+    TimeLogDB::add(id).await?;
 
-    let Ok(user) = UserToday::get(id).await else {
-        error!("Could not find User for session");
-        return Err(ServerFnError::<NoCustomError>::ServerError("Could Not Find User.".into()));
-    };
-    Ok(user)
+    Ok(())
 }
 
 /// Creates and provides the user context to all children
@@ -114,3 +103,4 @@ pub fn UserProvider(children: Children) -> impl IntoView {
 pub fn use_user() -> RwSignal<CurrentUser> {
     use_context::<RwSignal<CurrentUser>>().expect("User context not found. Did you wrap your app in <UserProvider>?")
 }
+

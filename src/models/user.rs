@@ -1,17 +1,19 @@
-use chrono::{DateTime, Utc};
 use reactive_stores::Store;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use super::TimeLog;
 
-// pub struct UserToday {
-//     pub id: Uuid,
-//     pub first_name: String,
-//     pub last_name: String,
-//     pub state: State,
-//     pub check_ins: Vec<DateTime<Utc>>,
-//     pub week_duration: u64,
-//     pub previous_day_possible_errors: u16,
-// }
+#[derive(Clone, Debug, Store, Deserialize, Serialize)]
+pub struct UserToday {
+    pub id: String,
+    pub first_name: String,
+    pub last_name: String,
+    pub phone_number: String,
+    pub state: i32, 
+    pub check_ins: Vec<TimeLog>,
+    pub week_duration: u64,
+    pub previous_day_possible_errors: u16,
+}
 
 #[derive(Clone, Debug, Default, Store, Deserialize, Serialize)]
 pub enum CurrentUser {
@@ -27,16 +29,6 @@ pub enum State {
     Hourly = 2,
 }
 
-#[derive(Clone, Debug, Store, Deserialize, Serialize)]
-pub struct UserToday {
-    pub id: Uuid,
-    pub first_name: String,
-    pub last_name: String,
-    pub phone_number: String,
-    pub state: i32,
-    pub check_in: Option<DateTime<Utc>>,
-}
-
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserUpdate {
     pub id: Uuid,
@@ -47,84 +39,51 @@ pub struct UserUpdate {
 }
 
 #[cfg(feature = "ssr")]
+pub struct UserDB {
+    pub id: String,
+    pub first_name: String,
+    pub last_name: String,
+    pub phone_number: String,
+    pub state: i32, 
+}
+
+#[cfg(feature = "ssr")]
 use {crate::database::get_db, sqlx::*};
 
 #[cfg(feature = "ssr")]
-impl UserToday {
+impl UserDB {
     #[tracing::instrument]
     pub async fn get_all_hourly() -> Result<Vec<Self>, sqlx::Error> {
         tracing::info!("Fetching all hourly users");
         let db = get_db();
-        query_as!(
-            UserToday,
-            r#"
-SELECT
-    u.id,
-    u.last_name,
-    u.first_name,
-    u.phone_number,
-    u.state,
-    s.check_in
-FROM
-    users u
-LEFT JOIN (
-    SELECT
-        user_id,
-        MAX(start_time) AS check_in
-    FROM
-        sessions
-    WHERE
-        end_time IS NULL
-        AND start_time >= CURRENT_DATE -- Ensuring the session started today
-    GROUP BY
-        user_id
-) s ON u.id = s.user_id
-WHERE
-    u.state = 2 -- Ensuring that the user's state is 2
-ORDER BY
-    u.last_name ASC,
-    u.first_name ASC;"#
-        )
-        .fetch_all(db)
-        .await
+        Ok(vec![])
     }
 
     #[tracing::instrument]
     pub async fn get(id: Uuid) -> Result<Self, sqlx::Error> {
         let db = get_db();
         query_as!(
-            UserToday,
+            UserDB,
             r#"
 SELECT
-    u.id,
-    u.last_name,
-    u.first_name,
-    u.phone_number,
-    u.state,
-    s.check_in
+    id,
+    last_name,
+    first_name,
+    phone_number,
+    state
 FROM
-    users u
-LEFT JOIN (
-    SELECT
-        user_id,
-        MAX(start_time) AS check_in
-    FROM
-        sessions
-    WHERE
-        end_time IS NULL
-        AND start_time >= CURRENT_DATE -- Ensuring the session started today
-    GROUP BY
-        user_id
-) s ON u.id = s.user_id
+    users
 WHERE
-    u.id = $1;
-        "#,
+    id = $1;
+            "#,
             id
         )
         .fetch_one(db)
         .await
     }
 }
+
+
 
 #[cfg(feature = "ssr")]
 impl UserUpdate {
@@ -205,4 +164,20 @@ WHERE
 
     tracing::info!("Got User: {:?}", result);
     result
+}
+
+#[cfg(feature = "ssr")]
+impl From<UserDB> for UserToday {
+    fn from(user: UserDB) -> Self {
+        Self {
+            id: user.id,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            phone_number: user.phone_number,
+            state: user.state,
+            check_ins: Vec::new(),
+            week_duration: 0, 
+            previous_day_possible_errors: 0,
+        }
+    }
 }

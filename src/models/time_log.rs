@@ -1,5 +1,4 @@
-
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct TimeLog {
     pub id: String,
     user_id: String,
@@ -10,14 +9,14 @@ pub struct TimeLog {
     correction: Option<Correction>
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Correction {
     id: String,
     reason: String,
     state: CorrectionState,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub enum CorrectionState {
     #[default]
     Pending = 0,
@@ -39,5 +38,48 @@ impl TimeLog {
             mac_address: None,
             correction: None,
         }
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct TimeLogDB {
+    id: String,
+    user_id: String,
+    event_time: i64,
+    location_latitude: Option<f64>,
+    location_longitude: Option<f64>,
+    mac_address: Option<String>,
+    correction: Option<Correction>
+}
+
+#[cfg(feature = "ssr")]
+use uuid::Uuid;
+
+#[cfg(feature = "ssr")]
+impl TimeLogDB {
+    pub async fn add(user_id: Uuid) -> Result<(), sqlx::Error> {
+        use crate::database::get_db;
+        use uuid::Uuid;
+        let db = get_db();
+        let id = Uuid::from_bytes(ulid::Ulid::new().to_bytes());
+        
+        sqlx::query!(
+            r#"
+            INSERT INTO time_log (
+                id, 
+                user_id, 
+                event_time
+            ) VALUES (
+                $1, 
+                $2, 
+                NOW()
+            )"#,
+            id,
+            user_id,
+        )
+        .execute(db)
+        .await?;
+
+        Ok(())
     }
 }

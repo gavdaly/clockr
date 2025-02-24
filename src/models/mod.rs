@@ -1,12 +1,5 @@
-pub mod adjustments;
-pub mod corrections;
-pub mod instance;
-pub mod location_trackers;
 pub mod magic_link;
-pub mod manual_entries;
 pub mod pins;
-pub mod sessions;
-pub mod time_sheets;
 pub mod user;
 pub mod time_log;
 

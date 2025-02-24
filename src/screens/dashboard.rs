@@ -82,10 +82,22 @@ fn DurationHourDisplay(seconds: Memo<i64>) -> impl IntoView {
     view! { <time datetime=time>{format!("{:.2}h", hours)}</time> }
 }
 
-#[island]
+#[component]
 fn ClkIn() -> impl IntoView {
-    use crate::functions::user::CheckIn;
+    use crate::functions::{CheckIn, use_user};
+    use crate::models::CurrentUser;
     use leptos::{form::ActionForm, tachys::dom::window};
+
+    let user = use_user();
+    let checked_in = Signal::derive(move || match user.get().clone() {
+        CurrentUser::Authenticated(user) => user.check_ins.len() % 2 == 1,
+        CurrentUser::Guest => {
+            false
+        }
+
+    }
+    );
+    let checked_in_text = Signal::derive(move || checked_in.get().to_string());
 
     let action = ServerAction::<CheckIn>::new();
     let result = action.value();
@@ -107,11 +119,18 @@ fn ClkIn() -> impl IntoView {
 
     view! {
         <ActionForm action attr:id="clk-in">
-            <button id="checked_in" data-checked-in="true" prop:disabled=disabled>
-                {if true { "You are Checked In" } else { "You are Checked Out" }}
+            <button
+                id="checked_in"
+                data-checked-in=move || checked_in_text.get()
+                prop:disabled=disabled
+            >
+                {move || {
+                    if checked_in.get() { "You are Checked In" } else { "You are Checked Out" }
+                }}
+
             </button>
         </ActionForm>
-        <ShowError error=error/>
+        <ShowError error/>
     }
 }
 
