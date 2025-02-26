@@ -1,10 +1,28 @@
 use leptos::prelude::*;
-use crate::components::ShowError;
+use crate::functions::user::get_current_user;
+use crate::models::user::CurrentUser;
+use crate::components::{ShowError, Loading};
 use crate::models::TimeLog;
+
 
 /// Renders the home page of your application.
 #[component]
 pub fn Dashboard() -> impl IntoView {
+    let (show_time, set_show_time) = signal(false);
+
+    let user_resource = Resource::new(
+        || (),
+        async move |_| {
+            match get_current_user().await {
+                Ok(u) => u,
+                Err(e) => {
+                    tracing::error!("Failed to get current user: {}", e);
+                    CurrentUser::Guest
+                }
+            }
+        }
+    );
+
     let (times, _set_times) = signal(vec![
         TimeLog::new("1".to_string(), 8 * 3600 + 3 * 60),      // 08:03 = (8 * 3600) + (3 * 60) = 29,580 seconds
         TimeLog::new("1".to_string(), 12 * 3600),              // 12:00 = (12 * 3600) = 43,200 seconds
@@ -40,20 +58,34 @@ pub fn Dashboard() -> impl IntoView {
             <div id="check-ins" class="card wide">
                 <div>
                     <h2>"Check Ins"</h2>
-                    <a href="/app/time/add">"add time +"</a>
+                    <button on:click=move |_| {
+                        set_show_time.set(!show_time.get())
+                    }>"add time +"</button>
                 </div>
+                <Show when=move || show_time.get()>
+
+                    <div>
+                        <form>
+                            <div>
+                                <label for="time">"Time"</label>
+                                <input type="time" name="time" id="time"/>
+                            </div>
+                            <div>
+                                <label for="reason">"Reason"</label>
+                                <textarea name="reason" id="reason"></textarea>
+                            </div>
+                            <button type="submit">"Submit"</button>
+                        </form>
+                    </div>
+                </Show>
+
                 <ul class="slide-list">
                     {move || {
                         times
                             .get()
                             .into_iter()
                             .map(|entry| {
-                                view! {
-                                    <li data-id=entry.id>
-                                        <time datetime="">{entry.event_time}</time>
-                                        <div class="delete-indicator">Delete</div>
-                                    </li>
-                                }
+                                view! { <DurationDisplay entry=entry/> }
                             })
                             .collect::<Vec<_>>()
                     }}
@@ -73,6 +105,22 @@ pub fn Dashboard() -> impl IntoView {
 }
 
 #[component]
+fn DurationDisplay(entry: TimeLog) -> impl IntoView {
+    use leptos::ev::MouseEvent;
+    let delete_entry = |e: MouseEvent| {
+        e.prevent_default();
+    };
+    view! {
+        <li data-entry-id=entry.id>
+            <time datetime="">{entry.event_time}</time>
+            <span on:click=delete_entry class="delete-indicator">
+                Delete
+            </span>
+        </li>
+    }
+}
+
+#[component]
 fn DurationHourDisplay(seconds: Memo<i64>) -> impl IntoView {
     let h = seconds.get() / 3600;
     let m = (seconds.get() % 3600) / 60;
@@ -84,14 +132,14 @@ fn DurationHourDisplay(seconds: Memo<i64>) -> impl IntoView {
 
 #[component]
 fn ClkIn() -> impl IntoView {
-    use crate::functions::{CheckIn, use_user};
+    use crate::functions::CheckIn;
     use crate::models::CurrentUser;
     use leptos::{form::ActionForm, tachys::dom::window};
 
-    let user = use_user();
-    let checked_in = Signal::derive(move || match user.get().clone() {
-        CurrentUser::Authenticated(user) => user.check_ins.len() % 2 == 1,
-        CurrentUser::Guest => {
+     let user= use_context::<CurrentUser>();
+    let checked_in = Signal::derive(move || match user.clone() {
+        Some(CurrentUser::Authenticated(user)) => user.check_ins.len() % 2 == 1,
+        _ => {
             false
         }
 
@@ -119,16 +167,17 @@ fn ClkIn() -> impl IntoView {
 
     view! {
         <ActionForm action attr:id="clk-in">
-            <button
-                id="checked_in"
-                data-checked-in=move || checked_in_text.get()
-                prop:disabled=disabled
-            >
-                {move || {
+            <Suspense fallback=move || view! { <Loading/> }>
+                <button
+                    id="checked_in"
+                    data-checked-in=move || checked_in_text.get()
+                    prop:disabled=disabled
+                >
+                    {move || {
                     if checked_in.get() { "You are Checked In" } else { "You are Checked Out" }
-                }}
-
-            </button>
+                    }}
+                </button>
+            </Suspense>
         </ActionForm>
         <ShowError error/>
     }

@@ -1,12 +1,10 @@
 use crate::components::{Icon, Loading};
-use crate::functions::user::use_user;
 use crate::models::user::CurrentUser;
 use leptos::html::Dialog;
 use leptos::prelude::*;
 
 #[component]
-pub fn Menu() -> impl IntoView {
-    let current_user = use_user();
+pub fn Menu(user: CurrentUser) -> impl IntoView {
     let dialog_ref = NodeRef::<Dialog>::new();
     let open_dialog = move |_| {
         let Some(dialog) = dialog_ref.get() else {
@@ -38,11 +36,11 @@ pub fn Menu() -> impl IntoView {
                         <li>
                             <a href="/app/timesheet">"timesheet"</a>
                         </li>
-                        <Show when=move || {
-                            if let CurrentUser::Authenticated(user) = current_user.get() {
-                                user.state == 1
-                            } else {
-                                false
+                        <Show when={
+                            let user = user.clone();
+                            move || match user.clone() {
+                                CurrentUser::Authenticated(u) => u.state == 1,
+                                _ => false,
                             }
                         }>
                             <h2>"Admin"</h2>
@@ -60,25 +58,21 @@ pub fn Menu() -> impl IntoView {
 
         <div id="nav">
 
-            <Suspense fallback=move || {
-                view! { <Loading/> }
-            }>
-                {move || {
-                    let user_context = use_user();
-                    match user_context.get() {
-                        CurrentUser::Authenticated(_) => {
-                            view! {
-                                <button on:click=open_dialog>
-                                    <Icon name="horizontal-menu".into()/>
-                                </button>
-                            }
-                                .into_any()
+            {
+                let user = user.clone();
+                move || match user.clone() {
+                    CurrentUser::Authenticated(_) => {
+                        view! {
+                            <button on:click=open_dialog>
+                                <Icon name="horizontal-menu".into()/>
+                            </button>
                         }
-                        CurrentUser::Guest => view! { <button id="nav">"login"</button> }.into_any(),
+                            .into_any()
                     }
-                }}
+                    _ => view! { <button id="nav">"login"</button> }.into_any(),
+                }
+            }
 
-            </Suspense>
         </div>
     }
 }
