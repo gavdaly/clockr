@@ -22,14 +22,14 @@ pub enum CurrentUser {
     Guest,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Store, Deserialize, Serialize)]
 pub enum State {
     Inactive = 0,
     Salary = 1,
     Hourly = 2,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug,Store, Deserialize, Serialize)]
 pub struct UserUpdate {
     pub id: Uuid,
     pub first_name: String,

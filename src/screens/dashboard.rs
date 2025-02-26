@@ -174,8 +174,9 @@ fn ClkIn() -> impl IntoView {
                     prop:disabled=disabled
                 >
                     {move || {
-                    if checked_in.get() { "You are Checked In" } else { "You are Checked Out" }
+                        if checked_in.get() { "You are Checked In" } else { "You are Checked Out" }
                     }}
+
                 </button>
             </Suspense>
         </ActionForm>

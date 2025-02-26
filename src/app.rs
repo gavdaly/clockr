@@ -1,13 +1,18 @@
 use crate::components::loading_progress::Loading;
 use crate::components::menu::Menu;
-use crate::functions::user::UserProvider;
+use crate::functions::user::get_current_user;
+use crate::models::user::CurrentUser;
 use crate::screens::{
-    Auth, Dashboard, HomePage, MagicLink, TimeSheetDisplay, TimeSheetEdit, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending, UserCreate, UserUpdate,Users, UsersList,
+    Auth, Dashboard, HomePage, MagicLink, //PhoneNumber,
+    // TimeSheetDisplay, TimeSheetEdit, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending,
+    UserCreate, UserUpdate,
+    // Users, UsersList,
 };
 use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_router::components::{Route, Router, FlatRoutes};
 use leptos_router::*;
+use reactive_stores::Store;
 use serde::{Deserialize, Serialize};
 
 pub static VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
@@ -31,56 +36,114 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
 }
 
 #[component]
+fn UserWrapper() -> impl IntoView {
+    let user_resource = Resource::new(
+        || (),
+        async move |_| {
+            match get_current_user().await {
+                Ok(u) => u,
+                Err(e) => {
+                    tracing::error!("Failed to get current user: {}", e);
+                    CurrentUser::Guest
+                }
+            }
+        }
+    );
+    view! {
+        <Suspense fallback=Loading>
+            {move || match user_resource.read().clone().take() {
+                Some(user) => {
+                    let user = Store::new(user);
+                    view! { <ATwo user/> }.into_any()
+                }
+                _ => view! {}.into_any(),
+            }}
+
+        </Suspense>
+    }
+}
+
+#[component]
+fn ATwo(user: Store<CurrentUser>) -> impl IntoView {
+    view! { <pre>{move || { format!("{:#?}", user.get()) }}</pre> }
+}
+
+#[component]
 #[tracing::instrument]
 pub fn App() -> impl IntoView {
     provide_meta_context();
+
+    let user_resource = Resource::new(
+        || (),
+        async move |_| {
+            match get_current_user().await {
+                Ok(u) => u,
+                Err(e) => {
+                    tracing::error!("Failed to get current user: {}", e);
+                    CurrentUser::Guest
+                }
+            }
+        }
+    );
 
     let content = r#"oklch(36.94% 0.1685 354.12)"#;
 
     tracing::info!("App component Rendered");
 
     view! {
+        <Title text="Clkr"/>
+        <Meta name="theme-color" content=content/>
+
+        <Stylesheet id="leptos" href="/pkg/clkr.css"/>
+        <Link rel="icon" type_="image/png" sizes="48x48" href="/logo-48.png"/>
+        <Link rel="icon" type_="image/svg+xml" sizes="any" href="/logo.svg"/>
+        <Link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+        <Link rel="manifest" href="/site.webmanifest"/>
+        <header id="header">
+            <h1>
+                <span>"Clkr"</span>
+                <span class="version">{VERSION.clone()}</span>
+            </h1>
+        </header>
         <Router>
-            <UserProvider>
-                <Title text="Clkr"/>
-                <Meta name="theme-color" content=content/>
+            <Suspense fallback=move || {
+                view! { <Loading/> }
+            }>
+                {move || match user_resource.read().clone() {
+                    Some(user) => view! { <Menu user/> }.into_any(),
+                    _ => view! {}.into_any(),
+                }}
 
-                <Stylesheet id="leptos" href="/pkg/clkr.css"/>
-                <Link rel="icon" type_="image/png" sizes="48x48" href="/logo-48.png"/>
-                <Link rel="icon" type_="image/svg+xml" sizes="any" href="/logo.svg"/>
-                <Link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
-                <Link rel="manifest" href="/site.webmanifest"/>
-                <header id="header">
-                    <h1>
-                        <span>"Clkr"</span>
-                        <span class="version">{VERSION.clone()}</span>
-                    </h1>
-                </header>
+            </Suspense>
 
-                <Menu/>
+            <UserWrapper/>
+            <main id="main">
 
-                <main id="main">
-                    <FlatRoutes fallback=Loading>
-                        <Route path=path!("") view=HomePage/>
-                        <Route path=path!("/p/:phone") view=Auth/>
-                        <Route path=path!("/login") view=PhoneNumber/>
-                        <Route path=path!("/l/:link") view=MagicLink/>
-                        <Route path=path!("/app") view=Dashboard/>
-                        <Route path=path!("/app/timesheet") view=TimeSheetDisplay/>
-                        <Route path=path!("/app/timesheet/edit/:uuid") view=TimeSheetEdit/>
-                        <Route path=path!("/app/users") view=Users/>
-                        <Route path=path!("/app/admin/timesheets") view=TimeSheetsList/>
-                        <Route
-                            path=path!("/app/admin/timesheets/adjustment")
-                            view=TimeSheetsAdjustment
-                        />
-                        <Route path=path!("/app/admin/timesheets/pending") view=TimeSheetsPending/>
-                        <Route path=path!("/app/admin/users") view=UsersList/>
-                        <Route path=path!("/app/admin/users/create") view=UserCreate/>
-                        <Route path=path!("/app/admin/users/edit/:id") view=UserUpdate/>
-                    </FlatRoutes>
-                </main>
-            </UserProvider>
+                <Suspense fallback=Loading>
+                    {move || match user_resource.read().clone() {
+                        Some(user) => {
+                            view! { <pre>{move || { format!("{:#?}", user) }}</pre> }.into_any()
+                        }
+                        _ => view! {}.into_any(),
+                    }}
+
+                </Suspense>
+
+                <FlatRoutes fallback=Loading>
+                    <Route path=path!("") view=HomePage/>
+                    <Route path=path!("/p/:phone") view=Auth/>
+                    <Route path=path!("/login") view=PhoneNumber/>
+                    <Route path=path!("/l/:link") view=MagicLink/>
+                    <Route path=path!("/app") view=move || view! { <Dashboard/> }/>
+
+                    // <Route path=path!("/app/timesheet") view=TimeSheetDisplay/>
+                    // <Route path=path!("/app/admin/timesheets") view=TimeSheetsList/>
+                    // <Route path=path!("/app/admin/timesheets/pending") view=TimeSheetsPending/>
+                    // <Route path=path!("/app/admin/users") view=UsersList/>
+                    <Route path=path!("/app/admin/users/create") view=UserCreate/>
+                    <Route path=path!("/app/admin/users/edit/:id") view=UserUpdate/>
+                </FlatRoutes>
+            </main>
         </Router>
     }
 }
