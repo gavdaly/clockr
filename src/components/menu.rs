@@ -4,7 +4,8 @@ use leptos::html::Dialog;
 use leptos::prelude::*;
 
 #[component]
-pub fn Menu(user: CurrentUser) -> impl IntoView {
+pub fn Menu() -> impl IntoView {
+    let user_context = use_context::<Resource<CurrentUser>>().expect("Not wrapped in `UserProvider`");
     let dialog_ref = NodeRef::<Dialog>::new();
     let open_dialog = move |_| {
         let Some(dialog) = dialog_ref.get() else {
@@ -36,21 +37,28 @@ pub fn Menu(user: CurrentUser) -> impl IntoView {
                         <li>
                             <a href="/app/timesheet">"timesheet"</a>
                         </li>
-                        <Show when={
-                            let user = user.clone();
-                            move || match user.clone() {
-                                CurrentUser::Authenticated(u) => u.state == 1,
-                                _ => false,
-                            }
+                        <Suspense fallback=move || {
+                            view! { <Loading/> }
                         }>
-                            <h2>"Admin"</h2>
-                            <li>
-                                <a href="/admin/timesheets">"timesheets"</a>
-                            </li>
-                            <li>
-                                <a href="/admin/users">"users"</a>
-                            </li>
-                        </Show>
+                            {move || match user_context.read().clone() {
+                                Some(CurrentUser::Authenticated(u)) => {
+                                    view! {
+                                        <Show when=move || u.state == 1>
+                                            <h2>"Admin"</h2>
+                                            <li>
+                                                <a href="/admin/timesheets">"timesheets"</a>
+                                            </li>
+                                            <li>
+                                                <a href="/admin/users">"users"</a>
+                                            </li>
+                                        </Show>
+                                    }
+                                        .into_any()
+                                }
+                                _ => {}.into_any(),
+                            }}
+
+                        </Suspense>
                     </ul>
                 </menu>
             </nav>
@@ -58,10 +66,11 @@ pub fn Menu(user: CurrentUser) -> impl IntoView {
 
         <div id="nav">
 
-            {
-                let user = user.clone();
-                move || match user.clone() {
-                    CurrentUser::Authenticated(_) => {
+            <Suspense fallback=move || {
+                view! { <Loading/> }
+            }>
+                {move || match user_context.read().clone() {
+                    Some(CurrentUser::Authenticated(_)) => {
                         view! {
                             <button on:click=open_dialog>
                                 <Icon name="horizontal-menu".into()/>
@@ -69,9 +78,10 @@ pub fn Menu(user: CurrentUser) -> impl IntoView {
                         }
                             .into_any()
                     }
-                    _ => view! { <button id="nav">"login"</button> }.into_any(),
-                }
-            }
+                    _ => view! { <button>"login"</button> }.into_any(),
+                }}
+
+            </Suspense>
 
         </div>
     }
