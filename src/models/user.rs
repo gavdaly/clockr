@@ -1,9 +1,8 @@
-use reactive_stores::Store;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use super::TimeLog;
 
-#[derive(Clone, Debug, Store, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserToday {
     pub id: String,
     pub first_name: String,
@@ -15,21 +14,21 @@ pub struct UserToday {
     pub previous_day_possible_errors: u16,
 }
 
-#[derive(Clone, Debug, Default, Store, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub enum CurrentUser {
     Authenticated(UserToday),
     #[default]
     Guest,
 }
 
-#[derive(Clone, Debug, Store, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum State {
     Inactive = 0,
     Salary = 1,
     Hourly = 2,
 }
 
-#[derive(Clone, Debug,Store, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserUpdate {
     pub id: Uuid,
     pub first_name: String,

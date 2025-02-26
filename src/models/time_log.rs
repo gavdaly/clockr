@@ -1,4 +1,4 @@
-#[derive(Clone, Debug, Store, Patch, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct TimeLog {
     pub id: String,
     user_id: String,
@@ -9,14 +9,14 @@ pub struct TimeLog {
     correction: Option<Correction>
 }
 
-#[derive(Clone, Debug, Store, Patch, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Correction {
     id: String,
     reason: String,
     state: u16,
 }
 
-#[derive(Clone, Debug, Default, Store, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub enum CorrectionState {
     #[default]
     Pending = 0,
@@ -52,7 +52,6 @@ pub(crate) struct TimeLogDB {
     correction: Option<Correction>
 }
 
-use reactive_stores::{Patch, Store};
 #[cfg(feature = "ssr")]
 use uuid::Uuid;
 
