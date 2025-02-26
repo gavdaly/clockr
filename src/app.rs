@@ -3,14 +3,18 @@ use crate::components::menu::Menu;
 use crate::functions::user::get_current_user;
 use crate::models::user::CurrentUser;
 use crate::screens::{
-    Auth, Dashboard, HomePage, MagicLink, //PhoneNumber,
+    Auth,
+    Dashboard,
+    HomePage,
+    MagicLink, //PhoneNumber,
     // TimeSheetDisplay, TimeSheetEdit, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending,
-    UserCreate, UserUpdate,
+    UserCreate,
+    UserUpdate,
     // Users, UsersList,
 };
 use leptos::prelude::*;
 use leptos_meta::*;
-use leptos_router::components::{Route, Router, FlatRoutes};
+use leptos_router::components::{FlatRoutes, Route, Router};
 use leptos_router::*;
 
 pub static VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
@@ -37,15 +41,13 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
 fn UserProvider(children: Children) -> impl IntoView {
     let user_resource = Resource::new(
         || (),
-        async move |_| {
-            match get_current_user().await {
-                Ok(u) => u,
-                Err(e) => {
-                    tracing::error!("Failed to get current user: {}", e);
-                    CurrentUser::Guest
-                }
+        async move |_| match get_current_user().await {
+            Ok(u) => u,
+            Err(e) => {
+                tracing::error!("Failed to get current user: {}", e);
+                CurrentUser::Guest
             }
-        }
+        },
     );
     provide_context(user_resource.clone());
     view! { <Suspense fallback=Loading>{children()}</Suspense> }

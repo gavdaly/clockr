@@ -5,7 +5,8 @@ use leptos::prelude::*;
 
 #[component]
 pub fn Menu() -> impl IntoView {
-    let user_context = use_context::<Resource<CurrentUser>>().expect("Not wrapped in `UserProvider`");
+    let user_context =
+        use_context::<Resource<CurrentUser>>().expect("Not wrapped in `UserProvider`");
     let dialog_ref = NodeRef::<Dialog>::new();
     let open_dialog = move |_| {
         let Some(dialog) = dialog_ref.get() else {

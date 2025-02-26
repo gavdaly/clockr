@@ -12,8 +12,7 @@ pub fn MagicLink() -> impl IntoView {
     let params = use_params::<MagicLinkParams>();
 
     match params.get() {
-        Ok(MagicLinkParams { link: Some(link) }) => view! { <MagicClick link/> }
-        .into_any(),
+        Ok(MagicLinkParams { link: Some(link) }) => view! { <MagicClick link/> }.into_any(),
         Err(e) => view! { <div>"Error parsing Parameters: " {e.to_string()}</div> }.into_any(),
         _ => view! { <div>"The link has expired, please try again!"</div> }.into_any(),
     }

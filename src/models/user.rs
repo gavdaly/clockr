@@ -1,6 +1,6 @@
+use super::TimeLog;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use super::TimeLog;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserToday {
@@ -8,7 +8,7 @@ pub struct UserToday {
     pub first_name: String,
     pub last_name: String,
     pub phone_number: String,
-    pub state: i32, 
+    pub state: i32,
     pub check_ins: Vec<TimeLog>,
     pub week_duration: u64,
     pub previous_day_possible_errors: u16,
@@ -43,7 +43,7 @@ pub struct UserDB {
     pub first_name: String,
     pub last_name: String,
     pub phone_number: String,
-    pub state: i32, 
+    pub state: i32,
 }
 
 #[cfg(feature = "ssr")]
@@ -81,8 +81,6 @@ WHERE
         .await
     }
 }
-
-
 
 #[cfg(feature = "ssr")]
 impl UserUpdate {
@@ -175,7 +173,7 @@ impl From<UserDB> for UserToday {
             phone_number: user.phone_number,
             state: user.state,
             check_ins: Vec::new(),
-            week_duration: 0, 
+            week_duration: 0,
             previous_day_possible_errors: 0,
         }
     }

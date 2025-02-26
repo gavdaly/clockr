@@ -1,58 +1,15 @@
-use super::timesheets::load_hourly_users;
-use crate::components::icon::Icon;
+// use super::timesheets::load_hourly_users;
 use crate::components::user_form::UserForm;
 use leptos::prelude::*;
-use leptos_router::components::A;
 use leptos_router::hooks::use_params;
 use leptos_router::params::Params;
-
-/// Renders the home page of your application.
-#[component]
-pub fn Users() -> impl IntoView {
-    let users = Resource::new(move || {}, move |_| load_hourly_users()).read();
-    view! {
-        <section class="stack users_list">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Phone Number</th>
-                    </tr>
-                </thead>
-                {move || match users.clone() {
-                    Some(Ok(users)) => {
-                        users
-                            .into_iter()
-                            .map(|user| {
-                                view! {
-                                    <tr>
-                                        <td>{user.last_name} ", " {user.first_name}</td>
-                                        <td>{user.phone_number}</td>
-                                    </tr>
-                                }
-                            })
-                            .collect_view()
-                            .into_any()
-                    }
-                    Some(Err(e)) => view! { <div>"Error: " {e.to_string()}</div> }.into_any(),
-                    None => view! {}.into_any(),
-                }}
-
-            </table>
-        </section>
-    }
-}
 
 #[component]
 pub fn AdminUsers(children: Children) -> impl IntoView {
     view! {
         <nav class="subWrapper">
-            <A href="" exact=true>
-                "Users List"
-            </A>
-            <A href="create" exact=true>
-                "Add New User"
-            </A>
+            <a href="">"Users List"</a>
+            <a href="create">"Add New User"</a>
         </nav>
         <section class="stack admin users_list">{children()}</section>
     }

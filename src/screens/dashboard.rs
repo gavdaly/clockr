@@ -1,19 +1,30 @@
+use crate::components::{Loading, ShowError};
+use crate::models::{CurrentUser, TimeLog, UserToday};
 use leptos::prelude::*;
-use crate::models::user::CurrentUser;
-use crate::components::{ShowError, Loading};
-use crate::models::TimeLog;
 
 /// Renders the home page of your application.
 #[component]
 pub fn Dashboard() -> impl IntoView {
     let (show_time, set_show_time) = signal(false);
 
-    let user_resource = use_context::<Resource<CurrentUser>>().expect("Not wrapped in `UserProvider`");
+    let user_resource =
+        use_context::<Resource<CurrentUser>>().expect("Not wrapped in `UserProvider`");
 
     let week = Signal::derive(move || 23554);
     view! {
         <section class="stack">
-            <ClkIn/>
+            <Suspense fallback=move || {
+                view! { <Loading/> }
+            }>
+                {move || match user_resource.read().clone() {
+                    Some(CurrentUser::Authenticated(user)) => {
+                        let u = Signal::derive(move || user.clone());
+                        view! { <ClkIn user=u/> }.into_any()
+                    }
+                    _ => view! {}.into_any(),
+                }}
+
+            </Suspense>
             <div id="check-ins" class="card wide">
                 <div>
                     <h2>"Check Ins"</h2>
@@ -81,14 +92,14 @@ pub fn Dashboard() -> impl IntoView {
 }
 
 /// Component that calculates and displays the total time logged for today
-/// 
+///
 /// This component:
 /// 1. Calculates completed time intervals (pairs of check-ins)
 /// 2. Tracks ongoing time if user is currently checked in
 /// 3. Updates the display every 10 seconds
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `logs` - A signal containing the user's time log entries
 #[component]
 pub fn TodayTotal(logs: Signal<Vec<TimeLog>>) -> impl IntoView {
@@ -107,14 +118,17 @@ pub fn TodayTotal(logs: Signal<Vec<TimeLog>>) -> impl IntoView {
             })
             .sum::<i64>()
     });
-    
-    let remaining = Signal::derive(move || 
-        match logs.get().len() % 2 {
-            1 => logs.get().last().expect("should have last entry").event_time,
-            _ => 0,
+
+    let remaining = Signal::derive(move || match logs.get().len() % 2 {
+        1 => {
+            logs.get()
+                .last()
+                .expect("should have last entry")
+                .event_time
         }
-    );
-    
+        _ => 0,
+    });
+
     set_interval(
         move || {
             let now = Date::now() as i64;
@@ -122,7 +136,7 @@ pub fn TodayTotal(logs: Signal<Vec<TimeLog>>) -> impl IntoView {
         },
         core::time::Duration::from_secs(10),
     );
-    
+
     let total_seconds = Signal::derive(move || {
         let base = today.get();
         let mut elapsed = 0;
@@ -167,20 +181,11 @@ fn DurationDateTime(seconds: Signal<i64>) -> impl IntoView {
 }
 
 #[component]
-fn ClkIn() -> impl IntoView {
+fn ClkIn(user: Signal<UserToday>) -> impl IntoView {
     use crate::functions::CheckIn;
-    use crate::models::CurrentUser;
     use leptos::{form::ActionForm, tachys::dom::window};
 
-     let user= use_context::<CurrentUser>();
-    let checked_in = Signal::derive(move || match user.clone() {
-        Some(CurrentUser::Authenticated(user)) => user.check_ins.len() % 2 == 1,
-        _ => {
-            false
-        }
-
-    }
-    );
+    let checked_in = Signal::derive(move || user.get().check_ins.len() % 2 == 1);
     let checked_in_text = Signal::derive(move || checked_in.get().to_string());
 
     let action = ServerAction::<CheckIn>::new();
