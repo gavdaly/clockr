@@ -148,7 +148,6 @@ menu {
     flex-direction: column;
     gap: 0.45rem;
     padding: 0.85rem;
-    height: 100%;
 }
 
 button[data-size="huge"] {
