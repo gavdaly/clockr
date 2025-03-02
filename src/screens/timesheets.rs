@@ -12,15 +12,9 @@ use uuid::Uuid;
 pub fn TimeSheetsLayout(children: Children) -> impl IntoView {
     view! {
         <nav class="subWrapper">
-            <A href="" exact=true>
-                "Time Sheets"
-            </A>
-            <A href="adjustment" exact=true>
-                "Add Adjustment"
-            </A>
-            <A href="pending" exact=true>
-                "Pending Corrections"
-            </A>
+            <a href="/app/timesheets">"Time Sheets"</a>
+            <a href="/app/timesheets/adjustment">"Add Adjustment"</a>
+            <a href="/app/timesheets/pending">"Pending Corrections"</a>
         </nav>
         <section class="stack">{children()}</section>
     }

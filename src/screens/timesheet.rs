@@ -16,7 +16,7 @@ pub fn TimeSheetDisplay() -> impl IntoView {
         view! {
             <TimeSheetLayout>
                 <section class="stack">
-                    <A href="/app/timesheet/missing">"Add missing time"</A>
+                    <a href="/app/timesheet/missing">"Add missing time"</a>
                     <p>"Time Sheet"</p>
                 </section>
             </TimeSheetLayout>

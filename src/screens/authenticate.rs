@@ -93,7 +93,7 @@ async fn authenticate(pin: i32, phone: String) -> Result<(), ServerFnError> {
     let session = use_context::<SessionAnySession>()
         .ok_or_else(|| ServerFnError::<NoCustomError>::ServerError("Session missing.".into()))?;
 
-    if pin.user_id != user.id {
+    if pin.user_id.to_string() != user.id {
         return Err(ServerFnError::<NoCustomError>::Request(
             "Unauthorized Try Again!".into(),
         ));

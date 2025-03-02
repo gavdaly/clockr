@@ -4075,6 +4075,7 @@ dependencies = [
  "postgres-types",
  "rand 0.9.0",
  "serde",
+ "uuid",
  "web-time",
 ]
 

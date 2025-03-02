@@ -1,5 +1,5 @@
 use crate::components::{Icon, Loading};
-use crate::models::user::CurrentUser;
+use crate::models::CurrentUser;
 use leptos::html::Dialog;
 use leptos::prelude::*;
 

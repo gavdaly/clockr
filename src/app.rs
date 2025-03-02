@@ -1,7 +1,7 @@
 use crate::components::loading_progress::Loading;
 use crate::components::menu::Menu;
 use crate::functions::user::get_current_user;
-use crate::models::user::CurrentUser;
+use crate::models::CurrentUser;
 use crate::screens::{
     Auth,
     Dashboard,
@@ -21,7 +21,7 @@ pub static VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
-        <!DOCTYPE html> 
+        <!DOCTYPE html>
         <html lang="en">
             <head>
                 <meta charset="utf-8"/>
@@ -124,7 +124,9 @@ async fn submit_phone_number(phone: String) -> Result<(), ServerFnError> {
 
     tracing::info!("user: {:?}", user);
 
-    let Ok(pin) = Pin::create_pin_for(user.id).await else {
+    let user_id = uuid::Uuid::parse_str(&user.id).expect("Should be valid uuid");
+
+    let Ok(pin) = Pin::create_pin_for(user_id).await else {
         tracing::error!("Could not create pin: {}", user.id.to_string());
         return Err(ServerFnError::ServerError("Error Creating Pin!".into()));
     };

@@ -1,18 +1,17 @@
 use leptos::prelude::*;
-use uuid::Uuid;
 
-use crate::models::user::UserUpdate;
+use crate::models::user::User;
 
 #[server]
 async fn submit_user_form(
-    user_id: Option<Uuid>,
+    user_id: Option<String>,
     first_name: String,
     last_name: String,
     phone_number: String,
     state: i32,
-) -> Result<UserUpdate, ServerFnError> {
+) -> Result<User, ServerFnError> {
     match user_id {
-        Some(id) => UserUpdate {
+        Some(id) => User {
             id,
             first_name,
             last_name,
@@ -22,7 +21,7 @@ async fn submit_user_form(
         .update()
         .await
         .map_err(|_| ServerFnError::Request("Error Updating User".into())),
-        None => UserUpdate::insert(&first_name, &last_name, &phone_number, state)
+        None => User::insert(&first_name, &last_name, &phone_number, state)
             .await
             .map_err(|_| ServerFnError::Request("".into())),
     }

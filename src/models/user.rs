@@ -1,25 +1,4 @@
-use super::TimeLog;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct UserToday {
-    pub id: String,
-    pub first_name: String,
-    pub last_name: String,
-    pub phone_number: String,
-    pub state: i32,
-    pub check_ins: Vec<TimeLog>,
-    pub week_duration: u64,
-    pub previous_day_possible_errors: u16,
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub enum CurrentUser {
-    Authenticated(UserToday),
-    #[default]
-    Guest,
-}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum State {
@@ -29,8 +8,8 @@ pub enum State {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct UserUpdate {
-    pub id: Uuid,
+pub struct User {
+    pub id: String,
     pub first_name: String,
     pub last_name: String,
     pub phone_number: String,
@@ -47,7 +26,7 @@ pub struct UserDB {
 }
 
 #[cfg(feature = "ssr")]
-use {crate::database::get_db, sqlx::*};
+use {crate::database::get_db, sqlx::*, uuid::Uuid};
 
 #[cfg(feature = "ssr")]
 impl UserDB {
@@ -83,12 +62,15 @@ WHERE
 }
 
 #[cfg(feature = "ssr")]
-impl UserUpdate {
+impl User {
     #[tracing::instrument]
     pub async fn update(&self) -> Result<Self, sqlx::Error> {
         let db = get_db();
+
+        let id = uuid::Uuid::parse_str(&self.id).expect("Invalid UUID");
+
         query_as!(
-            UserUpdate,
+            User,
             r#"
 UPDATE users
 SET first_name = $1, last_name = $2, phone_number = $3, state = $4
@@ -99,7 +81,7 @@ RETURNING first_name, last_name, phone_number, state, id
             self.last_name,
             self.phone_number,
             self.state,
-            self.id
+            id
         )
         .fetch_one(db)
         .await
@@ -114,7 +96,7 @@ RETURNING first_name, last_name, phone_number, state, id
     ) -> Result<Self, sqlx::Error> {
         let db = get_db();
         query_as!(
-            UserUpdate,
+            User,
             r#"
 INSERT INTO users(first_name, last_name, phone_number, state)
 VALUES ($1, $2, $3, $4)
@@ -133,7 +115,7 @@ RETURNING id, first_name, last_name, phone_number, state
 #[cfg(feature = "ssr")]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserPhone {
-    pub id: Uuid,
+    pub id: String,
     pub phone_number: String,
 }
 
@@ -164,7 +146,7 @@ WHERE
 }
 
 #[cfg(feature = "ssr")]
-impl From<UserDB> for UserToday {
+impl From<UserDB> for User {
     fn from(user: UserDB) -> Self {
         Self {
             id: user.id,
@@ -172,9 +154,6 @@ impl From<UserDB> for UserToday {
             last_name: user.last_name,
             phone_number: user.phone_number,
             state: user.state,
-            check_ins: Vec::new(),
-            week_duration: 0,
-            previous_day_possible_errors: 0,
         }
     }
 }

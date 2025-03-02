@@ -36,7 +36,7 @@ impl MagicLink {
         )
         .fetch_one(db)
         .await?;
-
+    
         Ok(link.id)
     }
 

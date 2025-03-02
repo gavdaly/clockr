@@ -17,44 +17,43 @@ pub fn AdminUsers(children: Children) -> impl IntoView {
 
 #[component]
 pub fn UsersList() -> impl IntoView {
-    let users = Resource::new(move || {}, move |_| load_hourly_users()).read();
+    // let users = Resource::new(move || {}, move |_| load_hourly_users()).read();
     view! {
         <AdminUsers>
-            <section class="stack">
-                {move || match users.clone() {
-                    Some(Ok(users)) => {
-                        view! {
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Phone Number</th>
-                                        <th>Edit</th>
-                                    </tr>
-                                </thead>
-                                {users
-                                    .into_iter()
-                                    .map(|user| {
-                                        view! {
-                                            <div class="user_list">
-                                                <span>{user.last_name} ", " {user.first_name}</span>
-                                                <span>{user.phone_number}</span>
-                                                <span>
-                                                    <A href=format!("/admin/user/edit/{}", user.id.to_string())>
-                                                        <Icon name="pencil".into()/>
-                                                    </A>
-                                                </span>
-                                            </div>
-                                        }
-                                    })
-                                    .collect_view()}
-                            </table>
-                        }
-                            .into_any()
-                    }
-                    Some(Err(e)) => view! { <div>"Error: " {e.to_string()}</div> }.into_any(),
-                    None => view! {}.into_any(),
-                }}
+            // {move || match users.clone() {
+            // Some(Ok(users)) => {
+            // view! {
+            // <table>
+            // <thead>
+            // <tr>
+            // <th>Name</th>
+            // <th>Phone Number</th>
+            // <th>Edit</th>
+            // </tr>
+            // </thead>
+            // // {users
+            // //     .into_iter()
+            // //     .map(|user| {
+            <section class="stack">// //         view! {
+            // //             <div class="user_list">
+            // //                 <span>{user.last_name} ", " {user.first_name}</span>
+            // //                 <span>{user.phone_number}</span>
+            // //                 <span>
+            // //                     <a href=format!("/app/admin/user/edit/{}", user.id.to_string())>
+            // //                         <Icon name="pencil".into()/>
+            // //                     </a>
+            // //                 </span>
+            // //             </div>
+            // //         }
+            // //     })
+            // //     .collect_view()}
+            // </table>
+            // }
+            // .into_any()
+            // }
+            // Some(Err(e)) => view! { <div>"Error: " {e.to_string()}</div> }.into_any(),
+            // None => view! {}.into_any(),
+            // }}
 
             </section>
         </AdminUsers>

@@ -7,9 +7,18 @@ pub struct TimeLog {
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Correction {
-    pub id: String,
     pub reason: String,
-    pub state: u16,
+    pub state: i16,
+}
+
+#[cfg(feature = "ssr")]
+use ulid::Ulid;
+
+#[cfg(feature = "ssr")]
+pub struct CorrectionDB {
+    pub time_log_id: Ulid,
+    pub reason: String,
+    pub state: i16,
 }
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
@@ -42,15 +51,14 @@ pub(crate) struct TimeLogDB {
 }
 
 #[cfg(feature = "ssr")]
-use uuid::Uuid;
-
-#[cfg(feature = "ssr")]
 impl TimeLogDB {
-    pub async fn add(user_id: Uuid) -> Result<(), sqlx::Error> {
+    pub async fn add(user_id: uuid::Uuid) -> Result<(), sqlx::Error> {
         use crate::database::get_db;
+        use ulid::Ulid;
         use uuid::Uuid;
+
         let db = get_db();
-        let id = Uuid::from_bytes(ulid::Ulid::new().to_bytes());
+        let id = Uuid::from_bytes(Ulid::new().to_bytes());
 
         sqlx::query!(
             r#"
@@ -73,20 +81,33 @@ impl TimeLogDB {
     }
 }
 
-impl Correction {
+#[cfg(feature = "ssr")]
+impl CorrectionDB {
     pub fn from_options(
-        id: Option<String>,
         reason: Option<String>,
-        state: Option<u16>,
+        state: Option<i16>,
+        time_log_id: Option<Ulid>,
     ) -> Option<Self> {
-        if id.is_none() || reason.is_none() || state.is_none() {
+        let Some(reason) = reason else {
             return None;
-        }
+        };
+        let Some(state) = state else {
+            return None;
+        };
+        let Some(time_log_id) = time_log_id else {
+            return None;
+        };
 
-        Some(Self {
-            id: id.unwrap_or("".to_string()),
-            reason: reason.unwrap_or("".to_string()),
-            state: state.unwrap_or(0),
-        })
+        Some(Self { reason, state, time_log_id })
+    }
+}
+
+#[cfg(feature = "ssr")]
+impl From <CorrectionDB> for Correction {
+    fn from(c: CorrectionDB) -> Self {
+        Self {
+            reason: c.reason,
+            state: c.state,
+        }
     }
 }

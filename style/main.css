@@ -83,6 +83,7 @@ html {
         padding-block: var(--size-2);
         color: var(--text-1);
         border-radius: var(--radius-round);
+        -webkit-user-select: none;
         user-select: none;
         transition: background-color 0.2s ease-in-out;
         &:hover {

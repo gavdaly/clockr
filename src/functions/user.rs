@@ -1,4 +1,4 @@
-use crate::models::user::CurrentUser;
+use crate::models::CurrentUser;
 use leptos::prelude::*;
 
 #[cfg(feature = "ssr")]
@@ -13,12 +13,12 @@ use tracing::{error, info, trace};
 #[server]
 #[tracing::instrument]
 pub async fn get_current_user() -> Result<CurrentUser, ServerFnError> {
+    use crate::models::UserTodayDB;
     use axum::extract::Extension;
     use axum_session::Session;
     use axum_session_sqlx::SessionPgPool;
     use leptos::prelude::server_fn::error::*;
     use leptos_axum::extract;
-    use crate::models::UserDB;
 
     trace!("Getting Current User");
 
@@ -26,21 +26,20 @@ pub async fn get_current_user() -> Result<CurrentUser, ServerFnError> {
         error!("Could not get session: {:?}", e);
         ServerFnError::<NoCustomError>::ServerError(e.to_string())
     })?;
-    
+
     info!("Session: {:?}", session);
 
-    let Some(id) = session.get("id") else {
+    let Some(id) = session.get::<String>("id") else {
         trace!("User not Authenticated, Could not find ID: {:?}", session);
         session.clear();
         return Ok(CurrentUser::Guest);
     };
 
-    let Ok(user) = UserDB::get(id).await else {
+    let Ok(user) = UserTodayDB::get(&id).await else {
         error!("Could not find User for session");
         session.clear();
         return Ok(CurrentUser::Guest);
     };
-
 
     Ok(CurrentUser::Authenticated(user.into()))
 }
@@ -56,8 +55,8 @@ async fn check_in() -> Result<(), ServerFnError> {
     use crate::models::TimeLogDB;
     use axum::extract::Extension;
     use axum_session::Session;
-    use leptos::prelude::server_fn::error::*;
     use axum_session_sqlx::SessionPgPool;
+    use leptos::prelude::server_fn::error::*;
     use leptos_axum::extract;
     use uuid::Uuid;
 
@@ -66,7 +65,9 @@ async fn check_in() -> Result<(), ServerFnError> {
 
     let Some(id) = session.get::<String>("id") else {
         trace!("User not Authenticated, Could not find ID: {:?}", session);
-        return Err(ServerFnError::<NoCustomError>::ServerError("User not authenticated".into()));
+        return Err(ServerFnError::<NoCustomError>::ServerError(
+            "User not authenticated".into(),
+        ));
     };
 
     let id = Uuid::parse_str(&id).expect("Should be valid uuid");

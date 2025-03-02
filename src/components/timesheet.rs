@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 
-use crate::models::sessions::Session;
-use crate::models::time_sheets::TimeSheet;
+// use crate::models::sessions::Session;
+// use crate::models::time_sheets::TimeSheet;
 use crate::utils::miliseconds_to_string;
 
 #[component]
@@ -77,10 +77,7 @@ pub fn TimeSheetDisplay(timesheet: TimeSheet) -> impl IntoView {
                             <tr class="entry">
                                 <td>{day.to_string()}</td>
                                 <td class="entries">
-                                    {entries
-                                        .iter()
-                                        .map(|_| view! {  })
-                                        .collect_view()}
+                                    {entries.iter().map(|_| view! {}).collect_view()}
                                 </td>
                             </tr>
                         }
@@ -91,7 +88,7 @@ pub fn TimeSheetDisplay(timesheet: TimeSheet) -> impl IntoView {
     }
 }
 
-#[component]
-fn EntryEdit(_entry: Session) -> impl IntoView {
-    view! { <div></div> }
-}
+// #[component]
+// fn EntryEdit(_entry: Session) -> impl IntoView {
+//     view! { <div></div> }
+// }
