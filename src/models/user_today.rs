@@ -3,11 +3,10 @@ use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "ssr")]
 use {
-    chrono::{DateTime, Local, NaiveDateTime, TimeZone, Weekday},
+    chrono::{Local, Weekday},
     std::collections::BTreeMap,
     ulid::Ulid,
 };
-
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub enum CurrentUser {
@@ -15,7 +14,6 @@ pub enum CurrentUser {
     #[default]
     Guest,
 }
-
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserToday {
@@ -51,7 +49,8 @@ impl UserTodayDB {
 
         let now = Local::now();
         let sunday = now
-            .date_naive().week(Weekday::Sun)
+            .date_naive()
+            .week(Weekday::Sun)
             .first_day()
             .and_hms_opt(0, 0, 0)
             .expect("Invalid datetime");
@@ -111,7 +110,7 @@ impl From<Vec<UserTodayDB>> for UserToday {
                 overview.correction_reason.clone(),
                 overview.correction_state,
                 Some(overview.time_log_id.clone()),
-            ); 
+            );
             let correction = match correction {
                 Some(c) => Some(c.into()),
                 None => None,
@@ -124,9 +123,7 @@ impl From<Vec<UserTodayDB>> for UserToday {
             };
 
             // Convert timestamp to date string
-            let date = overview.event_time
-                .format("%Y-%m-%d")
-                .to_string();
+            let date = overview.event_time.format("%Y-%m-%d").to_string();
 
             logs_by_date
                 .entry(date)

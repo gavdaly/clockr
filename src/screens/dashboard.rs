@@ -33,20 +33,7 @@ pub fn Dashboard() -> impl IntoView {
                     }>"add time +"</button>
                 </div>
                 <Show when=move || show_time.get()>
-
-                    <div>
-                        <form>
-                            <div>
-                                <label for="time">"Time"</label>
-                                <input type="time" name="time" id="time"/>
-                            </div>
-                            <div>
-                                <label for="reason">"Reason"</label>
-                                <textarea name="reason" id="reason"></textarea>
-                            </div>
-                            <button type="submit">"Submit"</button>
-                        </form>
-                    </div>
+                    <AddTimeForm on_success=Callback::new(move |_| set_show_time.set(false)) />
                 </Show>
                 <ul class="slide-list">
                     <Suspense fallback=move || {
@@ -65,7 +52,6 @@ pub fn Dashboard() -> impl IntoView {
                             }
                             _ => view! {}.into_any(),
                         }}
-
                     </Suspense>
                 </ul>
             </div>
@@ -88,6 +74,56 @@ pub fn Dashboard() -> impl IntoView {
                 <DurationDateTime seconds=week/>
             </div>
         </section>
+    }
+}
+
+#[component]
+fn AddTimeForm(on_success: Callback<()>) -> impl IntoView {
+    use crate::functions::AddTime;
+    use leptos::form::ActionForm;
+    
+    let action = ServerAction::<AddTime>::new();
+    let pending = action.pending();
+    let result = action.value();
+    
+    let error = Memo::new(move |_| result.get().and_then(|r| r.err()));
+    
+    // Call on_success when the action completes successfully
+    Effect::new(move |_| {
+        if let Some(Ok(_)) = result.get() {
+            on_success.run(());
+        }
+    });
+    
+    view! {
+        <div>
+            <ActionForm action>
+                <div>
+                    <label for="time">"Time"</label>
+                    <input 
+                        type="datetime-local" 
+                        name="time" 
+                        id="time"
+                        required
+                    />
+                </div>
+                <div>
+                    <label for="reason">"Reason"</label>
+                    <textarea 
+                        name="reason" 
+                        id="reason"
+                        required
+                    ></textarea>
+                </div>
+                <button 
+                    type="submit"
+                    prop:disabled=pending
+                >
+                    {move || if pending.get() { "Submitting..." } else { "Submit" }}
+                </button>
+            </ActionForm>
+            <ShowError error/>
+        </div>
     }
 }
 
