@@ -1,205 +1,168 @@
-use crate::models::{adjustments::Adjustment, sessions::SessionAndCorrection};
-use chrono::NaiveDate;
+use chrono::{ Datelike, Duration,  NaiveDate};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
 use uuid::Uuid;
-// TODO: Make Btrees into vecs to not ship btrees to client.
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TimeSheet {
-    pub id: Uuid,
-    pub first_name: String,
-    pub last_name: String,
-    pub phone_number: String,
-    pub state: i32,
-    pub entries: BTreeMap<NaiveDate, Vec<Entry>>,
-    // entries: Vec<(NaiveDate, Vec<Entry>>)>,
-    pub summary: BTreeMap<NaiveDate, (i64, i64, i64, i64)>,
-    // summary: Vec<(NaiveDate, (i64, i64, i64, i64))>
-    pub summary_totals: (i64, i64, i64, i64),
+    pub user_id: String,
+    pub weeks: Vec<Week>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub enum Entry {
-    Session(SessionAndCorrection),
-    Adjustment(Adjustment),
+pub struct Week {
+    pub start_date: String,
+    pub end_date: String,
+    pub days: Vec<Day>,
+    pub total_hours: f64,
 }
 
-#[cfg(feature = "ssr")]
-use {
-    crate::models::{
-        adjustments::get_adjustments_for, sessions::get_sessions_for, user::UserToday,
-    },
-    chrono::{DateTime, Duration, NaiveTime, Utc, Weekday},
-};
-
-#[cfg(feature = "ssr")]
 #[derive(Clone, Debug, Deserialize, Serialize)]
-struct InputValues {
-    user: UserToday,
-    sessions: Vec<SessionAndCorrection>,
-    adjustments: Vec<Adjustment>,
+pub struct Day {
+    pub date: String,
+    pub entries: Vec<TimeEntry>,
+    pub total_hours: f64,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct TimeEntry {
+    pub id: String,
+    pub start_time: i64,
+    pub end_time: Option<i64>,
+    pub duration: Option<i64>,
+    pub correction: Option<super::Correction>,
 }
 
 #[cfg(feature = "ssr")]
 impl TimeSheet {
-    #[tracing::instrument]
     pub async fn generate_for(
         user_id: Uuid,
         start_date: NaiveDate,
         end_date: NaiveDate,
     ) -> Result<Self, sqlx::Error> {
-        let midnitght = NaiveTime::default();
-        let user = UserToday::get(user_id).await?;
-        let start = start_date.and_time(midnitght);
-        let end = end_date.and_time(midnitght);
-        let sessions = get_sessions_for(
-            &user_id,
-            DateTime::from_naive_utc_and_offset(start, Utc),
-            DateTime::from_naive_utc_and_offset(end, Utc),
+        use crate::database::get_db;
+        use crate::models::{CorrectionDB, TimeLog};
+        use std::collections::HashMap;
+
+        let db = get_db();
+        
+        // Fetch all time logs for the user within the date range
+        let logs = sqlx::query!(r#"
+            SELECT 
+                tl.id as time_log_id,
+                tl.event_time,
+                c.reason as "correction_reason?",
+                c.state as "correction_state?"
+            FROM time_log tl
+            LEFT JOIN time_log_correction c ON c.time_log_id = tl.id
+            WHERE tl.user_id = $1 
+            AND tl.event_time >= $2
+            AND tl.event_time <= $3
+            ORDER BY tl.event_time ASC
+            "#,
+            user_id,
+            start_date.and_hms_opt(0, 0, 0).unwrap().and_utc(),
+            end_date.and_hms_opt(23, 59, 59).unwrap().and_utc()
         )
+        .fetch_all(db)
         .await?;
-        let adjustments = get_adjustments_for(&user_id, start.date(), end.date()).await?;
-        let values = InputValues {
-            user,
-            sessions,
-            adjustments,
-        };
-        // leptos::tracing::error!("###| {:?}", values);
-        Ok(Self::from(values))
-    }
 
-    #[tracing::instrument]
-    fn from(vals: InputValues) -> Self {
-        let UserToday {
-            id,
-            first_name,
-            last_name,
-            phone_number,
-            state,
-            ..
-        } = vals.user;
-        let entries = generate_entries(vals.adjustments, vals.sessions);
-        let summary = generate_summary(&entries);
-        let summary_totals = generate_summary_totals(&summary);
-        Self {
-            id,
-            first_name,
-            last_name,
-            phone_number,
-            state,
-            entries,
-            summary,
-            summary_totals,
+        let mut logs_by_date: HashMap<String, Vec<TimeLog>> = HashMap::new();
+        
+        for log in logs {
+            let event_time = log.event_time;
+            let date = event_time.format("%Y-%m-%d").to_string();
+            
+            let correction = CorrectionDB::from_options(
+                log.correction_reason,
+                log.correction_state,
+                Some(ulid::Ulid::from_string(&log.time_log_id.to_string()).unwrap()),
+            );
+            
+            let time_log = TimeLog {
+                id: log.time_log_id.to_string(),
+                event_time: event_time.timestamp(),
+                correction: correction.map(|c| c.into()),
+            };
+            
+            logs_by_date.entry(date).or_insert_with(Vec::new).push(time_log);
         }
-    }
-}
-
-#[cfg(feature = "ssr")]
-#[tracing::instrument]
-fn _calculate_statuatory_hours(
-    number_of_days: i64,
-    entries: &BTreeMap<NaiveDate, Vec<Entry>>,
-) -> Duration {
-    let mut total = Duration::zero();
-    entries.iter().for_each(|(_date, entries)| {
-        for entry in entries {
-            match entry {
-                Entry::Session(s) => {
-                    if let Some(end_time) = s.end_time {
-                        total = end_time - s.start_time + total;
-                    }
+        
+        // Generate weeks and days
+        let mut current_date = start_date;
+        let mut weeks: Vec<Week> = Vec::new();
+        let mut current_week: Option<Week> = None;
+        
+        while current_date <= end_date {
+            let date_str = current_date.format("%Y-%m-%d").to_string();
+            
+            let weekday = current_date.weekday();
+            if weekday == chrono::Weekday::Mon || current_week.is_none() {
+                if let Some(week) = current_week {
+                    weeks.push(week);
                 }
-                Entry::Adjustment(a) => {
-                    if a.category == 1 {
-                        total = Duration::milliseconds(a.duration as i64) + total;
-                    }
+                
+                let week_end = current_date + Duration::days(6);
+                let week_end_str = week_end.format("%Y-%m-%d").to_string();
+                
+                current_week = Some(Week {
+                    start_date: date_str.clone(),
+                    end_date: week_end_str,
+                    days: Vec::new(),
+                    total_hours: 0.0,
+                });
+            }
+            
+            let day_logs = logs_by_date.get(&date_str).cloned().unwrap_or_default();
+            
+            let mut entries: Vec<TimeEntry> = Vec::new();
+            let mut day_total_seconds = 0;
+            
+            for chunk in day_logs.chunks(2) {
+                let start_time = chunk[0].event_time;
+                let end_time = if chunk.len() > 1 { Some(chunk[1].event_time) } else { None };
+                
+                let duration = end_time.map(|end| end - start_time);
+                if let Some(dur) = duration {
+                    day_total_seconds += dur;
                 }
+                
+                entries.push(TimeEntry {
+                    id: chunk[0].id.clone(),
+                    start_time,
+                    end_time,
+                    duration,
+                    correction: chunk[0].correction.clone(),
+                });
             }
+            
+            // Calculate day total hours
+            let day_total_hours = day_total_seconds as f64 / 3600.0;
+            
+            // Create the day
+            let day = Day {
+                date: date_str,
+                entries,
+                total_hours: day_total_hours,
+            };
+            
+            // Add the day to the current week
+            if let Some(week) = &mut current_week {
+                week.total_hours += day_total_hours;
+                week.days.push(day);
+            }
+            
+            // Move to the next day
+            current_date = current_date + Duration::days(1);
         }
-    });
-    Duration::milliseconds(total.num_milliseconds() / number_of_days)
-}
-
-#[cfg(feature = "ssr")]
-#[tracing::instrument]
-/// Generates a summary from entries summary is (Entries, Adjustment, Vacation, Statuatory)
-fn generate_summary(
-    entries: &BTreeMap<NaiveDate, Vec<Entry>>,
-) -> BTreeMap<NaiveDate, (i64, i64, i64, i64)> {
-    let mut map: BTreeMap<NaiveDate, (i64, i64, i64, i64)> = BTreeMap::new();
-
-    entries.iter().for_each(|(date, entries)| {
-        let week = date.week(Weekday::Mon).first_day();
-        map.entry(week).or_insert((0, 0, 0, 0));
-        let Some(totals) = map.get_mut(&week) else {
-            return;
-        };
-        for entry in entries {
-            match entry {
-                Entry::Session(s) => {
-                    if let Some(end_time) = s.end_time {
-                        totals.0 += (end_time - s.start_time).num_milliseconds();
-                    }
-                }
-                Entry::Adjustment(a) => match a.category {
-                    1 => {
-                        totals.1 += a.duration as i64;
-                    }
-                    2 => {
-                        totals.2 += a.duration as i64;
-                    }
-                    3 => {
-                        totals.3 += a.duration as i64;
-                    }
-                    _ => {}
-                },
-            }
+        
+        // Add the last week
+        if let Some(week) = current_week {
+            weeks.push(week);
         }
-    });
-
-    map
-}
-
-#[cfg(feature = "ssr")]
-#[tracing::instrument]
-fn generate_entries(
-    adjustments: Vec<Adjustment>,
-    sessions: Vec<SessionAndCorrection>,
-) -> BTreeMap<NaiveDate, Vec<Entry>> {
-    let mut map: BTreeMap<NaiveDate, Vec<Entry>> = BTreeMap::new();
-    adjustments.into_iter().for_each(|adj| {
-        let date: NaiveDate = adj.start_date;
-        match map.get_mut(&date) {
-            Some(e) => {
-                e.push(Entry::Adjustment(adj));
-            }
-            None => {
-                map.insert(date, vec![Entry::Adjustment(adj)]);
-            }
-        };
-    });
-    sessions.into_iter().for_each(|sess| {
-        let date: NaiveDate = sess.start_time.date_naive();
-        match map.get_mut(&date) {
-            Some(e) => {
-                e.push(Entry::Session(sess));
-            }
-            None => {
-                map.insert(date, vec![Entry::Session(sess)]);
-            }
-        }
-    });
-    map
-}
-
-#[cfg(feature = "ssr")]
-#[tracing::instrument]
-fn generate_summary_totals(
-    summary: &BTreeMap<NaiveDate, (i64, i64, i64, i64)>,
-) -> (i64, i64, i64, i64) {
-    summary
-        .iter()
-        .fold((0, 0, 0, 0), |(s1, s2, s3, s4), (_, (e1, e2, e3, e4))| {
-            (s1 + e1, s2 + e2, s3 + e3, s4 + e4)
+        
+        Ok(Self {
+            user_id: user_id.to_string(),
+            weeks,
         })
+    }
 }

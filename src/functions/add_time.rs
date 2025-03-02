@@ -5,6 +5,7 @@ use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AddTimeInput {
+    pub date: String,
     pub time: String,
     pub reason: String,
 }
