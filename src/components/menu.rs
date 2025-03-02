@@ -56,7 +56,7 @@ pub fn Menu() -> impl IntoView {
                                     }
                                         .into_any()
                                 }
-                                _ => {}.into_any(),
+                                _ => view! {}.into_any(),
                             }}
 
                         </Suspense>

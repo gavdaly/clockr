@@ -134,7 +134,7 @@ pub fn miliseconds_to_hour_minute(duration: &i64) -> (i64, i64, i64) {
 /// # Returns
 ///
 /// * `#.##h (#h ##m)`
-/// and when there are no hours:
+///   and when there are no hours:
 /// * `#.####h (#m #s)`
 ///
 /// # Example

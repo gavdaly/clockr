@@ -21,7 +21,7 @@ pub static VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
-        <!DOCTYPE html>
+        <!DOCTYPE html> 
         <html lang="en">
             <head>
                 <meta charset="utf-8"/>
@@ -74,7 +74,7 @@ pub fn App() -> impl IntoView {
         <header id="header">
             <h1>
                 <span>"Clkr"</span>
-                <span class="version">{VERSION.clone()}</span>
+                <span class="version">{VERSION}</span>
             </h1>
         </header>
         <Router>

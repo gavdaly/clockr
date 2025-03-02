@@ -29,7 +29,7 @@ async fn main() {
     use jobs::jobs;
     use leptos::prelude::*;
     use leptos_axum::{generate_route_list, LeptosRoutes};
-    use tracing::{error, info, trace};
+    use tracing::{error, info};
     use tracing_subscriber::layer::SubscriberExt;
 
     dotenv::dotenv().ok();

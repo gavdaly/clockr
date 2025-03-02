@@ -34,8 +34,8 @@ pub fn UsersList() -> impl IntoView {
             // // {users
             // //     .into_iter()
             // //     .map(|user| {
-            <section class="stack">// //         view! {
-            // //             <div class="user_list">
+            // //         view! {
+            <section class="stack">// //             <div class="user_list">
             // //                 <span>{user.last_name} ", " {user.first_name}</span>
             // //                 <span>{user.phone_number}</span>
             // //                 <span>

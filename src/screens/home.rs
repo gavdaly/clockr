@@ -1,10 +1,8 @@
+use crate::components::Icon;
 use leptos::prelude::*;
 
 #[component]
 pub fn HomePage() -> impl IntoView {
-    // get settings
-    // show week summary
-    // upcomming vacations
     view! {
         <section class="landing-page">
             <div class="hero stack">
