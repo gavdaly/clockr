@@ -78,9 +78,18 @@ pub fn Dashboard() -> impl IntoView {
 }
 
 #[component]
-fn AddTimeForm(on_success: Callback<()>) -> impl IntoView {
+fn AddTimeForm(
+    #[prop(optional, into, default = None)]
+    date: Option<String>,
+    on_success: Callback<()>) -> impl IntoView {
     use crate::functions::AddTime;
     use leptos::form::ActionForm;
+    use chrono::Local;
+
+    let date = match date {
+        Some(date) => date,
+        None => Local::now().date_naive().to_string()
+    };
     
     let action = ServerAction::<AddTime>::new();
     let pending = action.pending();
@@ -98,10 +107,11 @@ fn AddTimeForm(on_success: Callback<()>) -> impl IntoView {
     view! {
         <div>
             <ActionForm action>
+                <input type="hidden" name="date" value=date />
                 <div>
                     <label for="time">"Time"</label>
                     <input 
-                        type="datetime-local" 
+                        type="time" 
                         name="time" 
                         id="time"
                         required
@@ -192,16 +202,29 @@ pub fn TodayTotal(logs: Signal<Vec<TimeLog>>) -> impl IntoView {
 
 #[component]
 fn LogEntry(entry: TimeLog) -> impl IntoView {
-    use leptos::ev::MouseEvent;
-    let delete_entry = |e: MouseEvent| {
-        e.prevent_default();
-    };
+    use crate::functions::DeleteTime;
+    use leptos::form::ActionForm;
+
+    let entry = Signal::derive(move || entry.clone());
+    
+    let action = ServerAction::<DeleteTime>::new();
+    let pending = action.pending();
+    let error = Memo::new(move |_| action.value().get().and_then(|r| r.err()));
+    
     view! {
-        <li data-entry-id=entry.id>
-            <time datetime="">{entry.event_time}</time>
-            <span on:click=delete_entry class="delete-indicator">
-                Delete
-            </span>
+        <li data-entry-id={entry.get().id}>
+            <time datetime="">{entry.get().event_time}</time>
+            <ActionForm action>
+                <input type="hidden" name="time_log_id" value=entry.get().id />
+                <button 
+                    type="submit"
+                    class="delete-indicator"
+                    prop:disabled=pending
+                >
+                    {move || if pending.get() { "Deleting..." } else { "Delete" }}
+                </button>
+            </ActionForm>
+            <ShowError error/>
         </li>
     }
 }
