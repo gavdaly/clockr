@@ -27,7 +27,7 @@ pub fn Menu() -> impl IntoView {
         <dialog node_ref=dialog_ref class="menu-dialog">
             <nav aria-label="Main Menu">
                 <button class="close-button" on:click=close_dialog>
-                    <Icon name="close".into()/>
+                    <Icon name="close"/>
                     <span class="sr-only">"Close Navigation Menu"</span>
                 </button>
                 <menu>
@@ -74,7 +74,7 @@ pub fn Menu() -> impl IntoView {
                     Some(CurrentUser::Authenticated(_)) => {
                         view! {
                             <button on:click=open_dialog>
-                                <Icon name="horizontal-menu".into()/>
+                                <Icon name="horizontal-menu"/>
                             </button>
                         }
                             .into_any()

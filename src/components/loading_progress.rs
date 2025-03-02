@@ -9,7 +9,7 @@ use leptos::prelude::*;
 pub fn Loading() -> impl IntoView {
     view! {
         <div data-state="loading">
-            <Icon name="loading".into()/>
+            <Icon name="loading"/>
             <span>"Loading..."</span>
         </div>
     }

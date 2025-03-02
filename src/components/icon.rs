@@ -6,7 +6,7 @@ use leptos::prelude::*;
 ///
 /// * `name` - The name of the icon.
 #[component]
-pub fn Icon(name: String) -> impl IntoView {
+pub fn Icon(#[prop(into)] name: String) -> impl IntoView {
     view! {
         <svg class=format!("icon {name}")>
             <use_ href=format!("/icons.svg#{name}")></use_>

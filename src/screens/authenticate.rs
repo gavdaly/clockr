@@ -47,7 +47,7 @@ pub fn Auth() -> impl IntoView {
                                         on:input=move |v| set_pin_input.set(event_target_value(&v))
                                     />
                                     <button type="submit">
-                                        <Icon name="login".into()/>
+                                        <Icon name="login"/>
                                         <span>"Log In"</span>
                                     </button>
                                 </div>
