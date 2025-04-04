@@ -31,10 +31,18 @@ use {crate::database::get_db, sqlx::*, uuid::Uuid};
 #[cfg(feature = "ssr")]
 impl UserDB {
     #[tracing::instrument]
-    pub async fn get_all_hourly() -> Result<Vec<Self>, sqlx::Error> {
+    pub async fn get_all_by_state(state: State) -> Result<Vec<Self>, sqlx::Error> {
         tracing::info!("Fetching all hourly users");
         let db = get_db();
-        Ok(vec![])
+        query_as!(
+            UserDB,
+            r#"
+            SELECT id, last_name, first_name, phone_number, state
+            FROM users
+            WHERE state = $1;
+            "#,
+            state as i32
+        ).fetch_all(db).await
     }
 
     #[tracing::instrument]
