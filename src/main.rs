@@ -17,9 +17,13 @@ mod jobs;
 #[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() {
+    #[allow(unused_imports)]
     use axum::body::Body;
+    #[allow(unused_imports)]
     use axum::extract::Request;
+    #[allow(unused_imports)]
     use axum::response::IntoResponse;
+    #[allow(unused_imports)]
     use axum::response::Response;
     use axum::Router;
     use axum_session::{SessionConfig, SessionLayer, SessionStore};
