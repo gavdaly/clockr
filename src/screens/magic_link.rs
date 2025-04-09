@@ -1,6 +1,7 @@
 use leptos::prelude::*;
 use leptos_router::hooks::use_params;
 use leptos_router::params::Params;
+use crate::functions::MagicSignIn;
 
 #[derive(Clone, Params, PartialEq)]
 struct MagicLinkParams {
@@ -27,33 +28,4 @@ fn MagicClick(link: String) -> impl IntoView {
             <button type="submit">Sign In</button>
         </ActionForm>
     }
-}
-
-#[server]
-async fn magic_sign_in(link: String) -> Result<(), ServerFnError> {
-    use crate::models::magic_link::MagicLink;
-    use axum::extract::Extension;
-    use axum_session::Session;
-    use axum_session_sqlx::SessionPgPool;
-    use leptos::prelude::server_fn::error::*;
-    use leptos_axum::extract;
-    use tracing::{error, info};
-
-    let session: Extension<Session<SessionPgPool>> = extract().await?;
-    info!("Session: {:?}", session);
-
-    let Ok(user_id) = MagicLink::get(&link).await else {
-        error!("COULD NOT GET USER FROM MAGIC LINK");
-        return Err(ServerFnError::<NoCustomError>::ServerError(
-            "The link has expired".into(),
-        ));
-    };
-
-    info!("Signed in user id: {} with magic link.", user_id);
-
-    session.set_longterm(true);
-    session.set("id", user_id);
-    leptos_axum::redirect("/app");
-
-    Ok(())
 }
