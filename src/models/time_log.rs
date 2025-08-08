@@ -31,7 +31,7 @@ pub enum CorrectionState {
     Pending = 0,
     Accepted = 1,
     Rejected = 2,
-    AdminAdded= 10,
+    AdminAdded = 10,
     UserDeleted = -1,
     AdminDeleted = -10,
 }
@@ -46,6 +46,7 @@ impl TimeLog {
     }
 }
 
+#[cfg(feature = "ssr")]
 #[derive(Debug)]
 pub(crate) struct TimeLogDB;
 
@@ -62,12 +63,12 @@ impl TimeLogDB {
         sqlx::query!(
             r#"
             INSERT INTO time_log (
-                id, 
-                user_id, 
+                id,
+                user_id,
                 event_time
             ) VALUES (
-                $1, 
-                $2, 
+                $1,
+                $2,
                 NOW()
             )"#,
             id,
@@ -89,10 +90,11 @@ impl TimeLogDB {
 
         let id = Ulid::from_datetime(event_time.into());
         let uuid_id = Uuid::from_bytes(id.to_bytes());
-        
+
         let mut tx = db.begin().await?;
-        
-        sqlx::query!(r#"
+
+        sqlx::query!(
+            r#"
             INSERT INTO time_log (
                 id,
                 user_id,
@@ -110,7 +112,8 @@ impl TimeLogDB {
         .fetch_one(&mut *tx)
         .await?;
 
-        sqlx::query!(r#"
+        sqlx::query!(
+            r#"
             INSERT INTO time_log_correction (
                 time_log_id,
                 reason,
@@ -126,20 +129,21 @@ impl TimeLogDB {
         )
         .execute(&mut *tx)
         .await?;
-        
+
         tx.commit().await?;
 
         Ok(())
     }
-    
+
     pub async fn update_correction(
         time_log_id: Uuid,
         state: CorrectionState,
     ) -> Result<(), sqlx::Error> {
-        use crate::database::get_db;  
+        use crate::database::get_db;
         let mut tx = get_db().begin().await?;
-        
-        sqlx::query!(r#"
+
+        sqlx::query!(
+            r#"
             UPDATE time_log_correction
             SET state = $2
             WHERE time_log_id = $1"#,
@@ -148,7 +152,7 @@ impl TimeLogDB {
         )
         .execute(&mut *tx)
         .await?;
-        
+
         tx.commit().await?;
 
         Ok(())

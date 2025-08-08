@@ -1,8 +1,8 @@
 use crate::models::CurrentUser;
-use leptos::{prelude::*, server_fn::error::NoCustomError};
+use leptos::prelude::*;
 
 #[cfg(feature = "ssr")]
-use tracing::{error, info, trace};
+use tracing::{error, trace};
 
 /// Retrieves the current user from the session, if one exists
 ///
@@ -17,8 +17,7 @@ pub async fn get_current_user() -> Result<CurrentUser, ServerFnError> {
 
     trace!("Getting Current User");
 
-    let (id, session) = super::current_user()
-        .await?;
+    let (id, session) = super::current_user().await?;
 
     let Ok(user) = UserTodayDB::get(&id.to_string()).await else {
         error!("Could not find User for session");
