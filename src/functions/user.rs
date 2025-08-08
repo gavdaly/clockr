@@ -35,7 +35,7 @@ pub async fn get_current_user() -> Result<CurrentUser, ServerFnError> {
 /// - `Err(ServerFnError)` if session is missing, user is not authenticated, or user cannot be found
 #[server]
 #[tracing::instrument]
-async fn check_in() -> Result<(), ServerFnError> {
+pub async fn check_in() -> Result<(), ServerFnError> {
     use crate::models::TimeLogDB;
 
     let (id, _) = super::current_user().await?;

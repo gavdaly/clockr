@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 
 #[server]
-async fn magic_sign_in(link: String) -> Result<(), ServerFnError> {
+pub async fn magic_sign_in(link: String) -> Result<(), ServerFnError> {
     use crate::models::magic_link::MagicLink;
     use leptos::prelude::server_fn::error::*;
     use tracing::{error, info};
@@ -9,7 +9,7 @@ async fn magic_sign_in(link: String) -> Result<(), ServerFnError> {
     let (_, session) = super::current_user()
         .await
         .map_err(|e| ServerFnError::<NoCustomError>::ServerError(e.to_string()))?;
-    
+
     info!("Session: {:?}", session);
 
     let Ok(user_id) = MagicLink::get(&link).await else {
