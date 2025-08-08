@@ -10,17 +10,17 @@ members = ["libs/*"]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-axum = { version = "^0.7", optional = true }
+axum = { version = "0.8.4", optional = true }
 console_error_panic_hook = { version = "^0.1", optional = true }
-leptos = { version = "^0.7.0", features = ["tracing"] }
-leptos_axum = { version = "^0.7.0", features = ["tracing"], optional = true }
-leptos_router = { version = "^0.7.0" }
-leptos_meta = { version = "^0.7.0", features = ["tracing"] }
+leptos = { version = "0.8.6", features = ["tracing"] }
+leptos_axum = { version = "0.8.5", features = ["tracing"], optional = true }
+leptos_router = { version = "0.8.5" }
+leptos_meta = { version = "0.8.5", features = ["tracing"] }
 tokio = { version = "^1", features = [
     "rt-multi-thread",
     "tracing",
 ], optional = true }
-tokio-cron-scheduler = { version = "^0.13.0", features = [
+tokio-cron-scheduler = { version = "^0.14", features = [
     "log",
     "tracing-subscriber",
 ], optional = true }
@@ -31,7 +31,7 @@ axum_session = { version = "^0.16.0", optional = true }
 axum_session_sqlx = { version = "^0.5.0", optional = true }
 serde = { version = "^1.0.201", features = ["derive"] }
 http = { version = "^1.1" }
-sqlx = { version = "^0.8.2", features = [
+sqlx = { version = "0.8.6", features = [
     "runtime-tokio-rustls",
     "sqlx-postgres",
     "uuid",
@@ -41,12 +41,12 @@ sqlx = { version = "^0.8.2", features = [
     "bigdecimal",
 ], optional = true }
 uuid = { version = "^1.8.0", features = ["v4", "js", "serde"] }
-ulid = { version = "^1.2.0", features = ["serde", "postgres", "uuid"], optional = true }
+ulid = { version = "^1.2", features = ["serde", "postgres", "uuid"], optional = true }
 base32 = { version = "^0.5.1", optional = true }
-chrono = { version = "^0.4.38", features = ["serde"] }
+chrono = { version = "^0.4", features = ["serde"] }
 rand = { version = "^0.9.0", features = ["nightly"], optional = true }
 dotenv = { version = "^0.15.0", optional = true }
-leptos-use = { version = "^0.15.6" }
+leptos-use = { version = "^0.16" }
 web-sys = { version = "^0.3.69" }
 twilio = { path = "libs/twilio", optional = true }
 openssl = { version = "^0.10", optional = true, features = ["vendored"] }
