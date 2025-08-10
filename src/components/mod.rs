@@ -1,3 +1,4 @@
+pub mod app_error_boundry;
 pub mod check_in;
 pub mod icon;
 pub mod loading_progress;
@@ -6,6 +7,7 @@ pub mod show_error;
 pub mod timesheet;
 pub mod user_form;
 
+pub use app_error_boundry::*;
 pub use check_in::*;
 pub use icon::*;
 pub use loading_progress::*;
