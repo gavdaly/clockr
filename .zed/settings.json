@@ -1,0 +1,31 @@
+{
+  "autosave": {
+    "after_delay": { "milliseconds": 120000 }
+  },
+
+  "format_on_save": "on",
+  "formatter": "language_server",
+
+  "lsp": {
+    "rust-analyzer": {
+      "initialization_options": {
+        "checkOnSave": {
+          "allFeatures": true,
+          "command": "clippy"
+        },
+        "cargo": {
+          "allFeatures": true
+        },
+        "procMacro": {
+          "enable": true,
+          "ignored": {
+            "leptos-macro": ["server"]
+          }
+        },
+        "rustfmt": {
+          "overrideCommand": ["leptosfmt", "--stdin", "--rustfmt"]
+        }
+      }
+    }
+  }
+}
