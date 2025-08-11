@@ -166,15 +166,9 @@ impl CorrectionDB {
         state: Option<i16>,
         time_log_id: Option<Ulid>,
     ) -> Option<Self> {
-        let Some(reason) = reason else {
-            return None;
-        };
-        let Some(state) = state else {
-            return None;
-        };
-        let Some(time_log_id) = time_log_id else {
-            return None;
-        };
+        let reason = reason?;
+        let state = state?;
+        let time_log_id = time_log_id?;
 
         Some(Self {
             reason,
@@ -193,3 +187,4 @@ impl From<CorrectionDB> for Correction {
         }
     }
 }
+

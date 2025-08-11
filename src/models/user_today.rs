@@ -60,7 +60,7 @@ impl UserTodayDB {
         sqlx::query_as!(
             UserTodayDB,
             r#"
-            SELECT 
+            SELECT
                 u.id as id,
                 u.first_name,
                 u.last_name,
@@ -72,7 +72,7 @@ impl UserTodayDB {
             FROM users u
             LEFT JOIN time_log tl ON tl.user_id = u.id
             LEFT JOIN time_log_correction c ON c.time_log_id = tl.id
-            WHERE u.id = $1 
+            WHERE u.id = $1
             AND tl.event_time >= $2
             ORDER BY tl.event_time ASC
             "#,
@@ -109,12 +109,9 @@ impl From<Vec<UserTodayDB>> for UserToday {
             let correction = CorrectionDB::from_options(
                 overview.correction_reason.clone(),
                 overview.correction_state,
-                Some(overview.time_log_id.clone()),
+                Some(overview.time_log_id),
             );
-            let correction = match correction {
-                Some(c) => Some(c.into()),
-                None => None,
-            };
+            let correction =  correction.map(|c| c.into());
 
             let time_log = TimeLog {
                 id: Uuid::from_bytes(overview.time_log_id.to_bytes()).to_string(),
@@ -126,8 +123,7 @@ impl From<Vec<UserTodayDB>> for UserToday {
             let date = overview.event_time.format("%Y-%m-%d").to_string();
 
             logs_by_date
-                .entry(date)
-                .or_insert_with(|| vec![])
+                .entry(date).or_default()
                 .push(time_log);
         }
 
@@ -165,3 +161,4 @@ impl From<Vec<UserTodayDB>> for UserToday {
         }
     }
 }
+

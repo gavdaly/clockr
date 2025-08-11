@@ -1,3 +1,4 @@
+use crate::Result;
 use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -8,21 +9,22 @@ pub struct DeleteTimeInput {
 
 #[server]
 #[tracing::instrument]
-pub async fn delete_time(input: DeleteTimeInput) -> Result<(), ServerFnError> {
+pub async fn delete_time(input: DeleteTimeInput) -> Result<()> {
     use super::current_user;
     use crate::models::{CorrectionState, TimeLogDB};
-    use leptos::prelude::server_fn::error::*;
-    use server_fn::error::NoCustomError;
+    use tracing::error;
     use uuid::Uuid;
 
-    let _user_id = current_user().await?;
+    let _user_id = current_user().await.ok_or(crate::Error::Unauthorized);
 
-    let time_log_id = Uuid::parse_str(&input.time_log_id)
-        .map_err(|e| ServerFnError::<NoCustomError>::ServerError(e.to_string()))?;
+    let Ok(time_log_id) = Uuid::parse_str(&input.time_log_id) else {
+        error!("Error parsing id: {input:?}");
+        return Err(crate::Error::InternalError);
+    };
 
-    TimeLogDB::update_correction(time_log_id, CorrectionState::UserDeleted)
-        .await
-        .map_err(|e| ServerFnError::<NoCustomError>::ServerError(e.to_string()))?;
-
-    Ok(())
+    match TimeLogDB::update_correction(time_log_id, CorrectionState::UserDeleted).await {
+        Ok(()) => Ok(()),
+        Err(e) => Err(e.into()),
+    }
 }
+

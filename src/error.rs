@@ -8,13 +8,15 @@ use std::fmt::{Display, Formatter, Result as FmtResult};
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Error {
     Io(String),
     Db(String),
 
     Unauthorized,
     NotFound,
+
+    InternalError,
 
     // internal Leptos server-fn machinery
     ServerFnError(ServerFnErrorErr),
@@ -29,6 +31,7 @@ impl Display for Error {
             Error::Db(_) => "Database error",
             Error::Unauthorized => "Unauthorized",
             Error::NotFound => "Not found",
+            Error::InternalError => "Internal error",
             Error::ServerFnError(e) => return write!(f, "{e}"),
         };
         write!(f, "{msg}")
@@ -64,6 +67,7 @@ impl Error {
             // Error::Http(_) => StatusCode::BAD_GATEWAY, // or 502/500 to taste
             Error::Unauthorized => StatusCode::UNAUTHORIZED,
             Error::NotFound => StatusCode::NOT_FOUND,
+            Error::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
             Error::ServerFnError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -72,7 +76,7 @@ impl Error {
 #[cfg(feature = "ssr")]
 impl axum::response::IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
-        use axum::response::IntoResponse;
         (self.status_code(), self.to_string()).into_response()
     }
 }
+

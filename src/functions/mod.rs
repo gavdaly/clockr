@@ -10,33 +10,35 @@ pub use user::*;
 
 #[cfg(feature = "ssr")]
 use {
-    axum::Extension, axum_session::Session, axum_session_sqlx::SessionPgPool, leptos::prelude::*,
-    leptos_axum::extract, uuid::Uuid,
+    axum::Extension,
+    axum_session::Session,
+    axum_session_sqlx::SessionPgPool,
+    leptos_axum::extract,
+    tracing::{error, trace},
+    uuid::Uuid,
 };
 
 #[cfg(feature = "ssr")]
-async fn current_user() -> Result<(Uuid, Extension<Session<SessionPgPool>>), ServerFnError> {
-    use leptos::server_fn::error::NoCustomError;
+async fn current_user() -> Option<(Uuid, Extension<Session<SessionPgPool>>)> {
 
     let session = match extract::<Extension<Session<SessionPgPool>>>().await {
-        Ok(session) => session,
+        Ok(s) => s,
         Err(e) => {
-            tracing::error!("Could not get session: {:?}", e);
-            return Err(ServerFnError::<NoCustomError>::ServerError(
-                "User not authenticated".into(),
-            ));
+            trace!("Could not get session: {:?}", e);
+            return None;
         }
     };
 
     let Some(id) = session.get::<String>("id") else {
-        return Err(ServerFnError::<NoCustomError>::ServerError(
-            "User not authenticated".into(),
-        ));
+        trace!("Could not get id from session: {session:?}");
+        return None;
     };
 
-    let id = Uuid::parse_str(&id).map_err(|e| {
-        ServerFnError::<NoCustomError>::ServerError(format!("Could not parse uuid: {}", e).into())
-    })?;
+    let Ok(id) = Uuid::parse_str(&id) else {
+        error!("Invalid UUID: {id}");
+        return None;
+    };
 
-    Ok((id, session))
+    Some((id, session))
 }
+

@@ -1,3 +1,4 @@
+use crate::Result;
 use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -9,23 +10,30 @@ pub struct AddTimeInput {
 }
 
 #[server]
-#[tracing::instrument]
-pub async fn add_time(input: AddTimeInput) -> Result<(), ServerFnError> {
+pub async fn add_time(input: AddTimeInput) -> Result<()> {
     use super::current_user;
     use crate::models::{CorrectionState, TimeLogDB};
     use chrono::{DateTime, Utc};
-    use leptos::prelude::server_fn::error::*;
-    use server_fn::error::NoCustomError;
+    use tracing::error;
 
-    let (user_id, _) = current_user().await?;
+    let Some((user_id, _)) = current_user().await else {
+        error!("User not found");
+        return Err(crate::Error::Unauthorized);
+    };
 
-    let event_time = DateTime::parse_from_rfc3339(&input.time)
-        .map_err(|e| ServerFnError::<NoCustomError>::ServerError(e.to_string()))?
-        .with_timezone(&Utc);
+    let Ok(event_time) = DateTime::parse_from_rfc3339(&input.time) else {
+        error!("Parsing Error");
+        return Err(crate::Error::InternalError);
+    };
 
-    TimeLogDB::add_correction(user_id, event_time, input.reason, CorrectionState::Pending)
-        .await
-        .map_err(|e| ServerFnError::<NoCustomError>::ServerError(e.to_string()))?;
+    let event_time = event_time.with_timezone(&Utc);
 
-    Ok(())
+
+    match TimeLogDB::add_correction(user_id, event_time, input.reason, CorrectionState::Pending)
+        .await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(crate::Error::Db(format!("Database add correction error: {e}")))
+        }
+
 }
+

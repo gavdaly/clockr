@@ -1,4 +1,4 @@
-use crate::components::icon::Icon;
+use crate::{Result,components::icon::Icon};
 use leptos::prelude::*;
 use leptos_router::hooks::use_params;
 use leptos_router::params::Params;
@@ -72,31 +72,25 @@ pub fn Auth() -> impl IntoView {
 }
 
 #[server]
-async fn authenticate(pin: i32, phone: String) -> Result<(), ServerFnError> {
+async fn authenticate(pin: i32, phone: String) -> Result<()> {
     use crate::models::pins::Pin;
     use crate::models::user::get_user_by_phone;
     use axum_session::SessionAnySession;
-    use leptos::prelude::server_fn::error::*;
 
     let Ok(pin) = Pin::get_pin(pin).await else {
-        return Err(ServerFnError::<NoCustomError>::ServerError(
-            "Internal Server Error".into(),
-        ));
+        return Err(crate::Error::InternalError);
     };
 
     let Ok(user) = get_user_by_phone(&phone).await else {
-        return Err(ServerFnError::<NoCustomError>::ServerError(
-            "Internal Server Error".into(),
-        ));
+        return Err(crate::Error::InternalError);
     };
 
-    let session = use_context::<SessionAnySession>()
-        .ok_or_else(|| ServerFnError::<NoCustomError>::ServerError("Session missing.".into()))?;
+    let Some(session) = use_context::<SessionAnySession>() else {
+        return Err(crate::Error::Unauthorized);
+    };
 
     if pin.user_id.to_string() != user.id {
-        return Err(ServerFnError::<NoCustomError>::Request(
-            "Unauthorized Try Again!".into(),
-        ));
+        return Err(crate::Error::Unauthorized);
     }
     session.set_longterm(true);
     session.set("id", user.id);
@@ -105,13 +99,15 @@ async fn authenticate(pin: i32, phone: String) -> Result<(), ServerFnError> {
 }
 
 #[server]
-pub async fn logout() -> Result<(), ServerFnError> {
+pub async fn logout() -> Result<()> {
     use axum_session::SessionAnySession;
-    use leptos::prelude::server_fn::error::*;
-    let session = use_context::<SessionAnySession>()
-        .ok_or_else(|| ServerFnError::<NoCustomError>::ServerError("Session missing.".into()))?;
+    let Some(session) = use_context::<SessionAnySession>() else {
+        tracing::trace!("Tried to remove non existing session");
+        return Err(crate::Error::InternalError);
+    };
     session.clear();
 
     leptos_axum::redirect("/");
     Ok(())
 }
+

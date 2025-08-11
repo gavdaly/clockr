@@ -49,7 +49,7 @@ fn UserProvider(children: Children) -> impl IntoView {
             }
         },
     );
-    provide_context(user_resource.clone());
+    provide_context(user_resource);
     view! { <Suspense fallback=Loading>{children()}</Suspense> }
 }
 

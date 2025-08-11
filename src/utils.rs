@@ -150,8 +150,8 @@ pub fn miliseconds_to_string(duration: &i64) -> String {
     let hours_dec = miliseconds_to_hour(duration);
     let (hours, minutes, seconds) = miliseconds_to_hour_minute(duration);
     match hours {
-        0 => format!("{:.4}h ({}m {}s)", hours_dec, minutes, seconds),
-        h => format!("{:.2}h ({}h {}m)", hours_dec, h, minutes),
+        0 => format!("{hours_dec:.4}h ({minutes}m {seconds}s)"),
+        h => format!("{hours_dec:.2}h ({h}h {minutes}m)"),
     }
 }
 

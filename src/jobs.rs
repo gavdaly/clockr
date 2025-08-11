@@ -17,11 +17,12 @@ pub async fn jobs() -> Result<(), JobSchedulerError> {
     }));
 
     sched.add(daily::create()?).await?;
-    // sched.add(hourly::create()?).await?;
+    sched.add(hourly::create()?).await?;
     sched.add(weekly::create()?).await?;
-    // sched.add(monthly::create()?).await?;
+    sched.add(monthly::create()?).await?;
 
     sched.start().await?;
 
     Ok(())
 }
+

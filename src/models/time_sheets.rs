@@ -89,8 +89,7 @@ impl TimeSheet {
             };
 
             logs_by_date
-                .entry(date)
-                .or_insert_with(Vec::new)
+                .entry(date).or_default()
                 .push(time_log);
         }
 
@@ -163,7 +162,7 @@ impl TimeSheet {
             }
 
             // Move to the next day
-            current_date = current_date + Duration::days(1);
+            current_date += Duration::days(1);
         }
 
         // Add the last week
@@ -177,3 +176,4 @@ impl TimeSheet {
         })
     }
 }
+

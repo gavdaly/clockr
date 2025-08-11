@@ -42,7 +42,7 @@ async fn main() {
 
     match tracing::subscriber::set_global_default(subscriber) {
         Ok(_) => (),
-        Err(e) => eprintln!("Failed to set tracing subscriber: {}", e),
+        Err(e) => eprintln!("Failed to set tracing subscriber: {e}"),
     }
 
     if let Err(e) = jobs().await {
@@ -90,3 +90,4 @@ async fn main() {
 
 #[cfg(not(feature = "ssr"))]
 pub fn main() {}
+

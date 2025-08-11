@@ -21,7 +21,7 @@ pub fn Dashboard() -> impl IntoView {
                         let u = Signal::derive(move || user.clone());
                         view! { <ClkIn user=u/> }.into_any()
                     }
-                    _ => view! {}.into_any(),
+                    _ => view! { <p>"unauthorized"</p> }.into_any(),
                 }}
 
             </Suspense>
@@ -33,7 +33,7 @@ pub fn Dashboard() -> impl IntoView {
                     }>"add time +"</button>
                 </div>
                 <Show when=move || show_time.get()>
-                    <AddTimeForm on_success=Callback::new(move |_| set_show_time.set(false)) />
+                    <AddTimeForm on_success=Callback::new(move |_| set_show_time.set(false))/>
                 </Show>
                 <ul class="slide-list">
                     <Suspense fallback=move || {
@@ -50,8 +50,9 @@ pub fn Dashboard() -> impl IntoView {
                                     .collect::<Vec<_>>()
                                     .into_any()
                             }
-                            _ => view! {}.into_any(),
+                            _ => view! { <p>"unauthorized"</p> }.into_any(),
                         }}
+
                     </Suspense>
                 </ul>
             </div>
@@ -64,7 +65,7 @@ pub fn Dashboard() -> impl IntoView {
                         let logs = Signal::derive(move || user.check_ins.clone());
                         view! { <TodayTotal logs=logs/> }.into_any()
                     }
-                    _ => view! {}.into_any(),
+                    _ => view! { <p>"unauthorized"</p> }.into_any(),
                 }}
 
             </Suspense>
@@ -79,56 +80,44 @@ pub fn Dashboard() -> impl IntoView {
 
 #[component]
 fn AddTimeForm(
-    #[prop(optional, into, default = None)]
-    date: Option<String>,
-    on_success: Callback<()>) -> impl IntoView {
+    #[prop(optional, into, default = None)] date: Option<String>,
+    on_success: Callback<()>,
+) -> impl IntoView {
     use crate::functions::AddTime;
-    use leptos::form::ActionForm;
     use chrono::Local;
+    use leptos::form::ActionForm;
 
     let date = match date {
         Some(date) => date,
-        None => Local::now().date_naive().to_string()
+        None => Local::now().date_naive().to_string(),
     };
-    
+
     let action = ServerAction::<AddTime>::new();
     let pending = action.pending();
     let result = action.value();
-    
+
     let error = Memo::new(move |_| result.get().and_then(|r| r.err()));
-    
+
     // Call on_success when the action completes successfully
     Effect::new(move |_| {
         if let Some(Ok(_)) = result.get() {
             on_success.run(());
         }
     });
-    
+
     view! {
         <div>
             <ActionForm action>
-                <input type="hidden" name="date" value=date />
+                <input type="hidden" name="date" value=date/>
                 <div>
                     <label for="time">"Time"</label>
-                    <input 
-                        type="time" 
-                        name="time" 
-                        id="time"
-                        required
-                    />
+                    <input type="time" name="time" id="time" required/>
                 </div>
                 <div>
                     <label for="reason">"Reason"</label>
-                    <textarea 
-                        name="reason" 
-                        id="reason"
-                        required
-                    ></textarea>
+                    <textarea name="reason" id="reason" required></textarea>
                 </div>
-                <button 
-                    type="submit"
-                    prop:disabled=pending
-                >
+                <button type="submit" prop:disabled=pending>
                     {move || if pending.get() { "Submitting..." } else { "Submit" }}
                 </button>
             </ActionForm>
@@ -206,21 +195,17 @@ fn LogEntry(entry: TimeLog) -> impl IntoView {
     use leptos::form::ActionForm;
 
     let entry = Signal::derive(move || entry.clone());
-    
+
     let action = ServerAction::<DeleteTime>::new();
     let pending = action.pending();
     let error = Memo::new(move |_| action.value().get().and_then(|r| r.err()));
-    
+
     view! {
-        <li data-entry-id={entry.get().id}>
+        <li data-entry-id=entry.get().id>
             <time datetime="">{entry.get().event_time}</time>
             <ActionForm action>
-                <input type="hidden" name="time_log_id" value=entry.get().id />
-                <button 
-                    type="submit"
-                    class="delete-indicator"
-                    prop:disabled=pending
-                >
+                <input type="hidden" name="time_log_id" value=entry.get().id/>
+                <button type="submit" class="delete-indicator" prop:disabled=pending>
                     {move || if pending.get() { "Deleting..." } else { "Delete" }}
                 </button>
             </ActionForm>
@@ -236,7 +221,7 @@ fn DurationDateTime(seconds: Signal<i64>) -> impl IntoView {
     let s = seconds.get() % 60;
     let hours = seconds.get() as f32 / 3600.0;
     let time = format!("PT{h}H{m}M{s}S");
-    view! { <time datetime=time>{format!("{:.2}h", hours)}</time> }
+    view! { <time datetime=time>{format!("{hours:.2}h")}</time> }
 }
 
 #[component]
@@ -283,3 +268,4 @@ fn ClkIn(user: Signal<UserToday>) -> impl IntoView {
         <ShowError error/>
     }
 }
+

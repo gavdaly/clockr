@@ -35,7 +35,7 @@ pub fn UserForm(uuid: Option<String>) -> impl IntoView {
                 Some(u) => {
                     view! { <input name="user_id" type="hidden" value=u.to_string()/> }.into_any()
                 }
-                None => view! {}.into_any(),
+                None => view! { <p>"unauthorized"</p> }.into_any(),
             }}
             <div>
                 <label>"First Name"</label>
@@ -67,3 +67,4 @@ pub fn UserForm(uuid: Option<String>) -> impl IntoView {
         </form>
     }
 }
+

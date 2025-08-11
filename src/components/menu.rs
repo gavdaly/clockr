@@ -56,7 +56,7 @@ pub fn Menu() -> impl IntoView {
                                     }
                                         .into_any()
                                 }
-                                _ => view! {}.into_any(),
+                                _ => view! { <p>"unauthorized"</p> }.into_any(),
                             }}
 
                         </Suspense>
@@ -87,3 +87,4 @@ pub fn Menu() -> impl IntoView {
         </div>
     }
 }
+
