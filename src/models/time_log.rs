@@ -48,10 +48,111 @@ impl TimeLog {
 
 #[cfg(feature = "ssr")]
 #[derive(Debug)]
-pub(crate) struct TimeLogDB;
+pub struct TimeLogDB;
+
+#[cfg(feature = "ssr")]
+#[derive(Debug)]
+pub struct SessionRecord {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub start_time: DateTime<Utc>,
+    pub end_time: Option<DateTime<Utc>>,
+}
 
 #[cfg(feature = "ssr")]
 impl TimeLogDB {
+    pub async fn transform_all_sessions() -> Result<(), sqlx::Error> {
+        use crate::database::get_db;
+
+        let db = get_db();
+        const BATCH_SIZE: i64 = 100;
+
+        let sessions_exists = sqlx::query!(
+            r#"SELECT EXISTS (SELECT 1 FROM sessions) as exists"#
+        )
+        .fetch_one(db)
+        .await?;
+
+        if !sessions_exists.exists.unwrap_or(false) {
+            return Ok(());
+        }
+
+        loop {
+            // Fetch limited batch of sessions
+            let sessions = sqlx::query_as!(
+                SessionRecord,
+                r#"
+                SELECT id, user_id, start_time, end_time
+                FROM sessions
+                LIMIT $1
+                "#,
+                BATCH_SIZE
+            )
+            .fetch_all(db)
+            .await?;
+
+            // If no sessions left, we're done
+            if sessions.is_empty() {
+                break;
+            }
+
+            for session in sessions {
+                let mut tx = db.begin().await?;
+                let check_in_id = create_ulid_as_uuid(session.start_time);
+                sqlx::query!(
+                    r#"
+                INSERT INTO time_log (
+                    id,
+                    user_id,
+                    event_time
+                ) VALUES (
+                    $1,
+                    $2,
+                    $3
+                )"#,
+                    check_in_id,
+                    session.user_id,
+                    session.start_time,
+                )
+                .execute(&mut *tx)
+                .await?;
+
+                if let Some(end_time) = session.end_time {
+                    let check_out_id = create_ulid_as_uuid(end_time);
+                    sqlx::query!(
+                        r#"
+                    INSERT INTO time_log (
+                        id,
+                        user_id,
+                        event_time
+                    ) VALUES (
+                        $1,
+                        $2,
+                        $3
+                    )"#,
+                        check_out_id,
+                        session.user_id,
+                        end_time,
+                    )
+                    .execute(&mut *tx)
+                    .await?;
+                }
+
+                sqlx::query!(
+                    r#"
+                    DELETE FROM sessions
+                    WHERE id = $1"#,
+                    session.id,
+                )
+                .execute(&mut *tx)
+                .await?;
+
+                tx.commit().await?;
+            }
+        }
+
+        Ok(())
+    }
     pub async fn add(user_id: Uuid) -> Result<(), sqlx::Error> {
         use crate::database::get_db;
         use ulid::Ulid;
@@ -157,6 +258,12 @@ impl TimeLogDB {
 
         Ok(())
     }
+}
+
+#[cfg(feature = "ssr")]
+fn create_ulid_as_uuid(dt: DateTime<Utc>) -> Uuid {
+    let ulid = Ulid::from_datetime(dt.into());
+    Uuid::from_bytes(ulid.to_bytes())
 }
 
 #[cfg(feature = "ssr")]
