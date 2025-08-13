@@ -30,6 +30,7 @@ async fn main() {
     use axum_session_sqlx::SessionPgPool;
     use clkr::app::*;
     use clkr::database::{get_db, init_db};
+    use clkr::models::TimeLogDB;
     use jobs::jobs;
     use leptos::prelude::*;
     use leptos_axum::{generate_route_list, LeptosRoutes};
@@ -80,6 +81,8 @@ async fn main() {
         error!("Failed to bind to address: `{addr}`");
         std::process::exit(10);
     };
+
+    // let _ = TimeLogDB::transform_all_sessions().await;
 
     info!("listening on http://{}", &addr);
     let Ok(_) = axum::serve(listener, app.into_make_service()).await else {
