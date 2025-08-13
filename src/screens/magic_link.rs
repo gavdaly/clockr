@@ -1,7 +1,7 @@
+use crate::functions::MagicSignIn;
 use leptos::prelude::*;
 use leptos_router::hooks::use_params;
 use leptos_router::params::Params;
-use crate::functions::MagicSignIn;
 
 #[derive(Clone, Params, PartialEq)]
 struct MagicLinkParams {

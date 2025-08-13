@@ -25,4 +25,3 @@ pub async fn magic_sign_in(link: String) -> Result<()> {
 
     Ok(())
 }
-

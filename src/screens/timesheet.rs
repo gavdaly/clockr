@@ -6,27 +6,29 @@ pub fn TimeSheetDisplay() -> impl IntoView {
     use crate::functions::AddTime;
     let action = ServerAction::<AddTime>::new();
 
-    let timesheet = Resource::new(move || action.version(), move |_| get_active_user_timesheet());
-    
+    let timesheet = Resource::new(
+        move || action.version(),
+        move |_| get_active_user_timesheet(),
+    );
+
     let add_time_pending = action.pending();
     let selected_date = RwSignal::new(None::<String>);
-    
+
     let show_add_form = RwSignal::new(false);
-    
-    
+
     let handle_add_time = move |date: String| {
         selected_date.set(Some(date));
         show_add_form.set(true);
     };
-    
+
     let close_form = move |_| {
         show_add_form.set(false);
     };
-    
+
     view! {
             <section class="stack">
                 <h2>"Timesheet"</h2>
-                
+
                 {move || match timesheet.get() {
                     None => view! { <p>"Loading..."</p> }.into_any(),
                     Some(Err(e)) => view! { <p class="error">"Error loading timesheet: " {e.to_string()}</p> }.into_any(),
@@ -56,16 +58,16 @@ pub fn TimeSheetDisplay() -> impl IntoView {
                                                                 let start_time = chrono::DateTime::from_timestamp(entry.start_time, 0)
                                                                     .map(|dt| dt.format("%H:%M").to_string())
                                                                     .unwrap_or_else(|| "Invalid time".to_string());
-                                                                
+
                                                                 let end_time = entry.end_time
                                                                     .and_then(|ts| chrono::DateTime::from_timestamp(ts, 0))
                                                                     .map(|dt| dt.format("%H:%M").to_string())
                                                                     .unwrap_or_else(|| "--:--".to_string());
-                                                                
+
                                                                 let duration = entry.duration
                                                                     .map(|d| format!("{:.2} hours", d as f64 / 3600.0))
                                                                     .unwrap_or_else(|| "In progress".to_string());
-                                                                
+
                                                                 let correction_status = entry.correction.as_ref().map(|c| {
                                                                     match c.state {
                                                                         0 => "(Pending)",
@@ -77,7 +79,7 @@ pub fn TimeSheetDisplay() -> impl IntoView {
                                                                         _ => ""
                                                                     }
                                                                 }).unwrap_or("");
-                                                                
+
                                                                 view! {
                                                                     <div class="entry">
                                                                         <div class="entry-times">
@@ -96,7 +98,7 @@ pub fn TimeSheetDisplay() -> impl IntoView {
                                                                 }
                                                             }).collect::<Vec<_>>()}
                                                         </div>
-                                                        <button 
+                                                        <button
                                                             class="add-entry-btn"
                                                             on:click=move |_| handle_add_time(day_date.clone())
                                                         >
@@ -112,7 +114,7 @@ pub fn TimeSheetDisplay() -> impl IntoView {
                         </div>
                     }.into_any()
                 }}
-                
+
                 {move || show_add_form.get().then(|| {
                     view! {
                         <div class="add-time-form-overlay">
@@ -122,23 +124,23 @@ pub fn TimeSheetDisplay() -> impl IntoView {
                                     <input type="hidden" id="date" value=selected_date.get().unwrap_or_default() />
                                     <div class="form-group">
                                         <label for="time">"Time (HH:MM)"</label>
-                                        <input 
-                                            type="time" 
-                                            id="time" 
+                                        <input
+                                            type="time"
+                                            id="time"
                                             required
                                         />
                                     </div>
                                     <div class="form-group">
                                         <label for="reason">"Reason"</label>
-                                        <textarea 
-                                            id="reason" 
+                                        <textarea
+                                            id="reason"
                                             required
                                         ></textarea>
                                     </div>
                                     <div class="form-actions">
                                         <button type="reset" on:click=close_form>"Cancel"</button>
-                                        <button 
-                                            type="submit" 
+                                        <button
+                                            type="submit"
                                             prop:disabled=add_time_pending.get()
                                         >
                                             {move || if add_time_pending.get() { "Adding..." } else { "Add Time" }}
@@ -152,8 +154,6 @@ pub fn TimeSheetDisplay() -> impl IntoView {
             </section>
     }
 }
-
-
 
 #[server]
 async fn get_active_user_timesheet() -> Result<TimeSheet, ServerFnError> {

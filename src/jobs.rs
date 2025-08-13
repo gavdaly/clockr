@@ -25,4 +25,3 @@ pub async fn jobs() -> Result<(), JobSchedulerError> {
 
     Ok(())
 }
-

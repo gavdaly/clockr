@@ -21,7 +21,7 @@ pub static VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
-        <!DOCTYPE html> 
+        <!DOCTYPE html>
         <html lang="en">
             <head>
                 <meta charset="utf-8"/>

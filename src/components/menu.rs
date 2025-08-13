@@ -87,4 +87,3 @@ pub fn Menu() -> impl IntoView {
         </div>
     }
 }
-

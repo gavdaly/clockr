@@ -1,4 +1,4 @@
-use crate::{Result,components::icon::Icon};
+use crate::{components::icon::Icon, Result};
 use leptos::prelude::*;
 use leptos_router::hooks::use_params;
 use leptos_router::params::Params;
@@ -110,4 +110,3 @@ pub async fn logout() -> Result<()> {
     leptos_axum::redirect("/");
     Ok(())
 }
-

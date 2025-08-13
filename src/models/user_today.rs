@@ -111,7 +111,7 @@ impl From<Vec<UserTodayDB>> for UserToday {
                 overview.correction_state,
                 Some(overview.time_log_id),
             );
-            let correction =  correction.map(|c| c.into());
+            let correction = correction.map(|c| c.into());
 
             let time_log = TimeLog {
                 id: Uuid::from_bytes(overview.time_log_id.to_bytes()).to_string(),
@@ -122,9 +122,7 @@ impl From<Vec<UserTodayDB>> for UserToday {
             // Convert timestamp to date string
             let date = overview.event_time.format("%Y-%m-%d").to_string();
 
-            logs_by_date
-                .entry(date).or_default()
-                .push(time_log);
+            logs_by_date.entry(date).or_default().push(time_log);
         }
 
         let today = Local::now().format("%Y-%m-%d").to_string();
@@ -161,4 +159,3 @@ impl From<Vec<UserTodayDB>> for UserToday {
         }
     }
 }
-

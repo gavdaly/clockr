@@ -88,9 +88,7 @@ impl TimeSheet {
                 correction: correction.map(|c| c.into()),
             };
 
-            logs_by_date
-                .entry(date).or_default()
-                .push(time_log);
+            logs_by_date.entry(date).or_default().push(time_log);
         }
 
         // Generate weeks and days
@@ -176,4 +174,3 @@ impl TimeSheet {
         })
     }
 }
-

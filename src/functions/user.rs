@@ -49,4 +49,3 @@ pub async fn check_in() -> Result<()> {
 
     Ok(())
 }
-

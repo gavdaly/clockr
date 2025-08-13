@@ -79,4 +79,3 @@ impl axum::response::IntoResponse for Error {
         (self.status_code(), self.to_string()).into_response()
     }
 }
-

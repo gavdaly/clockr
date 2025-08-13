@@ -28,12 +28,12 @@ pub async fn add_time(input: AddTimeInput) -> Result<()> {
 
     let event_time = event_time.with_timezone(&Utc);
 
-
     match TimeLogDB::add_correction(user_id, event_time, input.reason, CorrectionState::Pending)
-        .await {
-            Ok(_) => Ok(()),
-            Err(e) => Err(crate::Error::Db(format!("Database add correction error: {e}")))
-        }
-
+        .await
+    {
+        Ok(_) => Ok(()),
+        Err(e) => Err(crate::Error::Db(format!(
+            "Database add correction error: {e}"
+        ))),
+    }
 }
-

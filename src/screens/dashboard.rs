@@ -268,4 +268,3 @@ fn ClkIn(user: Signal<UserToday>) -> impl IntoView {
         <ShowError error/>
     }
 }
-

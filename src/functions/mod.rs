@@ -20,7 +20,6 @@ use {
 
 #[cfg(feature = "ssr")]
 async fn current_user() -> Option<(Uuid, Extension<Session<SessionPgPool>>)> {
-
     let session = match extract::<Extension<Session<SessionPgPool>>>().await {
         Ok(s) => s,
         Err(e) => {
@@ -41,4 +40,3 @@ async fn current_user() -> Option<(Uuid, Extension<Session<SessionPgPool>>)> {
 
     Some((id, session))
 }
-

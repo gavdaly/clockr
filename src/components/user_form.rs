@@ -67,4 +67,3 @@ pub fn UserForm(uuid: Option<String>) -> impl IntoView {
         </form>
     }
 }
-

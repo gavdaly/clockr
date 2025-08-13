@@ -2,7 +2,6 @@ use leptos::prelude::*;
 
 #[component]
 pub fn TimeSheetDisplay() -> impl IntoView {
-    
     view! {
         <table id="timesheet_summary">
             <thead>

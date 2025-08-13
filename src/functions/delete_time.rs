@@ -27,4 +27,3 @@ pub async fn delete_time(input: DeleteTimeInput) -> Result<()> {
         Err(e) => Err(e.into()),
     }
 }
-

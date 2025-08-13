@@ -42,7 +42,9 @@ impl UserDB {
             WHERE state = $1;
             "#,
             state as i32
-        ).fetch_all(db).await
+        )
+        .fetch_all(db)
+        .await
     }
 
     #[tracing::instrument]
