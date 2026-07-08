@@ -144,10 +144,49 @@ async fn submit_phone_number(phone: String) -> Result<(), ServerFnError> {
 pub fn PhoneNumber() -> impl IntoView {
     let submit = ServerAction::<SubmitPhoneNumber>::new();
     let value = submit.value();
+    let (phone, set_phone) = signal(String::new());
+    let (passkey_pending, set_passkey_pending) = signal(false);
+    let (passkey_error, set_passkey_error) = signal(None::<String>);
+    let login_with_passkey = move |_| {
+        set_passkey_pending.set(true);
+        set_passkey_error.set(None);
+
+        #[cfg(feature = "hydrate")]
+        wasm_bindgen_futures::spawn_local({
+            let phone = phone.get_untracked();
+            async move {
+                let result: std::result::Result<(), String> = async {
+                    let challenge = crate::functions::start_passkey_login(phone)
+                        .await
+                        .map_err(|error| error.to_string())?;
+                    let credential =
+                        crate::service::passkeys::get_passkey_credential(challenge.public_key)
+                            .await
+                            .map_err(|error| error.to_string())?;
+                    crate::functions::finish_passkey_login(challenge.challenge_id, credential)
+                        .await
+                        .map_err(|error| error.to_string())
+                }
+                .await;
+
+                if let Err(error) = result {
+                    set_passkey_error.set(Some(error));
+                }
+                set_passkey_pending.set(false);
+            }
+        });
+
+        #[cfg(not(feature = "hydrate"))]
+        {
+            set_passkey_error.set(Some("Passkey login requires browser support.".to_string()));
+            set_passkey_pending.set(false);
+        }
+    };
+
     view! {
         <Title text="Dental Care | Authentication"/>
 
-        <ActionForm action=submit>
+        <ActionForm action=submit attr:class="stack">
             <label>"Phone Number"</label>
             <input
                 id="phone"
@@ -157,9 +196,21 @@ pub fn PhoneNumber() -> impl IntoView {
                 placeholder="+1 (893) 234-2345"
                 inputmode="tel"
                 required
+                on:input=move |event| set_phone.set(event_target_value(&event))
             />
-            <button type="submit">"Get Pin"</button>
+            <button
+                type="button"
+                disabled=move || passkey_pending.get()
+                on:click=login_with_passkey
+            >
+                {move || if passkey_pending.get() { "Checking passkey" } else { "Log in with passkey" }}
+            </button>
+            <button type="submit">"Send recovery PIN"</button>
         </ActionForm>
+
+        <Show when=move || passkey_error.get().is_some()>
+            <div data-state="error">{move || passkey_error.get().unwrap_or_default()}</div>
+        </Show>
 
         <Show when=move || {
             value.get().is_some()

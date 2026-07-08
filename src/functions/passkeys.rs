@@ -74,6 +74,7 @@ pub async fn start_passkey_login(phone: String) -> Result<PasskeyChallenge> {
     use crate::service::passkeys::get_webauthn;
     use webauthn_rs::prelude::*;
 
+    let phone = crate::utils::filter_phone_number(&phone);
     let user = get_user_by_phone(&phone).await?;
     let user_id = Uuid::parse_str(&user.id).map_err(|_| crate::Error::InternalError)?;
     let passkeys = list_user_passkeys(user_id).await?;
