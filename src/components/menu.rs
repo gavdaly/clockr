@@ -43,14 +43,13 @@ pub fn Menu() -> impl IntoView {
                         }>
                             {move || match user_context.read().clone() {
                                 Some(CurrentUser::Authenticated(_)) => {
-                                    view! {
+                                    Some(view! {
                                         <li>
                                             <PasskeyRegistrationButton/>
                                         </li>
-                                    }
-                                        .into_any()
+                                    })
                                 }
-                                _ => view! {}.into_any(),
+                                _ => None,
                             }}
 
                         </Suspense>

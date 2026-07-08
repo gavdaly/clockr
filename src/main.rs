@@ -30,7 +30,6 @@ async fn main() {
     use axum_session_sqlx::SessionPgPool;
     use clkr::app::*;
     use clkr::database::{get_db, init_db};
-    use clkr::models::TimeLogDB;
     use jobs::jobs;
     use leptos::prelude::*;
     use leptos_axum::{generate_route_list, LeptosRoutes};

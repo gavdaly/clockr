@@ -1,17 +1,12 @@
 use leptos::prelude::*;
 
 #[component]
-pub fn AppErrorBoundary(
-    #[prop(optional, into)] class: Option<String>,
-    children: Children,
-) -> impl IntoView {
-    let class = class.unwrap_or_default();
-
+pub fn AppErrorBoundary(children: Children) -> impl IntoView {
     view! {
         <ErrorBoundary
             fallback=move |errors| {
                 view! {
-                    <div class=format!("error-boundary {class}") role="alert">
+                    <div class="error-boundary" role="alert">
                         <h2>"Something went wrong."</h2>
                         <ul>
                             {move || errors

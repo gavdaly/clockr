@@ -79,19 +79,12 @@ pub fn Dashboard() -> impl IntoView {
 }
 
 #[component]
-fn AddTimeForm(
-    #[prop(optional, into, default = None)] date: Option<String>,
-    on_success: Callback<()>,
-) -> impl IntoView {
+fn AddTimeForm(on_success: Callback<()>) -> impl IntoView {
     use crate::functions::AddTime;
     use chrono::Local;
     use leptos::form::ActionForm;
 
-    let date = match date {
-        Some(date) => date,
-        None => Local::now().date_naive().to_string(),
-    };
-
+    let date = Local::now().date_naive().to_string();
     let action = ServerAction::<AddTime>::new();
     let pending = action.pending();
     let result = action.value();
