@@ -1,0 +1,42 @@
+[
+  {
+    "label": "Leptos Dev",
+    "command": "cargo leptos watch",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": true,
+    "reveal": "always",
+    "hide": "never"
+  },
+  {
+    "label": "Leptos Build",
+    "command": "cargo leptos build",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "hide": "on_success"
+  },
+  {
+    "label": "Leptos Serve",
+    "command": "cargo leptos serve",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": true,
+    "reveal": "always",
+    "hide": "never"
+  },
+  {
+    "label": "Leptos Format",
+    "command": "cargo fmt",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "hide": "on_success"
+  },
+  {
+    "label": "Leptos Clippy",
+    "command": "cargo clippy --fix --allow-dirty --all-features",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "hide": "on_success"
+  }
+]
