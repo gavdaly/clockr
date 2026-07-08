@@ -12,10 +12,10 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 axum = { version = "0.8.4", optional = true }
 console_error_panic_hook = { version = "^0.1", optional = true }
-leptos = { version = "0.8.6", features = ["tracing"] }
-leptos_axum = { version = "0.8.5", features = ["tracing"], optional = true }
-leptos_router = { version = "0.8.5" }
-leptos_meta = { version = "0.8.5", features = ["tracing"] }
+leptos = { version = "=0.8.20", features = ["tracing"] }
+leptos_axum = { version = "0.8", features = ["tracing"], optional = true }
+leptos_router = { version = "0.8" }
+leptos_meta = { version = "0.8", features = ["tracing"] }
 tokio = { version = "^1", features = [
     "rt-multi-thread",
     "tracing",
@@ -24,7 +24,7 @@ tokio-cron-scheduler = { version = "^0.14", features = [
     "log",
     "tracing-subscriber",
 ], optional = true }
-wasm-bindgen = { version = "=0.2.100", optional = true }
+wasm-bindgen = { version = "0.2", optional = true }
 tracing = { version = "^0.1.40" }
 tracing-subscriber = { version = "^0.3", optional = true }
 axum_session = { version = "^0.16.0", optional = true }
@@ -54,6 +54,9 @@ leptos-use = { version = "^0.16" }
 web-sys = { version = "^0.3.69" }
 twilio = { path = "libs/twilio", optional = true }
 openssl = { version = "^0.10", optional = true, features = ["vendored"] }
+
+[patch.crates-io]
+proc-macro-error2 = { git = "https://github.com/fgardt/proc-macro-error-2", branch = "fix/future-incompat" }
 
 [features]
 hydrate = ["leptos/hydrate", "dep:console_error_panic_hook", "dep:wasm-bindgen"]
