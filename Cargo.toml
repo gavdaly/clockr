@@ -57,7 +57,10 @@ js-sys = { version = "0.3", optional = true }
 serde-wasm-bindgen = { version = "0.6", optional = true }
 base64ct = { version = "1", features = ["alloc"], optional = true }
 url = { version = "2", optional = true }
-webauthn-rs = { version = "0.5", features = ["danger-allow-state-serialisation"], optional = true }
+webauthn-rs = { version = "0.5", features = [
+    "conditional-ui",
+    "danger-allow-state-serialisation",
+], optional = true }
 webauthn-rs-proto = { version = "0.5", features = ["wasm"], optional = true }
 web-sys = { version = "^0.3.69", features = [
     "Window",

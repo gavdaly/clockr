@@ -11,6 +11,25 @@ pub struct PasskeyChallenge {
 }
 
 #[server]
+pub async fn start_passkey_primary_login() -> Result<PasskeyChallenge> {
+    use crate::models::passkey::insert_anonymous_challenge;
+    use crate::service::passkeys::get_webauthn;
+
+    let webauthn = get_webauthn().map_err(|_| crate::Error::InternalError)?;
+    let (public_key, state) = webauthn
+        .start_discoverable_authentication()
+        .map_err(|_| crate::Error::InternalError)?;
+    let state = serde_json::to_value(state).map_err(|_| crate::Error::InternalError)?;
+    let public_key = serde_json::to_value(public_key).map_err(|_| crate::Error::InternalError)?;
+    let challenge_id = insert_anonymous_challenge("discoverable_authentication", state).await?;
+
+    Ok(PasskeyChallenge {
+        challenge_id,
+        public_key,
+    })
+}
+
+#[server]
 pub async fn start_passkey_registration() -> Result<PasskeyChallenge> {
     use crate::models::passkey::insert_challenge;
     use crate::models::user::UserDB;
@@ -63,6 +82,57 @@ pub async fn finish_passkey_registration(
 
     insert_passkey(user_id, credential_id, passkey_json, label).await?;
     consume_challenge(challenge.id).await?;
+
+    Ok(())
+}
+
+#[server]
+pub async fn finish_passkey_primary_login(challenge_id: Uuid, credential: Value) -> Result<()> {
+    use crate::models::passkey::{
+        consume_challenge, list_user_passkeys, load_challenge, load_passkey_by_credential_id,
+        update_passkey_after_authentication,
+    };
+    use crate::service::passkeys::get_webauthn;
+    use axum_session::SessionAnySession;
+    use webauthn_rs::prelude::*;
+
+    let challenge = load_challenge(challenge_id, "discoverable_authentication").await?;
+    let state: DiscoverableAuthentication =
+        serde_json::from_value(challenge.state).map_err(|_| crate::Error::InternalError)?;
+    let credential: PublicKeyCredential =
+        serde_json::from_value(credential).map_err(|_| crate::Error::InternalError)?;
+    let webauthn = get_webauthn().map_err(|_| crate::Error::InternalError)?;
+    let (user_id, credential_id) = webauthn
+        .identify_discoverable_authentication(&credential)
+        .map_err(|_| crate::Error::Unauthorized)?;
+    let passkeys = list_user_passkeys(user_id).await?;
+    let discoverable_keys = passkeys
+        .into_iter()
+        .map(|record| serde_json::from_value::<Passkey>(record.passkey))
+        .collect::<std::result::Result<Vec<_>, _>>()
+        .map_err(|_| crate::Error::InternalError)?
+        .into_iter()
+        .map(DiscoverableKey::from)
+        .collect::<Vec<_>>();
+    let auth_result = webauthn
+        .finish_discoverable_authentication(&credential, state, &discoverable_keys)
+        .map_err(|_| crate::Error::Unauthorized)?;
+
+    let record = load_passkey_by_credential_id(credential_id).await?;
+    let mut passkey: Passkey =
+        serde_json::from_value(record.passkey).map_err(|_| crate::Error::InternalError)?;
+    let _ = passkey.update_credential(&auth_result);
+    let passkey = serde_json::to_value(passkey).map_err(|_| crate::Error::InternalError)?;
+
+    update_passkey_after_authentication(credential_id, passkey).await?;
+    consume_challenge(challenge.id).await?;
+
+    let Some(session) = use_context::<SessionAnySession>() else {
+        return Err(crate::Error::Unauthorized);
+    };
+    session.set_longterm(true);
+    session.set("id", user_id.to_string());
+    leptos_axum::redirect("/app");
 
     Ok(())
 }
@@ -136,7 +206,8 @@ pub async fn finish_passkey_login(challenge_id: Uuid, credential: Value) -> Resu
         return Err(crate::Error::Unauthorized);
     };
     session.set_longterm(true);
-    session.set("id", challenge.user_id.to_string());
+    let user_id = challenge.user_id.ok_or(crate::Error::Unauthorized)?;
+    session.set("id", user_id.to_string());
     leptos_axum::redirect("/app");
 
     Ok(())

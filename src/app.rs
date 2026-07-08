@@ -105,15 +105,17 @@ pub fn App() -> impl IntoView {
 
 #[server]
 #[tracing::instrument]
-async fn submit_phone_number(phone: String) -> Result<(), ServerFnError> {
+async fn submit_phone_number(phone: String, email: Option<String>) -> Result<(), ServerFnError> {
     use crate::models::pins::Pin;
     use crate::models::user::get_user_by_phone;
     use crate::service::sms::send_message;
     use leptos::prelude::server_fn::error::*;
 
     let phone = crate::utils::filter_phone_number(&phone);
+    let email = email.unwrap_or_default();
 
     tracing::info!("phone: {:?}", phone);
+    tracing::info!("email recovery requested: {}", !email.is_empty());
 
     let Ok(user) = get_user_by_phone(&phone).await else {
         tracing::error!("Could not find phone number: {:?}", phone);
@@ -134,6 +136,7 @@ async fn submit_phone_number(phone: String) -> Result<(), ServerFnError> {
     let pin_number = pin.number.to_string();
     let message = format!("Your verification code is: {pin_number}. Do not share it.");
     send_message(message, format!("+1{phone}")).await;
+    // TODO: send the same recovery challenge by email once an email service is configured.
 
     leptos_axum::redirect(&("/p/".to_string() + &phone));
 
@@ -144,7 +147,6 @@ async fn submit_phone_number(phone: String) -> Result<(), ServerFnError> {
 pub fn PhoneNumber() -> impl IntoView {
     let submit = ServerAction::<SubmitPhoneNumber>::new();
     let value = submit.value();
-    let (phone, set_phone) = signal(String::new());
     let (passkey_pending, set_passkey_pending) = signal(false);
     let (passkey_error, set_passkey_error) = signal(None::<String>);
     let login_with_passkey = move |_| {
@@ -153,19 +155,21 @@ pub fn PhoneNumber() -> impl IntoView {
 
         #[cfg(feature = "hydrate")]
         wasm_bindgen_futures::spawn_local({
-            let phone = phone.get_untracked();
             async move {
                 let result: std::result::Result<(), String> = async {
-                    let challenge = crate::functions::start_passkey_login(phone)
+                    let challenge = crate::functions::start_passkey_primary_login()
                         .await
                         .map_err(|error| error.to_string())?;
                     let credential =
                         crate::service::passkeys::get_passkey_credential(challenge.public_key)
                             .await
                             .map_err(|error| error.to_string())?;
-                    crate::functions::finish_passkey_login(challenge.challenge_id, credential)
-                        .await
-                        .map_err(|error| error.to_string())
+                    crate::functions::finish_passkey_primary_login(
+                        challenge.challenge_id,
+                        credential,
+                    )
+                    .await
+                    .map_err(|error| error.to_string())
                 }
                 .await;
 
@@ -186,6 +190,19 @@ pub fn PhoneNumber() -> impl IntoView {
     view! {
         <Title text="Dental Care | Authentication"/>
 
+        <section class="stack">
+            <button
+                type="button"
+                disabled=move || passkey_pending.get()
+                on:click=login_with_passkey
+            >
+                {move || if passkey_pending.get() { "Checking passkey" } else { "Continue with passkey" }}
+            </button>
+            <Show when=move || passkey_error.get().is_some()>
+                <div data-state="error">{move || passkey_error.get().unwrap_or_default()}</div>
+            </Show>
+        </section>
+
         <ActionForm action=submit attr:class="stack">
             <label>"Phone Number"</label>
             <input
@@ -196,21 +213,17 @@ pub fn PhoneNumber() -> impl IntoView {
                 placeholder="+1 (893) 234-2345"
                 inputmode="tel"
                 required
-                on:input=move |event| set_phone.set(event_target_value(&event))
             />
-            <button
-                type="button"
-                disabled=move || passkey_pending.get()
-                on:click=login_with_passkey
-            >
-                {move || if passkey_pending.get() { "Checking passkey" } else { "Log in with passkey" }}
-            </button>
-            <button type="submit">"Send recovery PIN"</button>
+            <label>"Email"</label>
+            <input
+                id="email"
+                type="email"
+                name="email"
+                autocomplete="email"
+                placeholder="you@example.com"
+            />
+            <button type="submit">"No passkey yet: send SMS/email recovery"</button>
         </ActionForm>
-
-        <Show when=move || passkey_error.get().is_some()>
-            <div data-state="error">{move || passkey_error.get().unwrap_or_default()}</div>
-        </Show>
 
         <Show when=move || {
             value.get().is_some()

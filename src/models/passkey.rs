@@ -23,7 +23,7 @@ pub struct PasskeyRecord {
 #[derive(Debug, Clone)]
 pub struct WebauthnChallenge {
     pub id: Uuid,
-    pub user_id: Uuid,
+    pub user_id: Option<Uuid>,
     pub state: Value,
 }
 
@@ -63,6 +63,33 @@ pub async fn list_user_passkeys(user_id: Uuid) -> Result<Vec<PasskeyRecord>, sql
         "#,
     )
     .bind(user_id)
+    .fetch_all(get_db())
+    .await?;
+
+    rows.into_iter()
+        .map(|row| {
+            Ok(PasskeyRecord {
+                id: row.try_get("id")?,
+                user_id: row.try_get("user_id")?,
+                credential_id: row.try_get("credential_id")?,
+                passkey: row.try_get("passkey")?,
+                label: row.try_get("label")?,
+                created_at: row.try_get("created_at")?,
+                last_used_at: row.try_get("last_used_at")?,
+            })
+        })
+        .collect()
+}
+
+#[cfg(feature = "ssr")]
+pub async fn list_all_passkeys() -> Result<Vec<PasskeyRecord>, sqlx::Error> {
+    let rows = sqlx::query(
+        r#"
+        SELECT id, user_id, credential_id, passkey, label, created_at, last_used_at
+        FROM user_passkeys
+        ORDER BY created_at ASC
+        "#,
+    )
     .fetch_all(get_db())
     .await?;
 
@@ -154,6 +181,26 @@ pub async fn insert_challenge(
 }
 
 #[cfg(feature = "ssr")]
+pub async fn insert_anonymous_challenge(flow: &str, state: Value) -> Result<Uuid, sqlx::Error> {
+    let expires_at = Utc::now() + Duration::minutes(5);
+    let id = sqlx::query(
+        r#"
+        INSERT INTO webauthn_challenges(user_id, flow, state, expires_at)
+        VALUES (NULL, $1, $2, $3)
+        RETURNING id
+        "#,
+    )
+    .bind(flow)
+    .bind(state)
+    .bind(expires_at)
+    .fetch_one(get_db())
+    .await?
+    .try_get("id")?;
+
+    Ok(id)
+}
+
+#[cfg(feature = "ssr")]
 pub async fn load_user_challenge(
     id: Uuid,
     user_id: Uuid,
@@ -178,7 +225,7 @@ pub async fn load_user_challenge(
 
     Ok(WebauthnChallenge {
         id: row.try_get("id")?,
-        user_id: row.try_get("user_id")?,
+        user_id: Some(row.try_get("user_id")?),
         state: row.try_get("state")?,
     })
 }
