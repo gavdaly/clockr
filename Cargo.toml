@@ -25,11 +25,13 @@ tokio-cron-scheduler = { version = "^0.14", features = [
     "tracing-subscriber",
 ], optional = true }
 wasm-bindgen = { version = "0.2", optional = true }
+wasm-bindgen-futures = { version = "0.4", optional = true }
 tracing = { version = "^0.1.40" }
 tracing-subscriber = { version = "^0.3", optional = true }
 axum_session = { version = "^0.16.0", optional = true }
 axum_session_sqlx = { version = "^0.5.0", optional = true }
 serde = { version = "^1.0.201", features = ["derive"] }
+serde_json = "^1"
 http = { version = "^1.1" }
 sqlx = { version = "0.8.6", features = [
     "runtime-tokio-rustls",
@@ -51,7 +53,18 @@ chrono = { version = "^0.4", features = ["serde"] }
 rand = { version = "^0.9.0", features = ["nightly"], optional = true }
 dotenv = { version = "^0.15.0", optional = true }
 leptos-use = { version = "^0.16" }
-web-sys = { version = "^0.3.69" }
+js-sys = { version = "0.3", optional = true }
+serde-wasm-bindgen = { version = "0.6", optional = true }
+base64ct = { version = "1", features = ["alloc"], optional = true }
+url = { version = "2", optional = true }
+webauthn-rs = { version = "0.5", features = ["danger-allow-state-serialisation"], optional = true }
+web-sys = { version = "^0.3.69", features = [
+    "Window",
+    "Navigator",
+    "CredentialsContainer",
+    "Credential",
+    "PublicKeyCredential",
+] }
 twilio = { path = "libs/twilio", optional = true }
 openssl = { version = "^0.10", optional = true, features = ["vendored"] }
 
@@ -59,7 +72,15 @@ openssl = { version = "^0.10", optional = true, features = ["vendored"] }
 proc-macro-error2 = { git = "https://github.com/fgardt/proc-macro-error-2", branch = "fix/future-incompat" }
 
 [features]
-hydrate = ["leptos/hydrate", "dep:console_error_panic_hook", "dep:wasm-bindgen"]
+hydrate = [
+    "leptos/hydrate",
+    "dep:console_error_panic_hook",
+    "dep:wasm-bindgen",
+    "dep:wasm-bindgen-futures",
+    "dep:js-sys",
+    "dep:serde-wasm-bindgen",
+    "dep:base64ct",
+]
 ssr = [
     "dep:axum",
     "dep:axum_session",
@@ -75,6 +96,8 @@ ssr = [
     "dep:openssl",
     "dep:tokio-cron-scheduler",
     "dep:base32",
+    "dep:url",
+    "dep:webauthn-rs",
     "leptos/ssr",
     "leptos_meta/ssr",
     "leptos_router/ssr",

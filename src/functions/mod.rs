@@ -1,11 +1,13 @@
 pub mod add_time;
 pub mod delete_time;
 pub mod magic_link_sign_in;
+pub mod passkeys;
 pub mod user;
 
 pub use add_time::*;
 pub use delete_time::*;
 pub use magic_link_sign_in::*;
+pub use passkeys::*;
 pub use user::*;
 
 #[cfg(feature = "ssr")]

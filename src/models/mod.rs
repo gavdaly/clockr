@@ -1,4 +1,5 @@
 pub mod magic_link;
+pub mod passkey;
 pub mod pins;
 pub mod time_log;
 pub mod time_sheets;
