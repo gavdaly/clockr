@@ -12,6 +12,8 @@ struct PhoneParams {
 pub fn Auth() -> impl IntoView {
     let authenticate = ServerAction::<Authenticate>::new();
     let (pin_input, set_pin_input) = signal(String::with_capacity(6));
+    let (passkey_pending, set_passkey_pending) = signal(false);
+    let (passkey_error, set_passkey_error) = signal(None::<String>);
 
     let phone_params = use_params::<PhoneParams>();
     let pattern = "[0-9]{6}";
@@ -34,11 +36,80 @@ pub fn Auth() -> impl IntoView {
 
                 {move || match phone_params.get() {
                     Ok(query) => {
+                        let phone = query.phone.unwrap_or_default();
+                        #[cfg(feature = "hydrate")]
+                        let passkey_phone = phone.clone();
+                        let login_with_passkey = move |_| {
+                            set_passkey_pending.set(true);
+                            set_passkey_error.set(None);
+
+                            #[cfg(feature = "hydrate")]
+                            wasm_bindgen_futures::spawn_local({
+                                let phone = passkey_phone.clone();
+                                async move {
+                                    let result: std::result::Result<(), String> = async {
+                                        let challenge =
+                                            crate::functions::start_passkey_login(phone)
+                                                .await
+                                                .map_err(|error| error.to_string())?;
+                                        let credential =
+                                            crate::service::passkeys::get_passkey_credential(
+                                                challenge.public_key,
+                                            )
+                                            .await
+                                            .map_err(|error| error.to_string())?;
+                                        crate::functions::finish_passkey_login(
+                                            challenge.challenge_id,
+                                            credential,
+                                        )
+                                        .await
+                                        .map_err(|error| error.to_string())
+                                    }
+                                    .await;
+
+                                    if let Err(error) = result {
+                                        set_passkey_error.set(Some(error.to_string()));
+                                    }
+                                    set_passkey_pending.set(false);
+                                }
+                            });
+
+                            #[cfg(not(feature = "hydrate"))]
+                            {
+                                set_passkey_error
+                                    .set(Some("Passkey login requires browser support.".to_string()));
+                                set_passkey_pending.set(false);
+                            }
+                        };
+
                         view! {
+                            <div class="stack">
+                                <button
+                                    type="button"
+                                    disabled=move || passkey_pending.get()
+                                    on:click=login_with_passkey
+                                >
+                                    <Icon name="login"/>
+                                    <span>
+                                        {move || {
+                                            if passkey_pending.get() {
+                                                "Checking passkey"
+                                            } else {
+                                                "Log in with passkey"
+                                            }
+                                        }}
+                                    </span>
+                                </button>
+                                <Show when=move || passkey_error.get().is_some()>
+                                    <p data-state="error">
+                                        {move || passkey_error.get().unwrap_or_default()}
+                                    </p>
+                                </Show>
+                            </div>
                             <ActionForm action=authenticate>
                                 <div class="stack">
-                                    <input type="hidden" value=query.phone name="phone"/>
-                                    <label id="pin">"Enter Pin From SMS"</label>
+                                    <input type="hidden" value=phone name="phone"/>
+                                    <label id="pin">"Recovery: enter PIN from SMS"</label>
                                     <input
                                         type="number"
                                         name="pin"

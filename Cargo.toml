@@ -58,12 +58,19 @@ serde-wasm-bindgen = { version = "0.6", optional = true }
 base64ct = { version = "1", features = ["alloc"], optional = true }
 url = { version = "2", optional = true }
 webauthn-rs = { version = "0.5", features = ["danger-allow-state-serialisation"], optional = true }
+webauthn-rs-proto = { version = "0.5", features = ["wasm"], optional = true }
 web-sys = { version = "^0.3.69", features = [
     "Window",
     "Navigator",
     "CredentialsContainer",
     "Credential",
+    "CredentialCreationOptions",
+    "CredentialRequestOptions",
     "PublicKeyCredential",
+    "PublicKeyCredentialCreationOptions",
+    "PublicKeyCredentialRequestOptions",
+    "AuthenticationExtensionsClientOutputs",
+    "console",
 ] }
 twilio = { path = "libs/twilio", optional = true }
 openssl = { version = "^0.10", optional = true, features = ["vendored"] }
@@ -80,6 +87,7 @@ hydrate = [
     "dep:js-sys",
     "dep:serde-wasm-bindgen",
     "dep:base64ct",
+    "dep:webauthn-rs-proto",
 ]
 ssr = [
     "dep:axum",

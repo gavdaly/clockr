@@ -1,4 +1,4 @@
-use crate::components::{Icon, Loading};
+use crate::components::{Icon, Loading, PasskeyRegistrationButton};
 use crate::models::CurrentUser;
 use leptos::html::Dialog;
 use leptos::prelude::*;
@@ -38,6 +38,22 @@ pub fn Menu() -> impl IntoView {
                         <li>
                             <a href="/app/timesheet">"timesheet"</a>
                         </li>
+                        <Suspense fallback=move || {
+                            view! { <Loading/> }
+                        }>
+                            {move || match user_context.read().clone() {
+                                Some(CurrentUser::Authenticated(_)) => {
+                                    view! {
+                                        <li>
+                                            <PasskeyRegistrationButton/>
+                                        </li>
+                                    }
+                                        .into_any()
+                                }
+                                _ => view! {}.into_any(),
+                            }}
+
+                        </Suspense>
                         <Suspense fallback=move || {
                             view! { <Loading/> }
                         }>
