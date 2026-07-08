@@ -156,6 +156,39 @@ WHERE
 }
 
 #[cfg(feature = "ssr")]
+#[tracing::instrument(skip(email), fields(email = %obfuscate_email(email)))]
+pub async fn store_user_email(user_id: Uuid, email: &str) -> Result<(), sqlx::Error> {
+    let db = get_db();
+
+    sqlx::query(
+        r#"
+UPDATE users
+SET email = $1, updated_at = NOW()
+WHERE id = $2
+  AND (email IS NULL OR email = $1);
+        "#,
+    )
+    .bind(email)
+    .bind(user_id)
+    .execute(db)
+    .await?;
+
+    Ok(())
+}
+
+#[cfg(feature = "ssr")]
+fn obfuscate_email(email: &str) -> String {
+    let Some((local, domain)) = email.split_once('@') else {
+        return "[invalid-email]".to_string();
+    };
+
+    let visible_local: String = local.chars().take(1).collect();
+    let visible_domain: String = domain.chars().take(1).collect();
+
+    format!("{visible_local}***@{visible_domain}***")
+}
+
+#[cfg(feature = "ssr")]
 impl From<UserDB> for User {
     fn from(user: UserDB) -> Self {
         Self {

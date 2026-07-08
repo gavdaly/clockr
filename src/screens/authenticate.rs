@@ -145,7 +145,7 @@ pub fn Auth() -> impl IntoView {
 #[server]
 async fn authenticate(pin: i32, phone: String) -> Result<()> {
     use crate::models::pins::Pin;
-    use crate::models::user::get_user_by_phone;
+    use crate::models::user::{get_user_by_phone, store_user_email};
     use axum_session::SessionAnySession;
 
     let Ok(pin) = Pin::get_pin(pin).await else {
@@ -163,6 +163,21 @@ async fn authenticate(pin: i32, phone: String) -> Result<()> {
     if pin.user_id.to_string() != user.id {
         return Err(crate::Error::Unauthorized);
     }
+    let pending_user_id = session
+        .get::<String>("pending_recovery_user_id")
+        .unwrap_or_default();
+    let pending_email = session
+        .get::<String>("pending_recovery_email")
+        .unwrap_or_default();
+
+    if pending_user_id == user.id && !pending_email.is_empty() {
+        if let Err(error) = store_user_email(pin.user_id, &pending_email).await {
+            tracing::warn!("Could not store recovery email: {error}");
+        }
+    }
+
+    session.set("pending_recovery_user_id", String::new());
+    session.set("pending_recovery_email", String::new());
     session.set_longterm(true);
     session.set("id", user.id);
     leptos_axum::redirect("/app");

@@ -109,13 +109,15 @@ async fn submit_phone_number(phone: String, email: Option<String>) -> Result<(),
     use crate::models::pins::Pin;
     use crate::models::user::get_user_by_phone;
     use crate::service::sms::send_message;
+    use axum_session::SessionAnySession;
     use leptos::prelude::server_fn::error::*;
 
     let phone = crate::utils::filter_phone_number(&phone);
-    let email = email.unwrap_or_default();
+    let email = email.unwrap_or_default().trim().to_ascii_lowercase();
+    let email = email.contains('@').then_some(email);
 
     tracing::info!("phone: {:?}", phone);
-    tracing::info!("email recovery requested: {}", !email.is_empty());
+    tracing::info!("email recovery requested: {}", email.is_some());
 
     let Ok(user) = get_user_by_phone(&phone).await else {
         tracing::error!("Could not find phone number: {:?}", phone);
@@ -127,6 +129,10 @@ async fn submit_phone_number(phone: String, email: Option<String>) -> Result<(),
     tracing::info!("user: {:?}", user);
 
     let user_id = uuid::Uuid::parse_str(&user.id).expect("Should be valid uuid");
+    if let Some(session) = use_context::<SessionAnySession>() {
+        session.set("pending_recovery_user_id", user.id.clone());
+        session.set("pending_recovery_email", email.unwrap_or_default());
+    }
 
     let Ok(pin) = Pin::create_pin_for(user_id).await else {
         tracing::error!("Could not create pin: {}", user.id.to_string());
