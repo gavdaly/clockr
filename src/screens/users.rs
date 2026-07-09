@@ -1,5 +1,6 @@
 // use super::timesheets::load_hourly_users;
 use crate::components::user_form::UserForm;
+use crate::functions::CreateMagicInviteLink;
 use leptos::prelude::*;
 use leptos_router::hooks::use_params;
 use leptos_router::params::Params;
@@ -71,7 +72,7 @@ pub fn UserCreate() -> impl IntoView {
 
 #[derive(Clone, Params, PartialEq)]
 struct UserUpdateParams {
-    uuid: Option<String>,
+    id: Option<String>,
 }
 
 #[component]
@@ -82,11 +83,12 @@ pub fn UserUpdate() -> impl IntoView {
         {move || {
             match params.read().clone() {
                 Ok(p) => {
-                    match p.uuid {
-                        Some(uuid) => {
+                    match p.id {
+                        Some(id) => {
                             view! {
                                 <AdminUsers>
-                                    <UserForm uuid=Some(uuid.clone())/>
+                                    <UserForm uuid=Some(id.clone())/>
+                                    <MagicInviteLink user_id=id/>
                                 </AdminUsers>
                             }
                                 .into_any()
@@ -100,5 +102,34 @@ pub fn UserUpdate() -> impl IntoView {
                 Err(_) => view! { <div>"Invalid ID"</div> }.into_any(),
             }
         }}
+    }
+}
+
+#[component]
+fn MagicInviteLink(user_id: String) -> impl IntoView {
+    let create_invite = ServerAction::<CreateMagicInviteLink>::new();
+    let value = create_invite.value();
+
+    view! {
+        <section class="stack">
+            <h2>"Invite Link"</h2>
+            <ActionForm action=create_invite>
+                <input type="hidden" name="user_id" value=user_id/>
+                <button type="submit">"Generate invite link"</button>
+            </ActionForm>
+            {move || {
+                value
+                    .get()
+                    .map(|result| match result {
+                        Ok(link) => view! {
+                            <input type="text" readonly value=link/>
+                        }
+                            .into_any(),
+                        Err(error) => {
+                            view! { <p data-state="error">{error.to_string()}</p> }.into_any()
+                        }
+                    })
+            }}
+        </section>
     }
 }
