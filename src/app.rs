@@ -7,6 +7,7 @@ use crate::screens::{
     Dashboard,
     HomePage,
     MagicLink, //PhoneNumber,
+    PasskeySetup,
     // TimeSheetDisplay, TimeSheetEdit, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending,
     UserCreate,
     UserUpdate,
@@ -14,7 +15,7 @@ use crate::screens::{
 };
 use leptos::prelude::*;
 use leptos_meta::*;
-use leptos_router::components::{FlatRoutes, Route, Router};
+use leptos_router::components::{FlatRoutes, Redirect, Route, Router};
 use leptos_router::*;
 
 pub static VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
@@ -88,18 +89,68 @@ pub fn App() -> impl IntoView {
                         <Route path=path!("/p/:phone") view=Auth/>
                         <Route path=path!("/login") view=PhoneNumber/>
                         <Route path=path!("/l/:link") view=MagicLink/>
-                        <Route path=path!("/app") view=move || view! { <Dashboard/> }/>
+                        <Route path=path!("/app/passkeys/setup") view=PasskeySetup/>
+                        <Route
+                            path=path!("/app")
+                            view=move || {
+                                view! {
+                                    <PasskeyEnrollmentGate>
+                                        <Dashboard/>
+                                    </PasskeyEnrollmentGate>
+                                }
+                            }
+                        />
 
                         // <Route path=path!("/app/timesheet") view=TimeSheetDisplay/>
                         // <Route path=path!("/app/admin/timesheets") view=TimeSheetsList/>
                         // <Route path=path!("/app/admin/timesheets/pending") view=TimeSheetsPending/>
                         // <Route path=path!("/app/admin/users") view=UsersList/>
-                        <Route path=path!("/app/admin/users/create") view=UserCreate/>
-                        <Route path=path!("/app/admin/users/edit/:id") view=UserUpdate/>
+                        <Route
+                            path=path!("/app/admin/users/create")
+                            view=move || {
+                                view! {
+                                    <PasskeyEnrollmentGate>
+                                        <UserCreate/>
+                                    </PasskeyEnrollmentGate>
+                                }
+                            }
+                        />
+                        <Route
+                            path=path!("/app/admin/users/edit/:id")
+                            view=move || {
+                                view! {
+                                    <PasskeyEnrollmentGate>
+                                        <UserUpdate/>
+                                    </PasskeyEnrollmentGate>
+                                }
+                            }
+                        />
                     </FlatRoutes>
                 </main>
             </UserProvider>
         </Router>
+    }
+}
+
+#[component]
+fn PasskeyEnrollmentGate(children: ChildrenFn) -> impl IntoView {
+    let setup_required = Resource::new(
+        || (),
+        async move |_| {
+            crate::functions::passkey_setup_required()
+                .await
+                .unwrap_or(false)
+        },
+    );
+
+    view! {
+        <Suspense fallback=Loading>
+            {move || match setup_required.get() {
+                Some(true) => view! { <Redirect path="/app/passkeys/setup"/> }.into_any(),
+                Some(false) => children().into_any(),
+                None => view! { <Loading/> }.into_any(),
+            }}
+        </Suspense>
     }
 }
 

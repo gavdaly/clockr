@@ -82,6 +82,25 @@ pub async fn list_user_passkeys(user_id: Uuid) -> Result<Vec<PasskeyRecord>, sql
 }
 
 #[cfg(feature = "ssr")]
+pub async fn user_has_passkey(user_id: Uuid) -> Result<bool, sqlx::Error> {
+    let has_passkey = sqlx::query(
+        r#"
+        SELECT EXISTS(
+            SELECT 1
+            FROM user_passkeys
+            WHERE user_id = $1
+        ) AS has_passkey
+        "#,
+    )
+    .bind(user_id)
+    .fetch_one(get_db())
+    .await?
+    .try_get("has_passkey")?;
+
+    Ok(has_passkey)
+}
+
+#[cfg(feature = "ssr")]
 pub async fn list_all_passkeys() -> Result<Vec<PasskeyRecord>, sqlx::Error> {
     let rows = sqlx::query(
         r#"

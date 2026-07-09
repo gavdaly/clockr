@@ -144,6 +144,7 @@ pub fn Auth() -> impl IntoView {
 
 #[server]
 async fn authenticate(pin: i32, phone: String) -> Result<()> {
+    use crate::models::passkey::user_has_passkey;
     use crate::models::pins::Pin;
     use crate::models::user::{get_user_by_phone, store_user_email};
     use axum_session::SessionAnySession;
@@ -180,7 +181,15 @@ async fn authenticate(pin: i32, phone: String) -> Result<()> {
     session.set("pending_recovery_email", String::new());
     session.set_longterm(true);
     session.set("id", user.id);
-    leptos_axum::redirect("/app");
+
+    if user_has_passkey(pin.user_id).await? {
+        session.remove("passkey_setup_required");
+        leptos_axum::redirect("/app");
+    } else {
+        session.set("passkey_setup_required", true);
+        leptos_axum::redirect("/app/passkeys/setup");
+    }
+
     Ok(())
 }
 

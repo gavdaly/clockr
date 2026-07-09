@@ -63,6 +63,7 @@ pub async fn finish_passkey_registration(
 ) -> Result<()> {
     use crate::models::passkey::{consume_challenge, insert_passkey, load_user_challenge};
     use crate::service::passkeys::get_webauthn;
+    use axum_session::SessionAnySession;
     use webauthn_rs::prelude::*;
 
     let (user_id, _) = super::current_user()
@@ -83,7 +84,36 @@ pub async fn finish_passkey_registration(
     insert_passkey(user_id, credential_id, passkey_json, label).await?;
     consume_challenge(challenge.id).await?;
 
+    if let Some(session) = use_context::<SessionAnySession>() {
+        session.remove("passkey_setup_required");
+    }
+    leptos_axum::redirect("/app");
+
     Ok(())
+}
+
+#[server]
+pub async fn passkey_setup_required() -> Result<bool> {
+    use crate::models::passkey::user_has_passkey;
+
+    let Some((user_id, session)) = super::current_user().await else {
+        return Ok(false);
+    };
+
+    let setup_required = session
+        .get::<bool>("passkey_setup_required")
+        .unwrap_or_default();
+
+    if !setup_required {
+        return Ok(false);
+    }
+
+    if user_has_passkey(user_id).await? {
+        session.remove("passkey_setup_required");
+        return Ok(false);
+    }
+
+    Ok(true)
 }
 
 #[server]

@@ -4,6 +4,7 @@ use leptos::prelude::*;
 #[server]
 pub async fn magic_sign_in(link: String) -> Result<()> {
     use crate::models::magic_link::MagicLink;
+    use crate::models::passkey::user_has_passkey;
     use axum_session::SessionAnySession;
     use tracing::{error, info};
 
@@ -23,7 +24,16 @@ pub async fn magic_sign_in(link: String) -> Result<()> {
 
     session.set_longterm(true);
     session.set("id", magic_link.user_id.to_string());
-    leptos_axum::redirect("/app");
+
+    if matches!(magic_link.purpose.as_str(), "invite" | "recovery")
+        && !user_has_passkey(magic_link.user_id).await?
+    {
+        session.set("passkey_setup_required", true);
+        leptos_axum::redirect("/app/passkeys/setup");
+    } else {
+        session.remove("passkey_setup_required");
+        leptos_axum::redirect("/app");
+    }
 
     Ok(())
 }
