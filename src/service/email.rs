@@ -3,6 +3,7 @@
 pub enum MagicLinkEmailKind {
     Invite,
     Recovery,
+    Verification,
 }
 
 #[cfg(feature = "ssr")]
@@ -11,6 +12,7 @@ impl MagicLinkEmailKind {
         match self {
             Self::Invite => "Create your Clockr account",
             Self::Recovery => "Recover access to Clockr",
+            Self::Verification => "Verify your Clockr email",
         }
     }
 
@@ -21,6 +23,9 @@ impl MagicLinkEmailKind {
             ),
             Self::Recovery => format!(
                 "Use this link to recover access to Clockr and set up a passkey if needed:\n\n{link}\n\nThis link expires in 30 minutes."
+            ),
+            Self::Verification => format!(
+                "Use this link to verify your email address for Clockr:\n\n{link}\n\nThis link expires in 24 hours."
             ),
         }
     }

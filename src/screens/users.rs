@@ -1,7 +1,8 @@
 // use super::timesheets::load_hourly_users;
 use crate::components::user_form::UserForm;
 use crate::functions::{
-    CreateMagicInviteLink, CreateMagicRecoveryLink, SendMagicInviteEmail, SendMagicRecoveryEmail,
+    CreateMagicInviteLink, CreateMagicRecoveryLink, SendEmailVerification, SendMagicInviteEmail,
+    SendMagicRecoveryEmail,
 };
 use crate::models::user::User;
 use leptos::prelude::*;
@@ -51,6 +52,7 @@ pub fn UsersList() -> impl IntoView {
                                         <th>"Name"</th>
                                         <th>"Phone"</th>
                                         <th>"Email"</th>
+                                        <th>"Email Verified"</th>
                                         <th>"State"</th>
                                         <th>"Actions"</th>
                                     </tr>
@@ -65,6 +67,7 @@ pub fn UsersList() -> impl IntoView {
                                                     <td>{user.last_name}", "{user.first_name}</td>
                                                     <td>{user.phone_number}</td>
                                                     <td>{user.email.unwrap_or_default()}</td>
+                                                    <td>{if user.email_verified_at.is_some() { "Yes" } else { "No" }}</td>
                                                     <td>{user.state}</td>
                                                     <td>
                                                         <a href=format!("/app/admin/users/edit/{user_id}")>
@@ -145,10 +148,13 @@ fn MagicUserLinks(user_id: String) -> impl IntoView {
     let send_invite_value = send_invite.value();
     let send_recovery = ServerAction::<SendMagicRecoveryEmail>::new();
     let send_recovery_value = send_recovery.value();
+    let send_verification = ServerAction::<SendEmailVerification>::new();
+    let send_verification_value = send_verification.value();
     let invite_user_id = user_id.clone();
     let send_invite_user_id = user_id.clone();
     let recovery_user_id = user_id.clone();
-    let send_recovery_user_id = user_id;
+    let send_recovery_user_id = user_id.clone();
+    let send_verification_user_id = user_id;
 
     view! {
         <section class="stack">
@@ -160,6 +166,10 @@ fn MagicUserLinks(user_id: String) -> impl IntoView {
             <ActionForm action=send_invite>
                 <input type="hidden" name="user_id" value=send_invite_user_id/>
                 <button type="submit">"Send invite email"</button>
+            </ActionForm>
+            <ActionForm action=send_verification>
+                <input type="hidden" name="user_id" value=send_verification_user_id/>
+                <button type="submit">"Send verification email"</button>
             </ActionForm>
             <ActionForm action=create_recovery>
                 <input type="hidden" name="user_id" value=recovery_user_id/>
@@ -184,6 +194,16 @@ fn MagicUserLinks(user_id: String) -> impl IntoView {
             }}
             {move || {
                 send_invite_value
+                    .get()
+                    .map(|result| match result {
+                        Ok(message) => view! { <p>{message}</p> }.into_any(),
+                        Err(error) => {
+                            view! { <p data-state="error">{error.to_string()}</p> }.into_any()
+                        }
+                    })
+            }}
+            {move || {
+                send_verification_value
                     .get()
                     .map(|result| match result {
                         Ok(message) => view! { <p>{message}</p> }.into_any(),

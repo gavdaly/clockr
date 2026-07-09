@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -14,6 +15,7 @@ pub struct User {
     pub last_name: String,
     pub phone_number: String,
     pub email: Option<String>,
+    pub email_verified_at: Option<DateTime<Utc>>,
     pub state: i32,
 }
 
@@ -24,6 +26,7 @@ pub struct UserDB {
     pub last_name: String,
     pub phone_number: String,
     pub email: Option<String>,
+    pub email_verified_at: Option<DateTime<Utc>>,
     pub state: i32,
 }
 
@@ -39,7 +42,7 @@ impl UserDB {
         query_as!(
             UserDB,
             r#"
-            SELECT id, last_name, first_name, phone_number, email, state
+            SELECT id, last_name, first_name, phone_number, email, email_verified_at, state
             FROM users
             ORDER BY last_name ASC, first_name ASC;
             "#
@@ -55,7 +58,7 @@ impl UserDB {
         query_as!(
             UserDB,
             r#"
-            SELECT id, last_name, first_name, phone_number, email, state
+            SELECT id, last_name, first_name, phone_number, email, email_verified_at, state
             FROM users
             WHERE state = $1;
             "#,
@@ -77,6 +80,7 @@ SELECT
     first_name,
     phone_number,
     email,
+    email_verified_at,
     state
 FROM
     users
@@ -102,9 +106,18 @@ impl User {
             User,
             r#"
 UPDATE users
-SET first_name = $1, last_name = $2, phone_number = $3, email = $4, state = $5, updated_at = NOW()
+SET first_name = $1,
+    last_name = $2,
+    phone_number = $3,
+    email = $4,
+    email_verified_at = CASE
+        WHEN email IS NOT DISTINCT FROM $4 THEN email_verified_at
+        ELSE NULL
+    END,
+    state = $5,
+    updated_at = NOW()
 WHERE id = $6
-RETURNING first_name, last_name, phone_number, email, state, id
+RETURNING first_name, last_name, phone_number, email, email_verified_at, state, id
 "#,
             self.first_name,
             self.last_name,
@@ -131,7 +144,7 @@ RETURNING first_name, last_name, phone_number, email, state, id
             r#"
 INSERT INTO users(first_name, last_name, phone_number, email, state)
 VALUES ($1, $2, $3, $4, $5)
-RETURNING id, first_name, last_name, phone_number, email, state
+RETURNING id, first_name, last_name, phone_number, email, email_verified_at, state
         "#,
             first_name,
             last_name,
@@ -185,7 +198,12 @@ pub async fn store_user_email(user_id: Uuid, email: &str) -> Result<(), sqlx::Er
     sqlx::query(
         r#"
 UPDATE users
-SET email = $1, updated_at = NOW()
+SET email = $1,
+    email_verified_at = CASE
+        WHEN email = $1 THEN email_verified_at
+        ELSE NULL
+    END,
+    updated_at = NOW()
 WHERE id = $2
   AND (email IS NULL OR email = $1);
         "#,
@@ -194,6 +212,33 @@ WHERE id = $2
     .bind(user_id)
     .execute(db)
     .await?;
+
+    Ok(())
+}
+
+#[cfg(feature = "ssr")]
+#[tracing::instrument(skip(email), fields(email = %obfuscate_email(email)))]
+pub async fn mark_user_email_verified(user_id: Uuid, email: &str) -> Result<(), sqlx::Error> {
+    let db = get_db();
+
+    let result = sqlx::query(
+        r#"
+UPDATE users
+SET email = $1,
+    email_verified_at = NOW(),
+    updated_at = NOW()
+WHERE id = $2
+  AND (email IS NULL OR email = $1);
+        "#,
+    )
+    .bind(email)
+    .bind(user_id)
+    .execute(db)
+    .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(sqlx::Error::RowNotFound);
+    }
 
     Ok(())
 }
@@ -219,6 +264,7 @@ impl From<UserDB> for User {
             last_name: user.last_name,
             phone_number: user.phone_number,
             email: user.email,
+            email_verified_at: user.email_verified_at,
             state: user.state,
         }
     }

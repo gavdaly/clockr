@@ -12,6 +12,7 @@ pub enum MagicLinkPurpose {
     SignIn,
     Invite,
     Recovery,
+    EmailVerification,
 }
 
 impl MagicLinkPurpose {
@@ -20,6 +21,7 @@ impl MagicLinkPurpose {
             Self::SignIn => "sign_in",
             Self::Invite => "invite",
             Self::Recovery => "recovery",
+            Self::EmailVerification => "email_verification",
         }
     }
 }
@@ -29,6 +31,7 @@ pub struct MagicLink {
     pub id: Uuid,
     pub user_id: Uuid,
     pub purpose: String,
+    pub email: Option<String>,
     pub expires_at: DateTime<Utc>,
     pub consumed_at: Option<DateTime<Utc>>,
 }
@@ -46,6 +49,16 @@ impl MagicLink {
         purpose: MagicLinkPurpose,
         ttl: Duration,
     ) -> Result<Uuid, sqlx::Error> {
+        Self::create_for_email(user_id, purpose, ttl, None).await
+    }
+
+    #[tracing::instrument]
+    pub async fn create_for_email(
+        user_id: Uuid,
+        purpose: MagicLinkPurpose,
+        ttl: Duration,
+        email: Option<&str>,
+    ) -> Result<Uuid, sqlx::Error> {
         info!(
             "Creating {} magic link for user {}",
             purpose.as_str(),
@@ -55,13 +68,14 @@ impl MagicLink {
         let expires_at = Utc::now() + ttl;
         let link = sqlx::query(
             r#"
-INSERT INTO magic_links (user_id, purpose, expires_at)
-VALUES ($1, $2, $3)
-RETURNING id, user_id, purpose, expires_at, consumed_at;
+INSERT INTO magic_links (user_id, purpose, email, expires_at)
+VALUES ($1, $2, $3, $4)
+RETURNING id, user_id, purpose, email, expires_at, consumed_at;
             "#,
         )
         .bind(user_id)
         .bind(purpose.as_str())
+        .bind(email)
         .bind(expires_at)
         .fetch_one(get_db())
         .await?;
@@ -84,7 +98,7 @@ SET consumed_at = NOW(), updated_at = NOW()
 WHERE id = $1
   AND consumed_at IS NULL
   AND expires_at > NOW()
-RETURNING id, user_id, purpose, expires_at, consumed_at;
+RETURNING id, user_id, purpose, email, expires_at, consumed_at;
             "#,
         )
         .bind(id)
@@ -108,6 +122,7 @@ RETURNING id, user_id, purpose, expires_at, consumed_at;
             id: row.get("id"),
             user_id: row.get("user_id"),
             purpose: row.get("purpose"),
+            email: row.get("email"),
             expires_at: row.get("expires_at"),
             consumed_at: row.get("consumed_at"),
         }

@@ -24,6 +24,7 @@ async fn submit_user_form(
             last_name,
             phone_number,
             email,
+            email_verified_at: None,
             state,
         }
         .update()

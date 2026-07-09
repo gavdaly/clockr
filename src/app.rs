@@ -5,6 +5,7 @@ use crate::models::CurrentUser;
 use crate::screens::{
     Auth,
     Dashboard,
+    EmailVerification,
     HomePage,
     MagicLink, //PhoneNumber,
     PasskeySetup,
@@ -89,6 +90,7 @@ pub fn App() -> impl IntoView {
                         <Route path=path!("/p/:phone") view=Auth/>
                         <Route path=path!("/login") view=PhoneNumber/>
                         <Route path=path!("/l/:link") view=MagicLink/>
+                        <Route path=path!("/email/verify/:link") view=EmailVerification/>
                         <Route path=path!("/app/passkeys/setup") view=PasskeySetup/>
                         <Route
                             path=path!("/app")
