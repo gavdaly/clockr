@@ -1,6 +1,8 @@
 // use super::timesheets::load_hourly_users;
 use crate::components::user_form::UserForm;
-use crate::functions::{CreateMagicInviteLink, CreateMagicRecoveryLink};
+use crate::functions::{
+    CreateMagicInviteLink, CreateMagicRecoveryLink, SendMagicInviteEmail, SendMagicRecoveryEmail,
+};
 use crate::models::user::User;
 use leptos::prelude::*;
 use leptos_router::hooks::use_params;
@@ -139,8 +141,14 @@ fn MagicUserLinks(user_id: String) -> impl IntoView {
     let invite_value = create_invite.value();
     let create_recovery = ServerAction::<CreateMagicRecoveryLink>::new();
     let recovery_value = create_recovery.value();
+    let send_invite = ServerAction::<SendMagicInviteEmail>::new();
+    let send_invite_value = send_invite.value();
+    let send_recovery = ServerAction::<SendMagicRecoveryEmail>::new();
+    let send_recovery_value = send_recovery.value();
     let invite_user_id = user_id.clone();
-    let recovery_user_id = user_id;
+    let send_invite_user_id = user_id.clone();
+    let recovery_user_id = user_id.clone();
+    let send_recovery_user_id = user_id;
 
     view! {
         <section class="stack">
@@ -149,9 +157,17 @@ fn MagicUserLinks(user_id: String) -> impl IntoView {
                 <input type="hidden" name="user_id" value=invite_user_id/>
                 <button type="submit">"Generate invite link"</button>
             </ActionForm>
+            <ActionForm action=send_invite>
+                <input type="hidden" name="user_id" value=send_invite_user_id/>
+                <button type="submit">"Send invite email"</button>
+            </ActionForm>
             <ActionForm action=create_recovery>
                 <input type="hidden" name="user_id" value=recovery_user_id/>
                 <button type="submit">"Generate recovery link"</button>
+            </ActionForm>
+            <ActionForm action=send_recovery>
+                <input type="hidden" name="user_id" value=send_recovery_user_id/>
+                <button type="submit">"Send recovery email"</button>
             </ActionForm>
             {move || {
                 invite_value
@@ -167,6 +183,16 @@ fn MagicUserLinks(user_id: String) -> impl IntoView {
                     })
             }}
             {move || {
+                send_invite_value
+                    .get()
+                    .map(|result| match result {
+                        Ok(message) => view! { <p>{message}</p> }.into_any(),
+                        Err(error) => {
+                            view! { <p data-state="error">{error.to_string()}</p> }.into_any()
+                        }
+                    })
+            }}
+            {move || {
                 recovery_value
                     .get()
                     .map(|result| match result {
@@ -174,6 +200,16 @@ fn MagicUserLinks(user_id: String) -> impl IntoView {
                             <input type="text" readonly value=link/>
                         }
                             .into_any(),
+                        Err(error) => {
+                            view! { <p data-state="error">{error.to_string()}</p> }.into_any()
+                        }
+                    })
+            }}
+            {move || {
+                send_recovery_value
+                    .get()
+                    .map(|result| match result {
+                        Ok(message) => view! { <p>{message}</p> }.into_any(),
                         Err(error) => {
                             view! { <p data-state="error">{error.to_string()}</p> }.into_any()
                         }
