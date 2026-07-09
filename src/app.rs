@@ -11,7 +11,7 @@ use crate::screens::{
     // TimeSheetDisplay, TimeSheetEdit, TimeSheetsAdjustment, TimeSheetsList, TimeSheetsPending,
     UserCreate,
     UserUpdate,
-    // Users, UsersList,
+    UsersList,
 };
 use leptos::prelude::*;
 use leptos_meta::*;
@@ -104,7 +104,16 @@ pub fn App() -> impl IntoView {
                         // <Route path=path!("/app/timesheet") view=TimeSheetDisplay/>
                         // <Route path=path!("/app/admin/timesheets") view=TimeSheetsList/>
                         // <Route path=path!("/app/admin/timesheets/pending") view=TimeSheetsPending/>
-                        // <Route path=path!("/app/admin/users") view=UsersList/>
+                        <Route
+                            path=path!("/app/admin/users")
+                            view=move || {
+                                view! {
+                                    <PasskeyEnrollmentGate>
+                                        <UsersList/>
+                                    </PasskeyEnrollmentGate>
+                                }
+                            }
+                        />
                         <Route
                             path=path!("/app/admin/users/create")
                             view=move || {

@@ -13,6 +13,7 @@ pub struct User {
     pub first_name: String,
     pub last_name: String,
     pub phone_number: String,
+    pub email: Option<String>,
     pub state: i32,
 }
 
@@ -22,6 +23,7 @@ pub struct UserDB {
     pub first_name: String,
     pub last_name: String,
     pub phone_number: String,
+    pub email: Option<String>,
     pub state: i32,
 }
 
@@ -31,13 +33,29 @@ use {crate::database::get_db, sqlx::*, uuid::Uuid};
 #[cfg(feature = "ssr")]
 impl UserDB {
     #[tracing::instrument]
+    pub async fn get_all() -> Result<Vec<Self>, sqlx::Error> {
+        tracing::info!("Fetching all users");
+        let db = get_db();
+        query_as!(
+            UserDB,
+            r#"
+            SELECT id, last_name, first_name, phone_number, email, state
+            FROM users
+            ORDER BY last_name ASC, first_name ASC;
+            "#
+        )
+        .fetch_all(db)
+        .await
+    }
+
+    #[tracing::instrument]
     pub async fn get_all_by_state(state: State) -> Result<Vec<Self>, sqlx::Error> {
         tracing::info!("Fetching all hourly users");
         let db = get_db();
         query_as!(
             UserDB,
             r#"
-            SELECT id, last_name, first_name, phone_number, state
+            SELECT id, last_name, first_name, phone_number, email, state
             FROM users
             WHERE state = $1;
             "#,
@@ -58,6 +76,7 @@ SELECT
     last_name,
     first_name,
     phone_number,
+    email,
     state
 FROM
     users
@@ -83,13 +102,14 @@ impl User {
             User,
             r#"
 UPDATE users
-SET first_name = $1, last_name = $2, phone_number = $3, state = $4
-WHERE id = $5
-RETURNING first_name, last_name, phone_number, state, id
+SET first_name = $1, last_name = $2, phone_number = $3, email = $4, state = $5, updated_at = NOW()
+WHERE id = $6
+RETURNING first_name, last_name, phone_number, email, state, id
 "#,
             self.first_name,
             self.last_name,
             self.phone_number,
+            self.email,
             self.state,
             id
         )
@@ -102,19 +122,21 @@ RETURNING first_name, last_name, phone_number, state, id
         first_name: &str,
         last_name: &str,
         phone_number: &str,
+        email: Option<String>,
         state: i32,
     ) -> Result<Self, sqlx::Error> {
         let db = get_db();
         query_as!(
             User,
             r#"
-INSERT INTO users(first_name, last_name, phone_number, state)
-VALUES ($1, $2, $3, $4)
-RETURNING id, first_name, last_name, phone_number, state
+INSERT INTO users(first_name, last_name, phone_number, email, state)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, first_name, last_name, phone_number, email, state
         "#,
             first_name,
             last_name,
             phone_number,
+            email,
             state
         )
         .fetch_one(db)
@@ -196,6 +218,7 @@ impl From<UserDB> for User {
             first_name: user.first_name,
             last_name: user.last_name,
             phone_number: user.phone_number,
+            email: user.email,
             state: user.state,
         }
     }

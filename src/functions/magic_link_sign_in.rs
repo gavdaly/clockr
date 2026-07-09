@@ -44,12 +44,33 @@ pub async fn create_magic_invite_link(user_id: String) -> Result<String> {
     use chrono::Duration;
     use uuid::Uuid;
 
-    let _ = super::current_user()
-        .await
-        .ok_or(crate::Error::Unauthorized)?;
+    let _ = super::current_admin_user_id().await?;
 
     let user_id = Uuid::parse_str(&user_id).map_err(|_| crate::Error::Unauthorized)?;
     let link_id = MagicLink::create_for(user_id, MagicLinkPurpose::Invite, Duration::days(14))
+        .await
+        .map_err(|_| crate::Error::InternalError)?;
+
+    Ok(format!("{}/l/{}", app_base_url(), link_id))
+}
+
+#[server]
+pub async fn create_magic_recovery_link(user_id: String) -> Result<String> {
+    use crate::models::magic_link::{MagicLink, MagicLinkPurpose};
+    use crate::models::user::UserDB;
+    use chrono::Duration;
+    use uuid::Uuid;
+
+    let _ = super::current_admin_user_id().await?;
+
+    let user_id = Uuid::parse_str(&user_id).map_err(|_| crate::Error::Unauthorized)?;
+    let user = UserDB::get(user_id).await?;
+
+    if user.email.is_none() {
+        return Err(crate::Error::NotFound);
+    }
+
+    let link_id = MagicLink::create_for(user_id, MagicLinkPurpose::Recovery, Duration::minutes(30))
         .await
         .map_err(|_| crate::Error::InternalError)?;
 

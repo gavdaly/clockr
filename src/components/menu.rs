@@ -62,10 +62,10 @@ pub fn Menu() -> impl IntoView {
                                         <Show when=move || u.state == 1>
                                             <h2>"Admin"</h2>
                                             <li>
-                                                <a href="/admin/timesheets">"timesheets"</a>
+                                                <a href="/app/admin/timesheets">"timesheets"</a>
                                             </li>
                                             <li>
-                                                <a href="/admin/users">"users"</a>
+                                                <a href="/app/admin/users">"users"</a>
                                             </li>
                                         </Show>
                                     }

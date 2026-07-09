@@ -1,6 +1,7 @@
 // use super::timesheets::load_hourly_users;
 use crate::components::user_form::UserForm;
-use crate::functions::CreateMagicInviteLink;
+use crate::functions::{CreateMagicInviteLink, CreateMagicRecoveryLink};
+use crate::models::user::User;
 use leptos::prelude::*;
 use leptos_router::hooks::use_params;
 use leptos_router::params::Params;
@@ -9,54 +10,81 @@ use leptos_router::params::Params;
 pub fn AdminUsers(children: Children) -> impl IntoView {
     view! {
         <nav class="subWrapper">
-            <a href="">"Users List"</a>
-            <a href="create">"Add New User"</a>
+            <a href="/app/admin/users">"Users List"</a>
+            <a href="/app/admin/users/create">"Add New User"</a>
         </nav>
         <section class="stack admin users_list">{children()}</section>
     }
 }
 
+#[server]
+async fn load_admin_users() -> crate::Result<Vec<User>> {
+    use crate::models::user::UserDB;
+
+    let _ = crate::functions::current_admin_user_id().await?;
+
+    let users = UserDB::get_all()
+        .await?
+        .into_iter()
+        .map(User::from)
+        .collect();
+
+    Ok(users)
+}
+
 #[component]
 pub fn UsersList() -> impl IntoView {
-    // let users = Resource::new(move || {}, move |_| load_hourly_users()).read();
+    let users = Resource::new(|| (), async move |_| load_admin_users().await);
+
     view! {
         <AdminUsers>
-            // {move || match users.clone() {
-            // Some(Ok(users)) => {
-            // view! {
-            // <table>
-            // <thead>
-            // <tr>
-            // <th>Name</th>
-            // <th>Phone Number</th>
-            // <th>Edit</th>
-            // </tr>
-            // </thead>
-            // // {users
-            // //     .into_iter()
-            // //     .map(|user| {
-            // //         view! {
-            <section class="stack">// //             <div class="user_list">
-            // //                 <span>{user.last_name} ", " {user.first_name}</span>
-            // //                 <span>{user.phone_number}</span>
-            // //                 <span>
-            // //                     <a href=format!("/app/admin/user/edit/{}", user.id.to_string())>
-            // //                         <Icon name="pencil".into()/>
-            // //                     </a>
-            // //                 </span>
-            // //             </div>
-            // //         }
-            // //     })
-            // //     .collect_view()}
-            // </table>
-            // }
-            // .into_any()
-            // }
-            // Some(Err(e)) => view! { <div>"Error: " {e.to_string()}</div> }.into_any(),
-            // None => view! {}.into_any(),
-            // }}
-
-            </section>
+            <h2>"Users"</h2>
+            <Suspense fallback=move || view! { <p>"Loading users"</p> }>
+                {move || match users.get() {
+                    Some(Ok(users)) => {
+                        view! {
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>"Name"</th>
+                                        <th>"Phone"</th>
+                                        <th>"Email"</th>
+                                        <th>"State"</th>
+                                        <th>"Actions"</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {users
+                                        .into_iter()
+                                        .map(|user| {
+                                            let user_id = user.id.clone();
+                                            view! {
+                                                <tr>
+                                                    <td>{user.last_name}", "{user.first_name}</td>
+                                                    <td>{user.phone_number}</td>
+                                                    <td>{user.email.unwrap_or_default()}</td>
+                                                    <td>{user.state}</td>
+                                                    <td>
+                                                        <a href=format!("/app/admin/users/edit/{user_id}")>
+                                                            "Edit"
+                                                        </a>
+                                                        <MagicUserLinks user_id=user.id/>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        })
+                                        .collect_view()}
+                                </tbody>
+                            </table>
+                        }
+                            .into_any()
+                    }
+                    Some(Err(error)) => {
+                        view! { <div data-state="error">{error.to_string()}</div> }.into_any()
+                    }
+                    None => view! { <p>"Loading users"</p> }.into_any(),
+                }}
+            </Suspense>
         </AdminUsers>
     }
 }
@@ -86,12 +114,12 @@ pub fn UserUpdate() -> impl IntoView {
                     match p.id {
                         Some(id) => {
                             view! {
-                                <AdminUsers>
-                                    <UserForm uuid=Some(id.clone())/>
-                                    <MagicInviteLink user_id=id/>
-                                </AdminUsers>
-                            }
-                                .into_any()
+                                    <AdminUsers>
+                                        <UserForm uuid=Some(id.clone())/>
+                                        <MagicUserLinks user_id=id/>
+                                    </AdminUsers>
+                                }
+                                    .into_any()
                         }
                         None => {
                             view! { <div data-state="error">{"Did not find the user!"}</div> }
@@ -106,19 +134,40 @@ pub fn UserUpdate() -> impl IntoView {
 }
 
 #[component]
-fn MagicInviteLink(user_id: String) -> impl IntoView {
+fn MagicUserLinks(user_id: String) -> impl IntoView {
     let create_invite = ServerAction::<CreateMagicInviteLink>::new();
-    let value = create_invite.value();
+    let invite_value = create_invite.value();
+    let create_recovery = ServerAction::<CreateMagicRecoveryLink>::new();
+    let recovery_value = create_recovery.value();
+    let invite_user_id = user_id.clone();
+    let recovery_user_id = user_id;
 
     view! {
         <section class="stack">
-            <h2>"Invite Link"</h2>
+            <h2>"Links"</h2>
             <ActionForm action=create_invite>
-                <input type="hidden" name="user_id" value=user_id/>
+                <input type="hidden" name="user_id" value=invite_user_id/>
                 <button type="submit">"Generate invite link"</button>
             </ActionForm>
+            <ActionForm action=create_recovery>
+                <input type="hidden" name="user_id" value=recovery_user_id/>
+                <button type="submit">"Generate recovery link"</button>
+            </ActionForm>
             {move || {
-                value
+                invite_value
+                    .get()
+                    .map(|result| match result {
+                        Ok(link) => view! {
+                            <input type="text" readonly value=link/>
+                        }
+                            .into_any(),
+                        Err(error) => {
+                            view! { <p data-state="error">{error.to_string()}</p> }.into_any()
+                        }
+                    })
+            }}
+            {move || {
+                recovery_value
                     .get()
                     .map(|result| match result {
                         Ok(link) => view! {

@@ -21,7 +21,7 @@ use {
 };
 
 #[cfg(feature = "ssr")]
-async fn current_user() -> Option<(Uuid, Extension<Session<SessionPgPool>>)> {
+pub(crate) async fn current_user() -> Option<(Uuid, Extension<Session<SessionPgPool>>)> {
     let session = match extract::<Extension<Session<SessionPgPool>>>().await {
         Ok(s) => s,
         Err(e) => {
@@ -41,4 +41,16 @@ async fn current_user() -> Option<(Uuid, Extension<Session<SessionPgPool>>)> {
     };
 
     Some((id, session))
+}
+
+#[cfg(feature = "ssr")]
+pub(crate) async fn current_admin_user_id() -> crate::Result<Uuid> {
+    let (id, _) = current_user().await.ok_or(crate::Error::Unauthorized)?;
+    let user = crate::models::user::UserDB::get(id).await?;
+
+    if user.state != 1 {
+        return Err(crate::Error::Unauthorized);
+    }
+
+    Ok(id)
 }
